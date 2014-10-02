@@ -6,7 +6,16 @@ public class Main {
 	 *        args[1] is architecture specification file name
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	
+		if(args.length == 0){
+			System.out.println("Assembly file and specification file not specified.");
+			return;
+		}
+		else if(args.length == 1){
+			System.out.println("No specification file specified.");
+			System.out.println("Assembly file: " + args[0]);
+			return;
+		}
 		
 		FileParser file = new FileParser(args[0], args[1]);
 		
