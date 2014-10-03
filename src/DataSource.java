@@ -4,12 +4,17 @@ import java.util.ArrayList;
 public class DataSource {
 	
 	ArrayList<String> assemblyCode;
-	ArrayList<String> architecture;
+	
+	String architectureName;
+	ArrayList<String> opcodes;
+	ArrayList<String> regsters;
+	
 	
 	public DataSource(){
 		
 		assemblyCode = new ArrayList<String>();
-		architecture = new ArrayList<String>();
+		opcodes = new ArrayList<String>();
+		regsters = new ArrayList<String>();
 	}
 
 	public ArrayList<String> getAssemblyCode() {
@@ -20,14 +25,28 @@ public class DataSource {
 		this.assemblyCode = assemblyCode;
 	}
 
-	public ArrayList<String> getArchitecture() {
-		return architecture;
+	public String getArchitectureName() {
+		return architectureName;
 	}
 
-	public void setArchitecture(ArrayList<String> architecture) {
-		this.architecture = architecture;
+	public void setArchitectureName(String architectureName) {
+		this.architectureName = architectureName;
 	}
-	
-	
+
+	public ArrayList<String> getOpcodes() {
+		return opcodes;
+	}
+
+	public void setOpcodes(ArrayList<String> opcodes) {
+		this.opcodes = opcodes;
+	}
+
+	public ArrayList<String> getRegsters() {
+		return regsters;
+	}
+
+	public void setRegsters(ArrayList<String> regsters) {
+		this.regsters = regsters;
+	}	
 
 }

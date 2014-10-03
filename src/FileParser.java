@@ -22,6 +22,7 @@ public class FileParser {
 			inputFile = new Scanner(new FileInputStream(fileName));
 		} catch (FileNotFoundException e) {
 			System.out.println("File " + fileName + " not found.");
+			System.exit(0);
 		}
 
 		while (inputFile.hasNext()) {
@@ -39,12 +40,48 @@ public class FileParser {
 			inputFile = new Scanner(new FileInputStream(fileName));
 		} catch (FileNotFoundException e) {
 			System.out.println("File " + fileName + " not found.");
-		}
-
-		while (inputFile.hasNext()) {
-			data.getArchitecture().add(inputFile.next());
+			System.exit(0);
 		}
 		
+		String string = inputFile.next();
+
+		while (inputFile.hasNext()) {
+			
+			if(string.equals("architecture:")){
+				data.setArchitectureName(inputFile.next());
+				
+				if(!inputFile.hasNext())
+					return;
+					
+				string = inputFile.next();
+			}
+			
+			if(string.equals("opcodes:")){				
+				string = inputFile.next();
+				
+				while(!string.equals("registers:") && !string.equals("architecture:")){
+					data.getOpcodes().add(string);
+					
+					if(!inputFile.hasNext())
+						return;
+						
+					string = inputFile.next();
+				}
+			}
+			
+			if(string.equals("registers:")){
+				string = inputFile.next();
+				
+				while(!string.equals("architecture:") && !string.equals("opcodes:")){
+					data.getRegsters().add(string);
+					
+					if(!inputFile.hasNext())
+						return;
+						
+					string = inputFile.next();
+				}
+			}	
+		}		
 		inputFile.close();
 	}
 
@@ -54,7 +91,6 @@ public class FileParser {
 
 	public void setData(DataSource data) {
 		this.data = data;
-	}
-		
+	}		
 
 }

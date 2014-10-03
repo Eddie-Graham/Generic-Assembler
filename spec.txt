@@ -1,1 +1,11 @@
+registers:
+$2-$3 	$v0-$v1 
+$4-$7 	$a0-$a3 
+$8-$15 	$t0-$t7
+
+opcodes:
+slti 001010
+sltiu 001001
+
+architecture:
 x86
