@@ -1,6 +1,7 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class FileParser {
 	
@@ -43,45 +44,120 @@ public class FileParser {
 			System.exit(0);
 		}
 		
-		String string = inputFile.next();
+		String line = null;
+		String[] tokens = null;
+		boolean architecture = false, opcodes = false, registers = false;
 
-		while (inputFile.hasNext()) {
-			
-			if(string.equals("architecture:")){
-				data.setArchitectureName(inputFile.next());
-				
-				if(!inputFile.hasNext())
-					return;
+		while (inputFile.hasNextLine()) {
+			line = inputFile.nextLine();
+
+			if (!line.isEmpty()) {				
+				tokens = line.split("\\s+");
+
+				for (String token : tokens) {
+
+					if (token.equals("architecture:")) {
+						architecture = true;
+						opcodes = false;
+						registers = false;
+						break;
+					}
+
+					if (token.equals("opcodes:")) {
+						architecture = false;
+						opcodes = true;
+						registers = false;
+						break;
+					}
+
+					if (token.equals("registers:")) {
+						architecture = false;
+						opcodes = false;
+						registers = true;
+						break;
+					}
+
+				}
+
+				if (architecture) {
+					for (String token : tokens) {
+						if(!token.equals("architecture:")){						
+							data.getArchitecture().add(token);
+						}						
+					}
+				}
+
+				if (registers) {		
+					for (String token : tokens) {
+						if(!token.equals("registers:")){						
+							data.getRegsters().add(token);							
+						}						
+					}
+				}
+
+				if (opcodes) {					
+					String op = null;
+					String code = null;
+					boolean first = true;
 					
-				string = inputFile.next();
-			}
-			
-			if(string.equals("opcodes:")){				
-				string = inputFile.next();
-				
-				while(!string.equals("registers:") && !string.equals("architecture:")){
-					data.getOpcodes().add(string);
-					
-					if(!inputFile.hasNext())
-						return;
+					for (String token : tokens) {
 						
-					string = inputFile.next();
+						if(first){
+							op = token;
+							first = false;
+						}
+						if(!token.equals("opcodes:") && !first){
+							code = token;
+							
+							data.getOpcodes().put(op, code);
+						}
+					}
 				}
 			}
-			
-			if(string.equals("registers:")){
-				string = inputFile.next();
-				
-				while(!string.equals("architecture:") && !string.equals("opcodes:")){
-					data.getRegsters().add(string);
-					
-					if(!inputFile.hasNext())
-						return;
-						
-					string = inputFile.next();
-				}
-			}	
 		}		
+			
+//			if(string.equals("architecture:")){			
+//				string = inputFile.next();
+//				
+//				while(!string.equals("opcodes:") && !string.equals("registers:")){
+//					data.getArchitecture().add(string);
+//					
+//					if(!inputFile.hasNext())
+//						return;
+//						
+//					string = inputFile.next();
+//				}
+//			}
+//			
+//			if(string.equals("opcodes:")){				
+//				string = inputFile.next();
+//				String nextString = null;
+//				
+//				while(!string.equals("registers:") && !string.equals("architecture:")){
+//					nextString = inputFile.next();
+//					data.getOpcodes().put(string, nextString);
+//					
+//					if(!inputFile.hasNext())
+//						return;
+//						
+//					string = inputFile.next();
+//				}
+//			}
+//			
+//			if(string.equals("registers:")){
+//				string = inputFile.next();
+//				
+//				while(!string.equals("architecture:") && !string.equals("opcodes:")){
+//					data.getRegsters().add(string);
+//					
+//					if(!inputFile.hasNext())
+//						return;
+//						
+//					string = inputFile.next();
+//				}
+//			}	
+//		}	
+		
 		inputFile.close();
 	}
 

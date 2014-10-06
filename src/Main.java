@@ -21,11 +21,9 @@ public class Main {
 		
 		DataSource data = file.getData();
 		
-		System.out.println(data.getAssemblyCode().toString());	
-		System.out.println(data.getArchitectureName());
-		System.out.println();
+		System.out.println(data.getAssemblyCode());	
+		System.out.println(data.getArchitecture());		
 		System.out.println(data.getOpcodes());
-		System.out.println();
 		System.out.println(data.getRegsters());
 		
 		

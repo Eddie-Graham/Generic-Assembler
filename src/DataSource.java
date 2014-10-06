@@ -1,19 +1,21 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class DataSource {
 	
 	ArrayList<String> assemblyCode;
 	
-	String architectureName;
-	ArrayList<String> opcodes;
+	ArrayList<String> architecture;
+	HashMap<String,String> opcodes;
 	ArrayList<String> regsters;
 	
 	
 	public DataSource(){
 		
 		assemblyCode = new ArrayList<String>();
-		opcodes = new ArrayList<String>();
+		architecture = new ArrayList<String>();
+		opcodes = new HashMap<String, String>();
 		regsters = new ArrayList<String>();
 	}
 
@@ -25,28 +27,28 @@ public class DataSource {
 		this.assemblyCode = assemblyCode;
 	}
 
-	public String getArchitectureName() {
-		return architectureName;
-	}
-
-	public void setArchitectureName(String architectureName) {
-		this.architectureName = architectureName;
-	}
-
-	public ArrayList<String> getOpcodes() {
-		return opcodes;
-	}
-
-	public void setOpcodes(ArrayList<String> opcodes) {
-		this.opcodes = opcodes;
-	}
-
 	public ArrayList<String> getRegsters() {
 		return regsters;
 	}
 
 	public void setRegsters(ArrayList<String> regsters) {
 		this.regsters = regsters;
+	}
+
+	public ArrayList<String> getArchitecture() {
+		return architecture;
+	}
+
+	public void setArchitecture(ArrayList<String> architecture) {
+		this.architecture = architecture;
+	}
+
+	public HashMap<String, String> getOpcodes() {
+		return opcodes;
+	}
+
+	public void setOpcodes(HashMap<String, String> opcodes) {
+		this.opcodes = opcodes;
 	}	
 
 }
