@@ -1,5 +1,7 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class FileParser {
@@ -17,7 +19,7 @@ public class FileParser {
 	
 	public void scanAssemblyFile(String fileName) {
 
-		Scanner inputFile = null;
+		Scanner inputFile = null;	
 
 		try {
 			inputFile = new Scanner(new FileInputStream(fileName));
@@ -26,8 +28,16 @@ public class FileParser {
 			System.exit(0);
 		}
 
-		while (inputFile.hasNext()) {
-			data.getAssemblyCode().add(inputFile.next());
+		while (inputFile.hasNextLine()) {	
+			ArrayList<String> assembly = new ArrayList<String>();
+			String line = inputFile.nextLine();
+			String[] tokens = line.split("\\s+");
+			
+			for(String token: Arrays.copyOfRange(tokens, 1, tokens.length)){
+				assembly.add(token);
+			}
+			data.getAssemblyCode().put(tokens[0], assembly);
+			//System.out.println(line);
 		}
 		
 		inputFile.close();
@@ -42,16 +52,13 @@ public class FileParser {
 		} catch (FileNotFoundException e) {
 			System.out.println("File " + fileName + " not found.");
 			System.exit(0);
-		}
-		
-		String line = null;
-		String[] tokens = null;		
+		}	
 
 		while (inputFile.hasNextLine()) {
-			line = inputFile.nextLine();
+			String line = inputFile.nextLine();
 
 			if (!line.isEmpty()) {				
-				tokens = line.split("\\s+");
+				String[] tokens = line.split("\\s+");
 
 				if(tokens.length == 1){
 					String token = tokens[0];
@@ -90,10 +97,10 @@ public class FileParser {
 				if (opcodes) 	
 					analyseOpcodes(tokens);				
 				
-				if(opcodeFormat)
+				if (opcodeFormat)
 					analyseOpcodeFormat(tokens);
-				
-				if(instructionFormat)
+
+				if (instructionFormat)
 					analyseInstructionFormat(tokens);
 				
 			}
@@ -152,7 +159,7 @@ public class FileParser {
 		
 		boolean first = true, done = false;
 		String op = null;
-		String[] opformat = new String[10];
+		ArrayList<String> opformat = new ArrayList<String>();
 		int i = 0;
 		
 		for(String token: tokens){
@@ -162,7 +169,7 @@ public class FileParser {
 					first = false;
 				}
 				else{						
-					opformat[i] = token;
+					opformat.add(token);
 					i++;
 				}
 				done = true;

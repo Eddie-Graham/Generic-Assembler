@@ -1,34 +1,39 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 
 public class DataSource {
 	
-	ArrayList<String> assemblyCode;
+	LinkedHashMap<String, ArrayList<String>> assemblyCode;
 	
 	ArrayList<String> architecture;
 	HashMap<String,String> opcodes;
 	ArrayList<String> registers;
-	HashMap<String,String[]> opcodeFormat;
+	HashMap<String, ArrayList<String>> opcodeFormat;
 	ArrayList<String> instructionFormat;
 	
 	public DataSource(){
 		
-		assemblyCode = new ArrayList<String>();
+		assemblyCode = new LinkedHashMap<String, ArrayList<String>>();
+		
 		architecture = new ArrayList<String>();
 		opcodes = new HashMap<String, String>();
 		registers = new ArrayList<String>();
-		opcodeFormat = new HashMap<String, String[]>();
+		opcodeFormat = new HashMap<String, ArrayList<String>>();
 		instructionFormat = new ArrayList<String>();
 	}
 
-	public ArrayList<String> getAssemblyCode() {
+	public LinkedHashMap<String, ArrayList<String>> getAssemblyCode() {
 		return assemblyCode;
 	}
 
-	public void setAssemblyCode(ArrayList<String> assemblyCode) {
+	public void setAssemblyCode(
+			LinkedHashMap<String, ArrayList<String>> assemblyCode) {
 		this.assemblyCode = assemblyCode;
 	}
+
+
 
 	public ArrayList<String> getArchitecture() {
 		return architecture;
@@ -54,11 +59,11 @@ public class DataSource {
 		this.registers = registers;
 	}
 
-	public HashMap<String, String[]> getOpcodeFormat() {
+	public HashMap<String, ArrayList<String>> getOpcodeFormat() {
 		return opcodeFormat;
 	}
 
-	public void setOpcodeFormat(HashMap<String, String[]> opcodeFormat) {
+	public void setOpcodeFormat(HashMap<String, ArrayList<String>> opcodeFormat) {
 		this.opcodeFormat = opcodeFormat;
 	}
 
@@ -68,5 +73,5 @@ public class DataSource {
 
 	public void setInstructionFormat(ArrayList<String> instructionFormat) {
 		this.instructionFormat = instructionFormat;
-	}
+	}	
 }
