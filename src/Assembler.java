@@ -17,5 +17,12 @@ public class Assembler {
 		
 		
 	}
+	
+	static String hexToBinary(String hex) {
+
+		int i = Integer.parseInt(hex, 16);
+		String binary = Integer.toBinaryString(i);
+		return binary;
+	}
 
 }

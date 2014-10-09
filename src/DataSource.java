@@ -8,15 +8,18 @@ public class DataSource {
 	
 	ArrayList<String> architecture;
 	HashMap<String,String> opcodes;
-	ArrayList<String> regsters;
-	
+	ArrayList<String> registers;
+	HashMap<String,String[]> opcodeFormat;
+	ArrayList<String> instructionFormat;
 	
 	public DataSource(){
 		
 		assemblyCode = new ArrayList<String>();
 		architecture = new ArrayList<String>();
 		opcodes = new HashMap<String, String>();
-		regsters = new ArrayList<String>();
+		registers = new ArrayList<String>();
+		opcodeFormat = new HashMap<String, String[]>();
+		instructionFormat = new ArrayList<String>();
 	}
 
 	public ArrayList<String> getAssemblyCode() {
@@ -25,14 +28,6 @@ public class DataSource {
 
 	public void setAssemblyCode(ArrayList<String> assemblyCode) {
 		this.assemblyCode = assemblyCode;
-	}
-
-	public ArrayList<String> getRegsters() {
-		return regsters;
-	}
-
-	public void setRegsters(ArrayList<String> regsters) {
-		this.regsters = regsters;
 	}
 
 	public ArrayList<String> getArchitecture() {
@@ -49,6 +44,29 @@ public class DataSource {
 
 	public void setOpcodes(HashMap<String, String> opcodes) {
 		this.opcodes = opcodes;
-	}	
+	}
 
+	public ArrayList<String> getRegisters() {
+		return registers;
+	}
+
+	public void setRegisters(ArrayList<String> registers) {
+		this.registers = registers;
+	}
+
+	public HashMap<String, String[]> getOpcodeFormat() {
+		return opcodeFormat;
+	}
+
+	public void setOpcodeFormat(HashMap<String, String[]> opcodeFormat) {
+		this.opcodeFormat = opcodeFormat;
+	}
+
+	public ArrayList<String> getInstructionFormat() {
+		return instructionFormat;
+	}
+
+	public void setInstructionFormat(ArrayList<String> instructionFormat) {
+		this.instructionFormat = instructionFormat;
+	}
 }

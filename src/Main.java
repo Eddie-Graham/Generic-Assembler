@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 
 public class Main {
 
@@ -22,10 +24,11 @@ public class Main {
 		DataSource data = file.getData();
 		
 		System.out.println(data.getAssemblyCode());	
-		System.out.println(data.getArchitecture());		
-		System.out.println(data.getOpcodes());
-		System.out.println(data.getRegsters());
-		
+		System.out.println("arc " + data.getArchitecture());		
+		System.out.println("ops " + data.getOpcodes());
+		System.out.println("reg " + data.getRegisters());
+		System.out.println("opF " + data.getOpcodeFormat().toString());
+		System.out.println("insF " + data.getInstructionFormat());	
 		
 
 	}
