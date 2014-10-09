@@ -37,7 +37,6 @@ public class FileParser {
 				assembly.add(token);
 			}
 			data.getAssemblyCode().put(tokens[0], assembly);
-			//System.out.println(line);
 		}
 		
 		inputFile.close();
@@ -63,29 +62,21 @@ public class FileParser {
 				if(tokens.length == 1){
 					String token = tokens[0];
 
-					if (token.equalsIgnoreCase("architecture:")) {
-						setBooleanValues(true, false, false, false, false);
-						
-					}
+					if (token.equalsIgnoreCase("architecture:")) 
+						setBooleanValues(true, false, false, false, false);						
 
-					if (token.equalsIgnoreCase("opcodes:")) {
-						setBooleanValues(false, false, true, false, false);
-						
-					}
+					if (token.equalsIgnoreCase("opcodes:")) 
+						setBooleanValues(false, false, true, false, false);						
 
-					if (token.equalsIgnoreCase("registers:")) {
-						setBooleanValues(false, true, false, false, false);	
-						
-					}
+					if (token.equalsIgnoreCase("registers:")) 
+						setBooleanValues(false, true, false, false, false);							
 					
-					if (token.equalsIgnoreCase("opcodeformat:")) {
+					if (token.equalsIgnoreCase("opcodeformat:")) 
 						setBooleanValues(false, false, false, true, false);
-						
-					}
 					
-					if (token.equalsIgnoreCase("instructionformat:")) {
+					if (token.equalsIgnoreCase("instructionformat:")) 
 						setBooleanValues(false, false, false, false, true);						
-					}
+					
 				}
 
 				if (architecture)
@@ -160,7 +151,6 @@ public class FileParser {
 		boolean first = true, done = false;
 		String op = null;
 		ArrayList<String> opformat = new ArrayList<String>();
-		int i = 0;
 		
 		for(String token: tokens){
 			if(!token.equalsIgnoreCase("opcodeformat:")){
@@ -168,13 +158,11 @@ public class FileParser {
 					op = token;
 					first = false;
 				}
-				else{						
+				else					
 					opformat.add(token);
-					i++;
-				}
+					
 				done = true;
-			}
-			
+			}			
 		}
 		if(done)
 			data.getOpcodeFormat().put(op, opformat);

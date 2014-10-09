@@ -33,8 +33,6 @@ public class DataSource {
 		this.assemblyCode = assemblyCode;
 	}
 
-
-
 	public ArrayList<String> getArchitecture() {
 		return architecture;
 	}
