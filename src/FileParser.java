@@ -1,7 +1,6 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class FileParser {
@@ -33,10 +32,10 @@ public class FileParser {
 			String line = inputFile.nextLine();
 			String[] tokens = line.split("\\s+");
 			
-			for(String token: Arrays.copyOfRange(tokens, 1, tokens.length)){
+			for(String token: tokens){
 				assembly.add(token);
 			}
-			data.getAssemblyCode().put(tokens[0], assembly);
+			data.getAssemblyCode().add(assembly);
 		}
 		
 		inputFile.close();
@@ -111,19 +110,24 @@ public class FileParser {
 	public void analyseArchitecture(String[] tokens){
 		
 		for (String token : tokens) {
-			if(!token.equalsIgnoreCase("architecture:")){						
-				data.getArchitecture().add(token);
-			}						
+			if(!token.equalsIgnoreCase("architecture:"))						
+				data.getArchitecture().add(token);					
 		}		
 	}
 	
 	public void analyseRegisters(String[] tokens){
 		
+		ArrayList<String> registers = new ArrayList<String>();
+		boolean done = false;
+		
 		for (String token : tokens) {
-			if(!token.equalsIgnoreCase("registers:")){						
-				data.getRegisters().add(token);							
+			if(!token.equalsIgnoreCase("registers:")){	
+				registers.add(token);	
+				done = true;
 			}						
 		}
+		if(done)
+			data.getRegisters().add(registers);
 	}
 	
 	public void analyseOpcodes(String[] tokens){
@@ -168,7 +172,7 @@ public class FileParser {
 			data.getOpcodeFormat().put(op, opformat);
 	}
 	
-	public void analyseInstructionFormat(String[] tokens){
+	public void analyseInstructionFormat(String[] tokens){		//add label in spec.txt?
 		
 		for (String token : tokens) {
 			if(!token.equalsIgnoreCase("instructionformat:")){						
@@ -179,9 +183,5 @@ public class FileParser {
 
 	public DataSource getData() {
 		return data;
-	}
-
-	public void setData(DataSource data) {
-		this.data = data;
 	}	
 }
