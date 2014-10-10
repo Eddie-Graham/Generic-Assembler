@@ -1,7 +1,11 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Scanner;
+
+import com.sun.xml.internal.ws.org.objectweb.asm.Label;
 
 public class FileParser {
 	
@@ -94,7 +98,8 @@ public class FileParser {
 					analyseInstructionFormat(tokens);
 				
 			}
-		}			
+		}
+		putRegistersInHashMap();
 		inputFile.close();
 	}
 	
@@ -179,7 +184,44 @@ public class FileParser {
 				data.getInstructionFormat().add(token);							
 			}						
 		}		
+	}	
+	
+	public void putRegistersInHashMap(){
+		
+		for(ArrayList<String> reg: data.getRegisters()){
+						
+			String hexTerm = reg.get(0);
+			String label = reg.get(1);			
+			
+			String[] labelNoDash = label.split("-");					// needed for final conversion before entry into hashmap
+			String[] hexNoDash = hexTerm.split("-");					// needed for final conversion before entry into hashmap
+			
+			String tempLabelNum = label.replaceAll("[^\\d.^-]", "");	// remove all except numbers and "-"
+			String[] LabelNumTerms = tempLabelNum.split("-");			// split label numbers in array
+			
+			String tempHex = hexTerm.replaceAll("[^\\d.^-]", "");		// remove all except numbers and "-"
+			String[] hexNumTerms = tempHex.split("-");					// split hex numbers in array
+			
+			int lowerIntHex = Integer.parseInt(hexNumTerms[0]);			// get first hex Int
+			
+			int lowerIntLabel = Integer.parseInt(LabelNumTerms[0]);		// get first label Int
+			int upperIntLabel = Integer.parseInt(LabelNumTerms[1]);		// get last label Int
+			
+			String currentLabel = labelNoDash[0];						// current label to work with 
+			String currentHex = hexNoDash[0];							// current hex to work with 
+			
+			while(lowerIntLabel <= upperIntLabel){
+				String regLabel = currentLabel.replaceAll("[\\d]", Integer.toString(lowerIntLabel));
+				String hex = currentHex.replaceAll("[\\d]", Integer.toString(lowerIntHex));
+				
+				lowerIntHex++;
+				lowerIntLabel++;
+
+				data.getRegisterHash().put(regLabel, hex);
+			}
+		}
 	}
+	
 
 	public DataSource getData() {
 		return data;

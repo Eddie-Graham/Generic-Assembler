@@ -11,6 +11,8 @@ public class DataSource {
 	HashMap<String, ArrayList<String>> opcodeFormat;
 	ArrayList<String> instructionFormat;
 	
+	HashMap<String, String> registerHash;
+	
 	public DataSource(){
 		
 		assemblyCode = new ArrayList<ArrayList<String>>();
@@ -20,6 +22,8 @@ public class DataSource {
 		registers = new ArrayList<ArrayList<String>>();
 		opcodeFormat = new HashMap<String, ArrayList<String>>();
 		instructionFormat = new ArrayList<String>();
+		
+		registerHash = new HashMap<String, String>();
 	}
 
 	public ArrayList<ArrayList<String>> getAssemblyCode() {
@@ -44,5 +48,9 @@ public class DataSource {
 
 	public ArrayList<String> getInstructionFormat() {
 		return instructionFormat;
+	}
+
+	public HashMap<String, String> getRegisterHash() {
+		return registerHash;
 	}	
 }
