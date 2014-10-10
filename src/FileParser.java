@@ -1,3 +1,10 @@
+/** 
+ * Eddie Graham
+ * 1101301g
+ * Individual Project 4
+ * Supervisor: John T O'Donnell
+ */
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -30,7 +37,7 @@ public class FileParser {
 		while (inputFile.hasNextLine()) {	
 			ArrayList<String> assembly = new ArrayList<String>();
 			String line = inputFile.nextLine();
-			String[] tokens = line.split("\\s+");
+			String[] tokens = line.replaceAll("^[,\\s]+", "").split("[,\\s]+");
 			
 			for(String token: tokens){
 				assembly.add(token);
@@ -95,7 +102,6 @@ public class FileParser {
 				
 			}
 		}
-//		putRegistersInHashMap();
 		inputFile.close();
 	}
 	

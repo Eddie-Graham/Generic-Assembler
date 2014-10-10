@@ -1,3 +1,9 @@
+/** 
+ * Eddie Graham
+ * 1101301g
+ * Individual Project 4
+ * Supervisor: John T O'Donnell
+ */
 
 public class Main {
 
@@ -16,7 +22,7 @@ public class Main {
 			System.out.println("Assembly file: " + args[0]);
 			System.exit(0);
 		}
-		
+				
 		FileParser file = new FileParser(args[0], args[1]);
 		
 		DataSource data = file.getData();
@@ -27,6 +33,5 @@ public class Main {
 		System.out.println("opF " + data.getOpcodeFormat().toString());
 		System.out.println("insF " + data.getInstructionFormat());	
 		System.out.println("regHash " + data.getRegisterHash());
-
 	}
 }

@@ -1,3 +1,10 @@
+/** 
+ * Eddie Graham
+ * 1101301g
+ * Individual Project 4
+ * Supervisor: John T O'Donnell
+ */
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -18,8 +25,7 @@ public class DataSource {
 		architecture = new ArrayList<String>();
 		opcodes = new HashMap<String, String>();
 		opcodeFormat = new HashMap<String, ArrayList<String>>();
-		instructionFormat = new ArrayList<String>();
-		
+		instructionFormat = new ArrayList<String>();		
 		registerHash = new HashMap<String, String>();
 	}
 
