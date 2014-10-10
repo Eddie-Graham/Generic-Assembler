@@ -7,10 +7,8 @@ public class DataSource {
 	
 	ArrayList<String> architecture;
 	HashMap<String,String> opcodes;
-	ArrayList<ArrayList<String>> registers;
 	HashMap<String, ArrayList<String>> opcodeFormat;
-	ArrayList<String> instructionFormat;
-	
+	ArrayList<String> instructionFormat;	
 	HashMap<String, String> registerHash;
 	
 	public DataSource(){
@@ -19,7 +17,6 @@ public class DataSource {
 		
 		architecture = new ArrayList<String>();
 		opcodes = new HashMap<String, String>();
-		registers = new ArrayList<ArrayList<String>>();
 		opcodeFormat = new HashMap<String, ArrayList<String>>();
 		instructionFormat = new ArrayList<String>();
 		
@@ -36,10 +33,6 @@ public class DataSource {
 
 	public HashMap<String, String> getOpcodes() {
 		return opcodes;
-	}
-
-	public ArrayList<ArrayList<String>> getRegisters() {
-		return registers;
 	}
 
 	public HashMap<String, ArrayList<String>> getOpcodeFormat() {

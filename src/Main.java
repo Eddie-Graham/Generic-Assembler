@@ -24,7 +24,6 @@ public class Main {
 		System.out.println("assembly: " + data.getAssemblyCode());	
 		System.out.println("arc " + data.getArchitecture());		
 		System.out.println("ops " + data.getOpcodes());
-		System.out.println("reg " + data.getRegisters());
 		System.out.println("opF " + data.getOpcodeFormat().toString());
 		System.out.println("insF " + data.getInstructionFormat());	
 		System.out.println("regHash " + data.getRegisterHash());
