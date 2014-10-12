@@ -85,19 +85,19 @@ public class FileParser {
 					
 				}
 
-				if (architecture)
+				else if (architecture)
 					analyseArchitecture(tokens);			
 
-				if (registers) 	
+				else if (registers) 	
 					analyseRegisters(tokens);				
 
-				if (opcodes) 	
+				else if (opcodes) 	
 					analyseOpcodes(tokens);				
 				
-				if (opcodeFormat)
+				else if (opcodeFormat)
 					analyseOpcodeFormat(tokens);
 
-				if (instructionFormat)
+				else if (instructionFormat)
 					analyseInstructionFormat(tokens);
 				
 			}
@@ -117,24 +117,18 @@ public class FileParser {
 	public void analyseArchitecture(String[] tokens){
 		
 		for (String token : tokens) {
-			if(!token.equalsIgnoreCase("architecture:"))						
-				data.getArchitecture().add(token);					
+			data.getArchitecture().add(token);					
 		}		
 	}
 	
 	public void analyseRegisters(String[] tokens){
 		
 		ArrayList<String> registers = new ArrayList<String>();
-		boolean done = false;
 		
-		for (String token : tokens) {
-			if(!token.equalsIgnoreCase("registers:")){	
-				registers.add(token);	
-				done = true;
-			}						
+		for (String token : tokens) {				
+			registers.add(token);										
 		}
-		if(done)
-			putRegistersInHashMap(registers);
+		putRegistersInHashMap(registers);
 	}
 	
 	public void analyseOpcodes(String[] tokens){
@@ -144,47 +138,39 @@ public class FileParser {
 		boolean first = true;
 		
 		for (String token : tokens) {			
-			if(!token.equalsIgnoreCase("opcodes:")){
-				if(first){
-					op = token;
-					first = false;
-				}
-				else
-					code = token;
-				
-				data.getOpcodes().put(op, code);
+			if(first){
+				op = token;
+				first = false;
 			}
+			else
+				code = token;
+				
+			data.getOpcodes().put(op, code);			
 		}		
 	}
 	
 	public void analyseOpcodeFormat(String[] tokens){
 		
-		boolean first = true, done = false;
+		boolean first = true;
 		String op = null;
 		ArrayList<String> opformat = new ArrayList<String>();
 		
 		for(String token: tokens){
-			if(!token.equalsIgnoreCase("opcodeformat:")){
-				if(first){
-					op = token;
-					first = false;
-				}
-				else					
-					opformat.add(token);
-					
-				done = true;
-			}			
+			if(first){
+				op = token;
+				first = false;
+			}
+			else					
+				opformat.add(token);							
 		}
-		if(done)
-			data.getOpcodeFormat().put(op, opformat);
+		
+		data.getOpcodeFormat().put(op, opformat);
 	}
 	
 	public void analyseInstructionFormat(String[] tokens){		//add label in spec.txt?
 		
-		for (String token : tokens) {
-			if(!token.equalsIgnoreCase("instructionformat:")){						
-				data.getInstructionFormat().add(token);							
-			}						
+		for (String token : tokens) {								
+			data.getInstructionFormat().add(token);											
 		}		
 	}	
 	
