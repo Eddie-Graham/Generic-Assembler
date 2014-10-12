@@ -143,10 +143,10 @@ public class FileParser {
 				first = false;
 			}
 			else
-				code = token;
-				
-			data.getOpcodes().put(op, code);			
-		}		
+				code = token;						
+		}
+		
+		data.getOpcodes().put(op, code);
 	}
 	
 	public void analyseOpcodeFormat(String[] tokens){
