@@ -134,32 +134,33 @@ public class FileParser {
 		
 		for(String token: tokens){
 			
-			if(first){
+			if(first){	// first token mnemonic
 				mnemonic = token;
 				opFormat.setMnemonic(mnemonic);
 				first = false;
 			}
 			
-			else if(token.startsWith("(")){
+			else if(token.startsWith("(")){		// at condition tokens		
 				atFormat = false;
 				atConditions = true;
 			}
 			
-			else if(token.startsWith("//")){
+			else if(token.startsWith("//")){	// last token (label)
 				opFormat.setLabel(token);
 				break;
 			}		
 			
-			if(atFormat){
+			if(atFormat){	// at format tokens
+				token = token.replaceAll("[,]", "");
 				opFormat.getOpFormat().add(token);
 			}
 			
-			else if(token.endsWith(")")){
+			else if(token.endsWith(")")){	// end of condition tokens
 				opConditions+= token;
 				formatConditions(opFormat, opConditions);
 			}	
 			
-			else if(atConditions){
+			else if(atConditions){	// at condition tokens
 				opConditions+= token;
 			}				
 		}
@@ -182,14 +183,12 @@ public class FileParser {
 		String hashKey = "";
 		ArrayList<String> instructionFormat = new ArrayList<String>();
 		
-		for (String token : tokens) {								
-			if(token.startsWith("//"))
-					hashKey = token;
-		}
-		
 		for (String token : tokens) {	
 			if(!token.startsWith("//"))
-				instructionFormat.add(token);				
+				instructionFormat.add(token);
+			
+			if(token.startsWith("//"))
+				hashKey = token;
 		}
 		data.getInstructionFormat().put(hashKey, instructionFormat);
 	}	

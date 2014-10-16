@@ -2,7 +2,7 @@ architecture:
 x86 x76
 
 opcodeformat:
-add rd, rs, rt	(opcode=000000, func=101010, shamt=11111) //label
+add rd, rs, rt	(opcode=000000, func=100000, shamt=11111) //label
 
 registers:
 $2-$3 	$v0-$v1 

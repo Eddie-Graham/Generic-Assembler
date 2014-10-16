@@ -1,3 +1,10 @@
+/** 
+ * Eddie Graham
+ * 1101301g
+ * Individual Project 4
+ * Supervisor: John T O'Donnell
+ */
+
 import java.util.ArrayList;
 import java.util.HashMap;
 

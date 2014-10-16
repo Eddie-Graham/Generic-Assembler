@@ -25,9 +25,15 @@ public class Main {
 				
 		FileParser file = new FileParser(args[0], args[1]);
 		
-		DataSource data = file.getData();
+		DataSource data = file.getData();		
 		
-		Assembler assembler = new Assembler(data);
+//		String x = "0x012A4020";
+//		String s = Assembler.hexToBinary(x);
+//		System.out.println(s);
+		
+//		String x = "00000001001010100100000001000000";
+//		String s = Assembler.binaryToHex(x);
+//		System.out.println(s);
 				
 		System.out.println("assembly: " + data.getAssemblyCode());	
 		System.out.println("arc " + data.getArchitecture());		
@@ -39,6 +45,8 @@ public class Main {
 		System.out.println("opCond " + data.getOpcodeFormats().get(s).getOpConditions());
 		System.out.println("opLabel " + data.getOpcodeFormats().get(s).getLabel());
 		System.out.println("opFor " + data.getOpcodeFormats().get(s).getOpFormat());
+		
+		Assembler assembler = new Assembler(data);
 		
 	}
 }
