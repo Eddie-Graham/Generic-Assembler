@@ -26,12 +26,19 @@ public class Main {
 		FileParser file = new FileParser(args[0], args[1]);
 		
 		DataSource data = file.getData();
+		
+		Assembler assembler = new Assembler(data);
 				
 		System.out.println("assembly: " + data.getAssemblyCode());	
 		System.out.println("arc " + data.getArchitecture());		
-		System.out.println("ops " + data.getOpcodes());
-		System.out.println("opF " + data.getOpcodeFormat().toString());
 		System.out.println("insF " + data.getInstructionFormat());	
 		System.out.println("regHash " + data.getRegisterHash());
+		
+		String s = "add";
+		System.out.println("opMn " + data.getOpcodeFormats().get(s).getMnemonic());
+		System.out.println("opCond " + data.getOpcodeFormats().get(s).getOpConditions());
+		System.out.println("opLabel " + data.getOpcodeFormats().get(s).getLabel());
+		System.out.println("opFor " + data.getOpcodeFormats().get(s).getOpFormat());
+		
 	}
 }

@@ -13,7 +13,7 @@ import java.util.Scanner;
 public class FileParser {
 	
 	DataSource data;
-	boolean architecture = false, opcodes = false, registers = false, opcodeFormat = false, instructionFormat = false;
+	boolean architecture = false, registers = false, opcodeFormat = false, instructionFormat = false;
 	
 	public FileParser(String assemblyFile, String specFile){
 		
@@ -69,19 +69,16 @@ public class FileParser {
 					String token = tokens[0];
 
 					if (token.equalsIgnoreCase("architecture:")) 
-						setBooleanValues(true, false, false, false, false);						
-
-					if (token.equalsIgnoreCase("opcodes:")) 
-						setBooleanValues(false, false, true, false, false);						
+						setBooleanValues(true, false, false, false);					
 
 					if (token.equalsIgnoreCase("registers:")) 
-						setBooleanValues(false, true, false, false, false);							
+						setBooleanValues(false, true, false, false);							
 					
 					if (token.equalsIgnoreCase("opcodeformat:")) 
-						setBooleanValues(false, false, false, true, false);
+						setBooleanValues(false, false, true, false);
 					
 					if (token.equalsIgnoreCase("instructionformat:")) 
-						setBooleanValues(false, false, false, false, true);						
+						setBooleanValues(false, false, false, true);					
 					
 				}
 
@@ -90,26 +87,21 @@ public class FileParser {
 
 				else if (registers) 	
 					analyseRegisters(tokens);				
-
-				else if (opcodes) 	
-					analyseOpcodes(tokens);				
-				
+			
 				else if (opcodeFormat)
 					analyseOpcodeFormat(tokens);
 
 				else if (instructionFormat)
-					analyseInstructionFormat(tokens);
-				
+					analyseInstructionFormat(tokens);				
 			}
 		}
 		inputFile.close();
 	}
 	
-	public void setBooleanValues(boolean architecture, boolean registers, boolean opcodes, boolean opcodeFormat, boolean instructionFormat){
+	public void setBooleanValues(boolean architecture, boolean registers, boolean opcodeFormat, boolean instructionFormat){
 		
 		this.architecture = architecture;
 		this.registers = registers;
-		this.opcodes = opcodes;
 		this.opcodeFormat = opcodeFormat;
 		this.instructionFormat = instructionFormat;
 	}
@@ -131,47 +123,75 @@ public class FileParser {
 		putRegistersInHashMap(registers);
 	}
 	
-	public void analyseOpcodes(String[] tokens){
-		
-		String op = null;
-		String code = null;
-		boolean first = true;
-		
-		for (String token : tokens) {			
-			if(first){
-				op = token;
-				first = false;
-			}
-			else
-				code = token;						
-		}
-		
-		data.getOpcodes().put(op, code);
-	}
 	
-	public void analyseOpcodeFormat(String[] tokens){
+	public void analyseOpcodeFormat(String[] tokens){		
 		
-		boolean first = true;
-		String op = null;
-		ArrayList<String> opformat = new ArrayList<String>();
+		OpcodeFormat opFormat = new OpcodeFormat();
+		
+		boolean atFormat = true, first = true, atConditions = false;
+		String mnemonic = "";
+		String opConditions = "";
 		
 		for(String token: tokens){
+			
 			if(first){
-				op = token;
+				mnemonic = token;
+				opFormat.setMnemonic(mnemonic);
 				first = false;
 			}
-			else					
-				opformat.add(token);							
+			
+			else if(token.startsWith("(")){
+				atFormat = false;
+				atConditions = true;
+			}
+			
+			else if(token.startsWith("//")){
+				opFormat.setLabel(token);
+				break;
+			}		
+			
+			if(atFormat){
+				opFormat.getOpFormat().add(token);
+			}
+			
+			else if(token.endsWith(")")){
+				opConditions+= token;
+				formatConditions(opFormat, opConditions);
+			}	
+			
+			else if(atConditions){
+				opConditions+= token;
+			}				
 		}
-		
-		data.getOpcodeFormat().put(op, opformat);
+		data.getOpcodeFormats().put(mnemonic, opFormat);		
 	}
 	
+	private void formatConditions(OpcodeFormat opFormat, String opConditions) {
+
+		String condNoBracket = opConditions.replaceAll("[()]", "");
+		String[] conditions = condNoBracket.split(",");		
+		
+		for(String condition: conditions){
+			String[] condElements = condition.split("=");
+			opFormat.getOpConditions().put(condElements[0], condElements[1]);
+		}	
+	}
+
 	public void analyseInstructionFormat(String[] tokens){		//add label in spec.txt?
 		
+		String hashKey = "";
+		ArrayList<String> instructionFormat = new ArrayList<String>();
+		
 		for (String token : tokens) {								
-			data.getInstructionFormat().add(token);											
-		}		
+			if(token.startsWith("//"))
+					hashKey = token;
+		}
+		
+		for (String token : tokens) {	
+			if(!token.startsWith("//"))
+				instructionFormat.add(token);				
+		}
+		data.getInstructionFormat().put(hashKey, instructionFormat);
 	}	
 	
 	public void putRegistersInHashMap(ArrayList<String> registers){		

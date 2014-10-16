@@ -16,11 +16,14 @@ public class Assembler {
 		
 		this.data = data;
 		objectCode = new ArrayList<String>();
+		assemble();
 	}
 	
 	public void assemble(){
 		
-		
+		for(ArrayList<String> assemblyLine: data.getAssemblyCode()){
+				//System.out.println(assemblyLine);			
+		}
 		
 	}
 	
