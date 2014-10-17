@@ -143,26 +143,25 @@ public class FileParser {
 			else if(token.startsWith("(")){		// at condition tokens		
 				atFormat = false;
 				atConditions = true;
-			}
-			
-			else if(token.startsWith("//")){	// last token (label)
-				opFormat.setLabel(token);
-				break;
-			}		
+			}	
 			
 			if(atFormat){	// at format tokens
 				token = token.replaceAll("[,]", "");
 				opFormat.getOpFormat().add(token);
 			}
+			else if(atConditions){
+				
+				if(token.endsWith(")")){	// end of condition tokens
+					opConditions+= token;
+					formatConditions(opFormat, opConditions);
+					atConditions = false;
+				}	
+				else
+					opConditions+= token;
+			}
 			
-			else if(token.endsWith(")")){	// end of condition tokens
-				opConditions+= token;
-				formatConditions(opFormat, opConditions);
-			}	
-			
-			else if(atConditions){	// at condition tokens
-				opConditions+= token;
-			}				
+			else	// at last token (instruction name)
+				opFormat.setInstructionName(token);					
 		}
 		data.getOpcodeFormats().put(mnemonic, opFormat);		
 	}
@@ -178,17 +177,20 @@ public class FileParser {
 		}	
 	}
 
-	public void analyseInstructionFormat(String[] tokens){		//add label in spec.txt?
+	public void analyseInstructionFormat(String[] tokens){	
 		
 		String hashKey = "";
 		ArrayList<String> instructionFormat = new ArrayList<String>();
 		
-		for (String token : tokens) {	
-			if(!token.startsWith("//"))
-				instructionFormat.add(token);
+		for (String token : tokens) {
 			
-			if(token.startsWith("//"))
+			if(token.endsWith(":")){
+				token = token.replaceAll("[:]", "");
 				hashKey = token;
+			}
+			else
+				instructionFormat.add(token);			
+			
 		}
 		data.getInstructionFormat().put(hashKey, instructionFormat);
 	}	

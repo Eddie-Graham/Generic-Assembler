@@ -13,14 +13,14 @@ public class OpcodeFormat {
 	String mnemonic;
 	ArrayList<String> opFormat;
 	HashMap<String,String> opConditions;
-	String label;
+	String instructionName;
 	
 	public OpcodeFormat(){
 		
 		mnemonic = "";
 		opFormat = new ArrayList<String>();
 		opConditions = new HashMap<String, String>();
-		label = "";
+		instructionName = "";
 	}
 
 	public String getMnemonic() {
@@ -47,11 +47,11 @@ public class OpcodeFormat {
 		this.opConditions = opConditions;
 	}
 
-	public String getLabel() {
-		return label;
+	public String getInstructionName() {
+		return instructionName;
 	}
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
+	public void setInstructionName(String instructionName) {
+		this.instructionName = instructionName;
+	}	
 }

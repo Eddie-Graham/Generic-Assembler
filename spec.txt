@@ -2,7 +2,9 @@ architecture:
 x86 x76
 
 opcodeformat:
-add rd, rs, rt	(opcode=000000, func=100000, shamt=11111) //label
+add rd, rs, rt	(opcode=000000, func=100000, shamt=11111) R-type
+andi rt, rs, immediate (opcode=001100) I-type
+
 
 registers:
 $2-$3 	$v0-$v1 
@@ -10,4 +12,5 @@ $4-$7 	$a0-$a3
 $8-$15 	$t0-$t7
 
 instructionformat:
-opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6) //label
+R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
+I-type: opcode(6) rs(5) rt(5) immediate(16)	

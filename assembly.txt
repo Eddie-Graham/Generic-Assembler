@@ -1,1 +1,2 @@
 add $t0, $t1, $t2
+andi $t0, $t1, 0x7f

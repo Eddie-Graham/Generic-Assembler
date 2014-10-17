@@ -28,12 +28,11 @@ public class Assembler {
 			String mnemonic = assemblyLine.get(0);
 			OpcodeFormat op = data.getOpcodeFormats().get(mnemonic);
 			System.out.println(op.getOpFormat());
-			String opLabel = op.getLabel();
+			String opLabel = op.getInstructionName();
 			ArrayList<String> insF = data.getInstructionFormat().get(opLabel);
 			System.out.println(insF);
 			HashMap<String,String> cond = op.getOpConditions();
 			System.out.println(cond);
-			System.out.println("**************************************************************");
 		}		
 	}
 	

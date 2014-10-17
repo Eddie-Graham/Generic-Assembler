@@ -40,11 +40,11 @@ public class Main {
 		System.out.println("insF " + data.getInstructionFormat());	
 		System.out.println("regHash " + data.getRegisterHash());
 		
-		String s = "add";
-		System.out.println("opMn " + data.getOpcodeFormats().get(s).getMnemonic());
-		System.out.println("opCond " + data.getOpcodeFormats().get(s).getOpConditions());
-		System.out.println("opLabel " + data.getOpcodeFormats().get(s).getLabel());
-		System.out.println("opFor " + data.getOpcodeFormats().get(s).getOpFormat());
+//		String s = "add";
+//		System.out.println("opMn " + data.getOpcodeFormats().get(s).getMnemonic());
+//		System.out.println("opCond " + data.getOpcodeFormats().get(s).getOpConditions());
+//		System.out.println("opLabel " + data.getOpcodeFormats().get(s).getLabel());
+//		System.out.println("opFor " + data.getOpcodeFormats().get(s).getOpFormat());
 		
 		Assembler assembler = new Assembler(data);
 		
