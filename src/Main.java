@@ -35,10 +35,10 @@ public class Main {
 //		String s = Assembler.binaryToHex(x);
 //		System.out.println(s);
 				
-		System.out.println("assembly: " + data.getAssemblyCode());	
-		System.out.println("arc " + data.getArchitecture());		
-		System.out.println("insF " + data.getInstructionFormat());	
-		System.out.println("regHash " + data.getRegisterHash());
+//		System.out.println("assembly: " + data.getAssemblyCode());	
+//		System.out.println("arc " + data.getArchitecture());		
+//		System.out.println("insF " + data.getInstructionFormat());	
+//		System.out.println("regHash " + data.getRegisterHash());
 		
 //		String s = "add";
 //		System.out.println("opMn " + data.getOpcodeFormats().get(s).getMnemonic());

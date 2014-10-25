@@ -12,11 +12,13 @@ public class Assembler {
 	
 	DataSource data;
 	ArrayList<String> objectCode;
+	HashMap<String, String> opFormatHash;
 	
 	public Assembler(DataSource data){
 		
 		this.data = data;
 		objectCode = new ArrayList<String>();
+		
 		assemble();
 	}
 	
@@ -24,18 +26,37 @@ public class Assembler {
 		
 		for(ArrayList<String> assemblyLine: data.getAssemblyCode()){
 			System.out.println("**************************************************************");
-			System.out.println(assemblyLine);
-			String mnemonic = assemblyLine.get(0);
-			OpcodeFormat op = data.getOpcodeFormats().get(mnemonic);
-			System.out.println(op.getOpFormat());
-			String opLabel = op.getInstructionName();
-			ArrayList<String> insF = data.getInstructionFormat().get(opLabel);
-			System.out.println(insF);
-			HashMap<String,String> cond = op.getOpConditions();
-			System.out.println(cond);
+			
+			populateInstruction(assemblyLine);
 		}		
 	}
 	
+	private void populateInstruction(ArrayList<String> assemblyLine) {
+		
+		String mnemonic = assemblyLine.get(0);
+		OpcodeFormatData op = data.getOpcodeFormats().get(mnemonic);		
+		makeOpFormatHash(assemblyLine, op.getOpFormat());
+		System.out.println(opFormatHash);
+		
+		String insName = op.getInstructionName();
+		InstructionFormatData insF = data.getInstructionFormat().get(insName);
+		
+		
+	}
+
+	private void makeOpFormatHash(ArrayList<String> assemblyLine, ArrayList<String> opFormat) {
+		
+		opFormatHash = new HashMap<String, String>();
+		
+		int i = 0;
+		
+		for(String assemblyTerm: assemblyLine){
+			String formatTerm = opFormat.get(i);
+			opFormatHash.put(formatTerm, assemblyTerm);
+			i++;
+		}		
+	}
+
 	public static String hexToBinary(String hex) {
 		
 		String binary = "";

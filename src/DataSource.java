@@ -13,8 +13,8 @@ public class DataSource {
 	ArrayList<ArrayList<String>> assemblyCode;
 	
 	ArrayList<String> architecture;
-	HashMap<String, OpcodeFormat> opcodeFormats;
-	HashMap<String, ArrayList<String>> instructionFormat;	
+	HashMap<String, OpcodeFormatData> opcodeFormats;
+	HashMap<String, InstructionFormatData> instructionFormat;	
 	HashMap<String, String> registerHash;
 	
 	public DataSource(){
@@ -22,8 +22,8 @@ public class DataSource {
 		assemblyCode = new ArrayList<ArrayList<String>>();
 		
 		architecture = new ArrayList<String>();
-		opcodeFormats = new HashMap<String, OpcodeFormat>();
-		instructionFormat = new HashMap<String, ArrayList<String>>();		
+		opcodeFormats = new HashMap<String, OpcodeFormatData>();
+		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
 	}
 
@@ -35,15 +35,15 @@ public class DataSource {
 		return architecture;
 	}
 
-	public HashMap<String, OpcodeFormat> getOpcodeFormats() {
+	public HashMap<String, OpcodeFormatData> getOpcodeFormats() {
 		return opcodeFormats;
 	}
 
-	public HashMap<String, ArrayList<String>> getInstructionFormat() {
+	public HashMap<String, InstructionFormatData> getInstructionFormat() {
 		return instructionFormat;
 	}
 
 	public HashMap<String, String> getRegisterHash() {
 		return registerHash;
-	}
+	}	
 }

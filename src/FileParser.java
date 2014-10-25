@@ -13,11 +13,15 @@ import java.util.Scanner;
 public class FileParser {
 	
 	DataSource data;
-	boolean architecture = false, registers = false, opcodeFormat = false, instructionFormat = false;
+	boolean architecture, registers, opcodeFormat, instructionFormat;
 	
 	public FileParser(String assemblyFile, String specFile){
 		
 		data = new DataSource();
+		architecture = false;
+		registers = false;
+		opcodeFormat = false;
+		instructionFormat = false;
 		
 		scanAssemblyFile(assemblyFile);
 		scanSpecFile(specFile);
@@ -126,7 +130,7 @@ public class FileParser {
 	
 	public void analyseOpcodeFormat(String[] tokens){		
 		
-		OpcodeFormat opFormat = new OpcodeFormat();
+		OpcodeFormatData opFormat = new OpcodeFormatData();
 		
 		boolean atFormat = true, first = true, atConditions = false;
 		String mnemonic = "";
@@ -166,7 +170,7 @@ public class FileParser {
 		data.getOpcodeFormats().put(mnemonic, opFormat);		
 	}
 	
-	private void formatConditions(OpcodeFormat opFormat, String opConditions) {
+	private void formatConditions(OpcodeFormatData opFormat, String opConditions) {
 
 		String condNoBracket = opConditions.replaceAll("[()]", "");
 		String[] conditions = condNoBracket.split(",");		
@@ -179,20 +183,26 @@ public class FileParser {
 
 	public void analyseInstructionFormat(String[] tokens){	
 		
-		String hashKey = "";
-		ArrayList<String> instructionFormat = new ArrayList<String>();
+		String insName = "";
+		InstructionFormatData insF = new InstructionFormatData();
 		
 		for (String token : tokens) {
 			
 			if(token.endsWith(":")){
 				token = token.replaceAll("[:]", "");
-				hashKey = token;
+				insName = token;
 			}
-			else
-				instructionFormat.add(token);			
-			
+			else{
+				String[] tokenTerms = token.split("\\(|\\)");
+				String operand = tokenTerms[0];
+				int bitSize = Integer.parseInt(tokenTerms[1]);
+				insF.getOperands().add(operand);
+				insF.getOpFormatHash().put(operand, bitSize);
+							
+			}
 		}
-		data.getInstructionFormat().put(hashKey, instructionFormat);
+		insF.setInstructionName(insName);
+		data.getInstructionFormat().put(insName, insF);
 	}	
 	
 	public void putRegistersInHashMap(ArrayList<String> registers){		
