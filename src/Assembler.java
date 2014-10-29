@@ -12,7 +12,7 @@ public class Assembler {
 	
 	DataSource data;
 	ArrayList<String> objectCode;
-	HashMap<String, String> opFormatHash;
+	HashMap<String, String> opFormatTermsHash;
 	
 	public Assembler(DataSource data){
 		
@@ -36,33 +36,50 @@ public class Assembler {
 		String mnemonic = assemblyLine.get(0);	//get mnemonic
 		OpcodeFormatData op = data.getOpcodeFormats().get(mnemonic);	// get format for op		
 		makeOpFormatHash(assemblyLine, op.getOpFormat());	// make op hash
-//		System.out.println(opFormatHash);
 		
-		String insName = op.getInstructionName();	// gat name of instruction type
+		String insName = op.getInstructionName();	// get name of instruction type
+		
 		InstructionFormatData insF = data.getInstructionFormat().get(insName);	// get ins format
-		System.out.println(insF.getOpFormatHash());
-		System.out.println(insF.getOperands());
+
+		String binaryLine = "";
 		
 		for(String operand: insF.getOperands()){
-			System.out.println(operand);
+			
+			if(op.getOpConditions().get(operand) != null){
+				String binaryOP = op.getOpConditions().get(operand);
+				binaryLine += binaryOP + " ";
+			}
+			else{
+				
+				String reg = opFormatTermsHash.get(operand);
+				String regHex = data.getRegisterHash().get(reg);
+				int bits = insF.getOpFormatBitHash().get(operand);
+				String binary = binaryFromHexFormatted(regHex, bits);
+				
+				binaryLine += binary + " ";
+			}			
 		}
-		
+		System.out.println(binaryLine);		
 	}
 
 	private void makeOpFormatHash(ArrayList<String> assemblyLine, ArrayList<String> opFormat) {
 		
-		opFormatHash = new HashMap<String, String>();
+		opFormatTermsHash = new HashMap<String, String>();
 		
 		int i = 0;
 		
 		for(String assemblyTerm: assemblyLine){
 			String formatTerm = opFormat.get(i);
-			opFormatHash.put(formatTerm, assemblyTerm);
+			opFormatTermsHash.put(formatTerm, assemblyTerm);
 			i++;
 		}		
 	}
 	
-	public static String binaryFormatted(String hex, int bits){
+	public static String binaryFromHexFormatted(String hex, int bits){
+		
+		if(hex.charAt(0) == '$'){
+			hex = hex.substring(1);
+		}
 		
 		String binary = hexToBinary(hex);
 		
@@ -76,6 +93,21 @@ public class Assembler {
 		
 		String finalString = zeros + binary;
 		
+		return finalString;
+	}
+	
+	public static String binaryFromBinaryFormatted(String binary, int bits) {
+
+		int initialLength = binary.length();
+		int zerosNeeded = bits - initialLength;
+
+		String zeros = "";
+
+		for (; zerosNeeded > 0; zerosNeeded -= 1)
+			zeros += "0";
+
+		String finalString = zeros + binary;
+
 		return finalString;
 	}
 

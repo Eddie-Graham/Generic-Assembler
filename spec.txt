@@ -2,7 +2,7 @@ architecture:
 x86 x76
 
 opcodeformat:
-add rd, rs, rt	(opcode=000000, func=100000, shamt=11111) R-type
+add rd, rs, rt	(opcode=000000, func=100000, shamt=00000) R-type
 andi rt, rs, immediate (opcode=001100) I-type
 
 

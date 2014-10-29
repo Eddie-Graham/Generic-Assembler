@@ -1,3 +1,10 @@
+/** 
+ * Eddie Graham
+ * 1101301g
+ * Individual Project 4
+ * Supervisor: John T O'Donnell
+ */
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -5,13 +12,13 @@ import java.util.HashMap;
 public class InstructionFormatData {
 	
 	String instructionName;
-	HashMap<String, Integer> opFormatHash;
+	HashMap<String, Integer> opFormatBitHash;
 	ArrayList<String> operands;
 	
 	public InstructionFormatData(){
 		
 		instructionName = "";
-		opFormatHash = new HashMap<String, Integer>();
+		opFormatBitHash = new HashMap<String, Integer>();
 		operands = new ArrayList<String>();		
 	}
 
@@ -23,12 +30,12 @@ public class InstructionFormatData {
 		this.instructionName = instructionName;
 	}
 
-	public HashMap<String, Integer> getOpFormatHash() {
-		return opFormatHash;
+	public HashMap<String, Integer> getOpFormatBitHash() {
+		return opFormatBitHash;
 	}
 
-	public void setOpFormatHash(HashMap<String, Integer> opFormatHash) {
-		this.opFormatHash = opFormatHash;
+	public void setOpFormatBitHash(HashMap<String, Integer> opFormatBitHash) {
+		this.opFormatBitHash = opFormatBitHash;
 	}
 
 	public ArrayList<String> getOperands() {

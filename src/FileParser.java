@@ -197,7 +197,7 @@ public class FileParser {
 				String operand = tokenTerms[0];
 				int bitSize = Integer.parseInt(tokenTerms[1]);
 				insF.getOperands().add(operand);
-				insF.getOpFormatHash().put(operand, bitSize);
+				insF.getOpFormatBitHash().put(operand, bitSize);
 							
 			}
 		}
