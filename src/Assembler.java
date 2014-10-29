@@ -33,14 +33,19 @@ public class Assembler {
 	
 	private void populateInstruction(ArrayList<String> assemblyLine) {
 		
-		String mnemonic = assemblyLine.get(0);
-		OpcodeFormatData op = data.getOpcodeFormats().get(mnemonic);		
-		makeOpFormatHash(assemblyLine, op.getOpFormat());
-		System.out.println(opFormatHash);
+		String mnemonic = assemblyLine.get(0);	//get mnemonic
+		OpcodeFormatData op = data.getOpcodeFormats().get(mnemonic);	// get format for op		
+		makeOpFormatHash(assemblyLine, op.getOpFormat());	// make op hash
+//		System.out.println(opFormatHash);
 		
-		String insName = op.getInstructionName();
-		InstructionFormatData insF = data.getInstructionFormat().get(insName);
+		String insName = op.getInstructionName();	// gat name of instruction type
+		InstructionFormatData insF = data.getInstructionFormat().get(insName);	// get ins format
+		System.out.println(insF.getOpFormatHash());
+		System.out.println(insF.getOperands());
 		
+		for(String operand: insF.getOperands()){
+			System.out.println(operand);
+		}
 		
 	}
 
@@ -55,6 +60,23 @@ public class Assembler {
 			opFormatHash.put(formatTerm, assemblyTerm);
 			i++;
 		}		
+	}
+	
+	public static String binaryFormatted(String hex, int bits){
+		
+		String binary = hexToBinary(hex);
+		
+		int initialLength = binary.length();
+		int zerosNeeded = bits - initialLength;
+		
+		String zeros = "";
+		
+		for(;zerosNeeded>0;zerosNeeded -= 1)
+			zeros += "0";		
+		
+		String finalString = zeros + binary;
+		
+		return finalString;
 	}
 
 	public static String hexToBinary(String hex) {

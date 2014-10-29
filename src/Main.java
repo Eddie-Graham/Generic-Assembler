@@ -28,7 +28,8 @@ public class Main {
 		DataSource data = file.getData();		
 		
 //		String x = "0x012A4020";
-//		String s = Assembler.hexToBinary(x);
+//		String x = "8";
+//		String s = Assembler.binaryFormatted(x, 7);
 //		System.out.println(s);
 		
 //		String x = "00000001001010100100000001000000";
