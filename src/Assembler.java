@@ -34,22 +34,21 @@ public class Assembler {
 	private void populateInstruction(ArrayList<String> assemblyLine) {
 		
 		String mnemonic = assemblyLine.get(0);	//get mnemonic
-		OpcodeFormatData op = data.getOpcodeFormats().get(mnemonic);	// get format for op		
-		makeOpFormatHash(assemblyLine, op.getOpFormat());	// make op hash
+		OpcodeFormatData op = data.getOpcodeFormats().get(mnemonic);	// get format for operand		
+		makeOpFormatHash(assemblyLine, op.getOpFormat());	// make operand hash with values
 		
-		String insName = op.getInstructionName();	// get name of instruction type
-		
-		InstructionFormatData insF = data.getInstructionFormat().get(insName);	// get ins format
+		String insName = op.getInstructionName();	// get name of instruction type		
+		InstructionFormatData insF = data.getInstructionFormat().get(insName);	// get ins format data
 
 		String binaryLine = "";
 		
-		for(String operand: insF.getOperands()){
+		for(String operand: insF.getOperands()){	// ins format operands
 			
 			if(op.getOpConditions().get(operand) != null){
-				String binaryOP = op.getOpConditions().get(operand);
-				binaryLine += binaryOP + " ";
+				String binaryOp = op.getOpConditions().get(operand);
+				binaryLine += binaryOp + " ";
 			}
-			else{
+			else{	//registers??
 				
 				String reg = opFormatTermsHash.get(operand);
 				String regHex = data.getRegisterHash().get(reg);
@@ -131,4 +130,12 @@ public class Assembler {
 		String hex = String.format("%X", l) ;
 		return hex;
 	}
+	
+	public static String decimalToBinary(String decimal){
+	       
+		int decimalInt = Integer.parseInt(decimal);
+		String binary = Integer.toBinaryString(decimalInt);
+
+		return binary;
+	   }
 }

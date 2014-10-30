@@ -38,15 +38,19 @@ public class FileParser {
 			System.exit(0);
 		}
 
-		while (inputFile.hasNextLine()) {	
+		while (inputFile.hasNextLine()) {
+			
 			ArrayList<String> assembly = new ArrayList<String>();
 			String line = inputFile.nextLine();
-			String[] tokens = line.replaceAll("^[,\\s]+", "").split("[,\\s]+");
 			
-			for(String token: tokens){
-				assembly.add(token);
-			}
+			if(!line.isEmpty()){
+				String[] tokens = line.replaceAll("^[,\\s]+", "").split("[,\\s]+");
+			
+				for(String token: tokens)
+					assembly.add(token);
+				
 			data.getAssemblyCode().add(assembly);
+			}
 		}
 		
 		inputFile.close();

@@ -32,7 +32,11 @@ public class Main {
 //		String s = Assembler.binaryFormatted(x, 7);
 //		System.out.println(s);
 		
-//		String x = "00000001001010100100000001000000";
+//		String x = "60";
+//		String s = Assembler.decimalToBinary(x);
+//		System.out.println(s);
+		
+//		String x = "00000001000000000000000000001000";
 //		String s = Assembler.binaryToHex(x);
 //		System.out.println(s);
 				

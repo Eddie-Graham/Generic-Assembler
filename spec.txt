@@ -4,6 +4,8 @@ x86 x76
 opcodeformat:
 add rd, rs, rt	(opcode=000000, func=100000, shamt=00000) R-type
 andi rt, rs, immediate (opcode=001100) I-type
+jr rd (opcode=000000, sec1=00000, sec2=00000, sec3=00000, func=001000) mine
+
 
 
 registers:
@@ -14,3 +16,4 @@ $8-$15 	$t0-$t7
 instructionformat:
 R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
 I-type: opcode(6) rs(5) rt(5) immediate(16)	
+mine: opcode(6) rd(5) sec1(5) sec2(5) sec3(5) func(6)

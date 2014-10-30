@@ -1,1 +1,7 @@
-add $t0, $t1, $t2
+
+
+add $t0, $t1, $t3
+
+add $t0, $t1, $t5
+
+jr $t0
