@@ -4,4 +4,4 @@ add $t0, $t1, $t3
 
 add $t0, $t1, $t5
 
-jr $t0
+add $t1, $t1, $t1
