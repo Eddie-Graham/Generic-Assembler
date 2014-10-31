@@ -125,9 +125,11 @@ public class FileParser {
 		
 		ArrayList<String> registers = new ArrayList<String>();
 		
-		for (String token : tokens) {				
-			registers.add(token);										
+		for (String token : tokens) {
+			if(!token.equals("="))
+				registers.add(token);										
 		}
+		
 		putRegistersInHashMap(registers);
 	}
 	
@@ -210,9 +212,11 @@ public class FileParser {
 	}	
 	
 	public void putRegistersInHashMap(ArrayList<String> registers){		
-						
-			String hexTerm = registers.get(0);
-			String label = registers.get(1);			
+		
+		if(registers.get(0).contains("-")){
+				
+			String label = registers.get(0);
+			String hexTerm = registers.get(1);						
 			
 			String[] labelNoDash = label.split("-");	// needed for final conversion before entry into hashmap
 			String[] hexNoDash = hexTerm.split("-");	// needed for final conversion before entry into hashmap
@@ -239,7 +243,13 @@ public class FileParser {
 				lowerIntLabel++;
 
 				data.getRegisterHash().put(regLabel, hex);
-			}		
+			}
+		}
+		else{
+			String regLabel = registers.get(0);
+			String hex = registers.get(1);			
+			data.getRegisterHash().put(regLabel, hex);
+		}
 	}
 	
 
