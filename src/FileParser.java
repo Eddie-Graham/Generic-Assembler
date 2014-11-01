@@ -14,6 +14,8 @@ public class FileParser {
 	
 	DataSource data;
 	boolean architecture, registers, opcodeFormat, instructionFormat;
+	boolean atOpFormat, atCodes, atInsName, firstTab;
+	OpcodeFormatData currentOpFormat;
 	
 	public FileParser(String assemblyFile, String specFile){
 		
@@ -22,6 +24,13 @@ public class FileParser {
 		registers = false;
 		opcodeFormat = false;
 		instructionFormat = false;
+		
+		atOpFormat = true;
+		atCodes = false;
+		atInsName = false;
+		firstTab = true;
+		
+		currentOpFormat = null;
 		
 		scanAssemblyFile(assemblyFile);
 		scanSpecFile(specFile);
@@ -68,39 +77,44 @@ public class FileParser {
 		}	
 
 		while (inputFile.hasNextLine()) {
+			boolean title = false;
 			String line = inputFile.nextLine();
 
-			if (!line.isEmpty()) {				
-				String[] tokens = line.split("\\s+");
-
-				if(tokens.length == 1){
-					String token = tokens[0];
-
-					if (token.equalsIgnoreCase("architecture:")) 
-						setBooleanValues(true, false, false, false);					
-
-					if (token.equalsIgnoreCase("registers:")) 
-						setBooleanValues(false, true, false, false);							
-					
-					if (token.equalsIgnoreCase("opcodeformat:")) 
-						setBooleanValues(false, false, true, false);
-					
-					if (token.equalsIgnoreCase("instructionformat:")) 
-						setBooleanValues(false, false, false, true);					
-					
+			if (!line.isEmpty()) {
+				
+				if (line.startsWith("architecture:")) {
+					setBooleanValues(true, false, false, false);
+					title = true;
 				}
 
-				else if (architecture)
-					analyseArchitecture(tokens);			
+				else if (line.startsWith("registers:")) {
+					setBooleanValues(false, true, false, false);
+					title = true;
+				}
 
-				else if (registers) 	
-					analyseRegisters(tokens);				
-			
-				else if (opcodeFormat)
-					analyseOpcodeFormat(tokens);
+				else if (line.startsWith("opcodeformat:")) {
+					setBooleanValues(false, false, true, false);
+					title = true;
+				}
 
-				else if (instructionFormat)
-					analyseInstructionFormat(tokens);				
+				else if (line.startsWith("instructionformat:")) {
+					setBooleanValues(false, false, false, true);
+					title = true;
+				}
+		
+				if (!title) {
+					if (architecture)
+						analyseArchitecture(line);
+
+					else if (registers)
+						analyseRegisters(line);
+
+					else if (opcodeFormat)
+						analyseOpcodeFormat(line);
+
+					else if (instructionFormat)
+						analyseInstructionFormat(line);
+				}
 			}
 		}
 		inputFile.close();
@@ -114,15 +128,18 @@ public class FileParser {
 		this.instructionFormat = instructionFormat;
 	}
 	
-	public void analyseArchitecture(String[] tokens){
+	public void analyseArchitecture(String line){
+		
+		String[] tokens = line.split("\\s+");
 		
 		for (String token : tokens) {
 			data.getArchitecture().add(token);					
 		}		
 	}
 	
-	public void analyseRegisters(String[] tokens){
+	public void analyseRegisters(String line){
 		
+		String[] tokens = line.split("\\s+");
 		ArrayList<String> registers = new ArrayList<String>();
 		
 		for (String token : tokens) {
@@ -134,52 +151,76 @@ public class FileParser {
 	}
 	
 	
-	public void analyseOpcodeFormat(String[] tokens){		
+	public void analyseOpcodeFormat(String line){		
 		
-		OpcodeFormatData opFormat = new OpcodeFormatData();
+		String[] tokens = line.split("\\s+");
+		OpcodeFormatData opFormat = currentOpFormat; 
+		boolean inCodes = false;
+		String opCodes = "";
 		
-		boolean atFormat = true, first = true, atConditions = false;
-		String mnemonic = "";
-		String opConditions = "";
+		if(line.startsWith("\t")){
+			if(firstTab){				
+				atCodes = true;
+				atOpFormat = false;
+				firstTab = false;
+			}
+			else{
+				atCodes = false;
+				atInsName = true;
+			}
+		}
+		
+		else{
+			opFormat = new OpcodeFormatData();
+			resetBooleanValues();
+			currentOpFormat = opFormat;
+		}
+		
+		boolean first = true;
 		
 		for(String token: tokens){
 			
-			if(first){	// first token mnemonic
-				mnemonic = token;
-				opFormat.setMnemonic(mnemonic);
-				first = false;
-			}
-			
-			else if(token.startsWith("(")){		// at condition tokens		
-				atFormat = false;
-				atConditions = true;
-			}	
-			
-			if(atFormat){	// at format tokens
+			if (atOpFormat) {				
+				if(first){
+					opFormat.setMnemonic(token);
+					first = false;
+				}
+		
 				token = token.replaceAll("[,]", "");
 				opFormat.getOpFormat().add(token);
-			}
-			else if(atConditions){
-				
-				if(token.endsWith(")")){	// end of condition tokens
-					opConditions+= token;
-					formatConditions(opFormat, opConditions);
-					atConditions = false;
-				}	
-				else
-					opConditions+= token;
-			}
+			} 
 			
-			else	// at last token (instruction name)
-				opFormat.setInstructionName(token);					
+			else if (atCodes) {
+				opCodes += token;
+				inCodes = true;
+			} 
+			
+			else if (atInsName) {				
+				if(!token.isEmpty()){
+					opFormat.setInstructionName(token);	
+					String mnemonic = opFormat.getMnemonic();
+					data.getOpcodeFormats().put(mnemonic, currentOpFormat);
+				}
+			}			
 		}
-		data.getOpcodeFormats().put(mnemonic, opFormat);		
+		
+		if(inCodes)
+			formatConditions(opFormat, opCodes);		
 	}
 	
+	private void resetBooleanValues() {
+		
+		atOpFormat = true;
+		atCodes = false;
+		atInsName = false;
+		firstTab = true;
+		
+		currentOpFormat = null;	
+	}
+
 	private void formatConditions(OpcodeFormatData opFormat, String opConditions) {
 
-		String condNoBracket = opConditions.replaceAll("[()]", "");
-		String[] conditions = condNoBracket.split(",");		
+		String[] conditions = opConditions.split(",");		
 		
 		for(String condition: conditions){
 			String[] condElements = condition.split("=");
@@ -187,7 +228,9 @@ public class FileParser {
 		}	
 	}
 
-	public void analyseInstructionFormat(String[] tokens){	
+	public void analyseInstructionFormat(String line){	
+		
+		String[] tokens = line.split("\\s+");
 		
 		String insName = "";
 		InstructionFormatData insF = new InstructionFormatData();

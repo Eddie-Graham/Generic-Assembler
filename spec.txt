@@ -1,11 +1,10 @@
 architecture:
-x86 x76
+x86 
 
 opcodeformat:
-add rd, rs, rt	(opcode=000000, func=100000, shamt=00000) R-type
-andi rt, rs, immediate (opcode=001100) I-type
-
-
+add rd, rs, rt	
+	opcode=000000, func=100100, shamt=00000 
+	R-type
 
 registers:
 $v0-$v1 = $2-$3 	
