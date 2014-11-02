@@ -12,13 +12,13 @@ import java.util.HashMap;
 public class InstructionFormatData {
 	
 	String instructionName;
-	HashMap<String, Integer> opFormatBitHash;
+	HashMap<String, Integer> operandBitHash;
 	ArrayList<String> operands;
 	
 	public InstructionFormatData(){
 		
 		instructionName = "";
-		opFormatBitHash = new HashMap<String, Integer>();
+		operandBitHash = new HashMap<String, Integer>();
 		operands = new ArrayList<String>();		
 	}
 
@@ -30,12 +30,12 @@ public class InstructionFormatData {
 		this.instructionName = instructionName;
 	}
 
-	public HashMap<String, Integer> getOpFormatBitHash() {
-		return opFormatBitHash;
+	public HashMap<String, Integer> getOperandBitHash() {
+		return operandBitHash;
 	}
 
-	public void setOpFormatBitHash(HashMap<String, Integer> opFormatBitHash) {
-		this.opFormatBitHash = opFormatBitHash;
+	public void setOperandBitHash(HashMap<String, Integer> operandBitHash) {
+		this.operandBitHash = operandBitHash;
 	}
 
 	public ArrayList<String> getOperands() {
@@ -44,5 +44,5 @@ public class InstructionFormatData {
 
 	public void setOperands(ArrayList<String> operands) {
 		this.operands = operands;
-	}
+	}	
 }

@@ -1,7 +1,7 @@
 
 
-add $t0, $t1, $t3
+ADD t4, t0, t5
 
-add $t4, $t0, $t5
+LHU t4 t6[t1]
 
 

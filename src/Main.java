@@ -32,11 +32,11 @@ public class Main {
 //		String s = Assembler.binaryFormatted(x, 7);
 //		System.out.println(s);
 		
-//		String x = "60";
+//		String x = "12";
 //		String s = Assembler.decimalToBinary(x);
 //		System.out.println(s);
 		
-//		String x = "00000001000000000000000000001000";
+//		String x = "00000001000011010110000000100000";
 //		String s = Assembler.binaryToHex(x);
 //		System.out.println(s);
 				
@@ -45,10 +45,10 @@ public class Main {
 //		System.out.println("insF " + data.getInstructionFormat());	
 //		System.out.println("regHash " + data.getRegisterHash());
 		
-//		String s = "add";
-//		System.out.println("opMn " + data.getOpcodeFormats().get(s).getMnemonic());
-//		System.out.println("opCond " + data.getOpcodeFormats().get(s).getOpConditions());
-//		System.out.println("opFor " + data.getOpcodeFormats().get(s).getOpFormat());
+//		String s = "LHU";
+//		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
+//		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpcodes());
+//		System.out.println("opFor " + data.getMnemonicTable().get(s).getMnemonicFormat());
 		
 		Assembler assembler = new Assembler(data);
 		
