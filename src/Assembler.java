@@ -6,6 +6,7 @@
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Assembler {
@@ -72,39 +73,66 @@ public class Assembler {
 
 			String[] splitFormatTerms = formatTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");																	
 
-			String splitRegex = "\\";
-			boolean first = true;
 			boolean hasNonAlpha = false;
+			ArrayList<String> delimiters = new ArrayList<String>();
 
-			for (String furtherFormatTerm : splitFormatTerms) {
-				if (!isAlphaNumeric(furtherFormatTerm)) {
-					if (!first)
-						splitRegex += "|\\";
-					splitRegex += furtherFormatTerm;
-					first = false;
+			for (String token: splitFormatTerms) {
+				if (!isAlphaNumeric(token)) {					
+					delimiters.add(token);
 					hasNonAlpha = true;
 				}
 			}
+			
+			String[] splitAssemblyTerms = new String[10];			
 
-			if (!hasNonAlpha)
-				splitRegex += "//";
-
-			String[] splitAssemblyTerm = assemblyTerm.split(splitRegex); // "\\[|\\]"
-
-			int y = 0;
+			if(hasNonAlpha){
+				String regex = getRegex(delimiters);
+				splitAssemblyTerms = assemblyTerm.split(regex);
+			}
+			else{
+				splitAssemblyTerms[0] = assemblyTerm;
+			}
+			
+			int y = 0;			
 
 			for (String furtherFormatTerm : splitFormatTerms) {
 				if (!isAlphaNumeric(furtherFormatTerm)) {
-
+					//correct
 				}
 				else {
-					assemblyOpFormatHash.put(furtherFormatTerm, splitAssemblyTerm[y]);
-					y++;
+					assemblyOpFormatHash.put(furtherFormatTerm, splitAssemblyTerms[y]);					
 				}
+				y++;
 			}	
 			i++;
 		}
 		return assemblyOpFormatHash;
+	}
+
+	private String getRegex(ArrayList<String> delimiters){
+		
+		String firstPart = "(?=[\\";
+		String secondPart = "|(?<=[\\";
+		
+		boolean first = true;
+		
+		for(String delimiter: delimiters){
+			if(!first){
+				firstPart += "|\\";
+				secondPart += "|\\";
+			}			
+		
+			firstPart += delimiter;
+			secondPart += delimiter;
+			first = false;
+		}
+		
+		firstPart += "])";
+		secondPart += "])";
+		
+		String regex = firstPart + secondPart;
+		
+		return regex;
 	}
 
 	public static String binaryFromHexFormatted(String hex, int bits) {
@@ -172,7 +200,7 @@ public class Assembler {
 		return binary;
 	}
 
-	public boolean isAlphaNumeric(String s) {
+	private boolean isAlphaNumeric(String s) {
 		String pattern = "^[a-zA-Z0-9]*$";
 		if (s.matches(pattern)) {
 			return true;

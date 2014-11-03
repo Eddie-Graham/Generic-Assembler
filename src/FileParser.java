@@ -37,7 +37,7 @@ public class FileParser {
 		scanSpecFile(specFile);
 	}
 	
-	public void scanAssemblyFile(String fileName) {
+	private void scanAssemblyFile(String fileName) {
 
 		Scanner inputFile = null;	
 
@@ -66,7 +66,7 @@ public class FileParser {
 		inputFile.close();
 	}
 	
-	public void scanSpecFile(String fileName){
+	private void scanSpecFile(String fileName){
 		
 		Scanner inputFile = null;
 
@@ -144,7 +144,7 @@ public class FileParser {
 		}		
 	}
 
-	public void setBooleanValues(boolean architecture, boolean registers, boolean mnemonicFormat, boolean instructionFormat, boolean operandSyntax){
+	private void setBooleanValues(boolean architecture, boolean registers, boolean mnemonicFormat, boolean instructionFormat, boolean operandSyntax){
 		
 		this.architecture = architecture;
 		this.registers = registers;
@@ -153,7 +153,7 @@ public class FileParser {
 		this.operandsyntax = operandSyntax;
 	}
 	
-	public void analyseArchitecture(String line){
+	private void analyseArchitecture(String line){
 		
 		String[] tokens = line.split("\\s+");
 		
@@ -162,7 +162,7 @@ public class FileParser {
 		}		
 	}
 	
-	public void analyseRegisters(String line){
+	private void analyseRegisters(String line){
 		
 		String[] tokens = line.split("\\s+");
 		ArrayList<String> registers = new ArrayList<String>();
@@ -176,7 +176,7 @@ public class FileParser {
 	}
 	
 	
-	public void analyseMnemonicFormat(String line){		
+	private void analyseMnemonicFormat(String line){		
 		
 		String[] tokens = line.split("\\s+");
 		MnemonicFormatData mnemonicFormat = currentMnemonicFormat; 
@@ -253,7 +253,7 @@ public class FileParser {
 		}	
 	}
 
-	public void analyseInstructionFormat(String line){	
+	private void analyseInstructionFormat(String line){	
 		
 		String[] tokens = line.split("\\s+");
 		
@@ -279,7 +279,7 @@ public class FileParser {
 		data.getInstructionFormat().put(insName, insF);
 	}	
 	
-	public void putRegistersInHashMap(ArrayList<String> registers){		
+	private void putRegistersInHashMap(ArrayList<String> registers){		
 		
 		if(registers.get(0).contains("-")){
 				

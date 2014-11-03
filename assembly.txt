@@ -1,8 +1,9 @@
 
 
-ADD t4, t0, t5
 
-LHU t4(t3) t7
+LHU t4 t7(t0)
+
+ADD t0, t0, t0
 
 
 

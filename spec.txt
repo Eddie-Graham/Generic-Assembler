@@ -6,7 +6,7 @@ ADD op1, op2, op3
 	opcode=000000, func=100000, shamt=00000 
 	R-type
 	
-LHU rt(base) offset
+LHU rt offset(base)
 	opcode=100101
 	I-type
 	
