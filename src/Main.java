@@ -50,6 +50,8 @@ public class Main {
 //		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpcodes());
 //		System.out.println("opFor " + data.getMnemonicTable().get(s).getMnemonicFormat());
 		
+//		System.out.println(data.getMemorySyntax());
+		
 		Assembler assembler = new Assembler(data);
 		
 	}

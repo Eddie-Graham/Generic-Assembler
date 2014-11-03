@@ -16,6 +16,9 @@ public class DataSource {
 	HashMap<String, MnemonicFormatData> mnemonicTable;
 	HashMap<String, InstructionFormatData> instructionFormat;	
 	HashMap<String, String> registerHash;
+	String immediateSyntax;
+	String registerSyntax;
+	String memorySyntax;
 	
 	public DataSource(){
 		
@@ -25,6 +28,7 @@ public class DataSource {
 		mnemonicTable = new HashMap<String, MnemonicFormatData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
+		
 	}
 
 	public ArrayList<ArrayList<String>> getAssemblyCode() {
@@ -66,5 +70,29 @@ public class DataSource {
 
 	public void setRegisterHash(HashMap<String, String> registerHash) {
 		this.registerHash = registerHash;
+	}
+
+	public String getImmediateSyntax() {
+		return immediateSyntax;
+	}
+
+	public void setImmediateSyntax(String immediateSyntax) {
+		this.immediateSyntax = immediateSyntax;
+	}
+
+	public String getRegisterSyntax() {
+		return registerSyntax;
+	}
+
+	public void setRegisterSyntax(String registerSyntax) {
+		this.registerSyntax = registerSyntax;
+	}
+
+	public String getMemorySyntax() {
+		return memorySyntax;
+	}
+
+	public void setMemorySyntax(String memorySyntax) {
+		this.memorySyntax = memorySyntax;
 	}	
 }

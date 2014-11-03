@@ -2,6 +2,8 @@
 
 ADD t4, t0, t5
 
-LHU t4 t6[t1]
+LHU t4(t3) t7
+
+
 
 

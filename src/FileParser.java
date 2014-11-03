@@ -120,12 +120,30 @@ public class FileParser {
 
 					else if (instructionFormat)
 						analyseInstructionFormat(line);
+					
+					else if (operandsyntax)
+						analyseOperandSyntax(line);
 				}
 			}
 		}
 		inputFile.close();
 	}
 	
+	private void analyseOperandSyntax(String line) {
+		
+		String[] tokens = line.split("\\s+");
+
+		if (tokens[0].equals("immediate:")) {
+			data.setImmediateSyntax(tokens[1]);
+		}
+		else if (tokens[0].equals("register:")) {
+			data.setRegisterSyntax(tokens[1]);
+		}
+		else if (tokens[0].equals("memory:")) {
+			data.setMemorySyntax(tokens[1]);
+		}		
+	}
+
 	public void setBooleanValues(boolean architecture, boolean registers, boolean mnemonicFormat, boolean instructionFormat, boolean operandSyntax){
 		
 		this.architecture = architecture;

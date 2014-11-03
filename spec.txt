@@ -6,7 +6,7 @@ ADD op1, op2, op3
 	opcode=000000, func=100000, shamt=00000 
 	R-type
 	
-LHU rt, offset[base]
+LHU rt(base) offset
 	opcode=100101
 	I-type
 	
@@ -23,9 +23,10 @@ instructionformat:
 R-type: opcode(6) op2(5) op3(5) op1(5) shamt(5) func(6)
 I-type: opcode(6) base(5) rt(5) offset(16)
 
+
 operandsyntax:
 register: $...	
-immediate: [...]
+immediate: #...
 memory: 0x...
 
 

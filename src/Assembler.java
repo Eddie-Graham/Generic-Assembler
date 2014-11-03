@@ -6,10 +6,7 @@
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-
-import com.sun.xml.internal.ws.util.StringUtils;
 
 public class Assembler {
 
@@ -27,8 +24,7 @@ public class Assembler {
 	public void assemble() {
 
 		for (ArrayList<String> assemblyLine : data.getAssemblyCode()) {
-			System.out
-					.println("**************************************************************");
+			System.out.println("**************************************************************");
 
 			populateInstruction(assemblyLine);
 		}
@@ -37,13 +33,14 @@ public class Assembler {
 	private void populateInstruction(ArrayList<String> assemblyLine) {
 
 		String mnemonic = assemblyLine.get(0); // get mnemonic
-		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic); 
-		HashMap<String, String> assemblyOpFormatHash = makeAssemblyOpFormatHash(assemblyLine, op.getMnemonicFormat()); 
-
-		String insName = op.getInstructionName(); 
-		InstructionFormatData insF = data.getInstructionFormat().get(insName); 
+		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic);
+		HashMap<String, String> assemblyOpFormatHash = makeAssemblyOpFormatHash(assemblyLine, op.getMnemonicFormat());
 
 		System.out.println(assemblyOpFormatHash);
+		
+		String insName = op.getInstructionName();
+		InstructionFormatData insF = data.getInstructionFormat().get(insName);
+
 		String binaryLine = "";
 
 		for (String operand : insF.getOperands()) { // ins format operands
@@ -73,25 +70,38 @@ public class Assembler {
 		for (String assemblyTerm : assemblyLine) {
 			String formatTerm = mnemonicFormat.get(i);
 
-			String[] splitFormatTerms = formatTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-			String[] splitAssemblyTerm = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-			
-			int x = 0;
-			
-			for(String furtherFormatTerm: splitFormatTerms){
-				String furtherAssemblyTerm = splitAssemblyTerm[x];
-				
-				if(furtherFormatTerm.matches("^.*[^a-zA-Z0-9].*$")){
-					if(furtherFormatTerm.equals(furtherAssemblyTerm)){
-						//correct
-					}
-						
+			String[] splitFormatTerms = formatTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");																	
+
+			String splitRegex = "\\";
+			boolean first = true;
+			boolean hasNonAlpha = false;
+
+			for (String furtherFormatTerm : splitFormatTerms) {
+				if (!isAlphaNumeric(furtherFormatTerm)) {
+					if (!first)
+						splitRegex += "|\\";
+					splitRegex += furtherFormatTerm;
+					first = false;
+					hasNonAlpha = true;
 				}
-				else{
-					assemblyOpFormatHash.put(furtherFormatTerm, furtherAssemblyTerm);
-				}				
-				x++;
 			}
+
+			if (!hasNonAlpha)
+				splitRegex += "//";
+
+			String[] splitAssemblyTerm = assemblyTerm.split(splitRegex); // "\\[|\\]"
+
+			int y = 0;
+
+			for (String furtherFormatTerm : splitFormatTerms) {
+				if (!isAlphaNumeric(furtherFormatTerm)) {
+
+				}
+				else {
+					assemblyOpFormatHash.put(furtherFormatTerm, splitAssemblyTerm[y]);
+					y++;
+				}
+			}	
 			i++;
 		}
 		return assemblyOpFormatHash;
@@ -160,5 +170,13 @@ public class Assembler {
 		String binary = Integer.toBinaryString(decimalInt);
 
 		return binary;
+	}
+
+	public boolean isAlphaNumeric(String s) {
+		String pattern = "^[a-zA-Z0-9]*$";
+		if (s.matches(pattern)) {
+			return true;
+		}
+		return false;
 	}
 }
