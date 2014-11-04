@@ -24,21 +24,24 @@ public class Assembler {
 
 	public void assemble() {
 
-		for (ArrayList<String> assemblyLine : data.getAssemblyCode()) {
+		for (String assemblyLine : data.getAssemblyCode()) {
 			System.out.println("**************************************************************");
 
 			populateInstruction(assemblyLine);
 		}
 	}
 
-	private void populateInstruction(ArrayList<String> assemblyLine) {
+	private void populateInstruction(String assemblyLine) {
 
-		String mnemonic = assemblyLine.get(0); // get mnemonic
+		String[] tokens = assemblyLine.split("\\s+");
+		String mnemonic = tokens[0];
+
 		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic);
+
 		HashMap<String, String> assemblyOpFormatHash = makeAssemblyOpFormatHash(assemblyLine, op.getMnemonicFormat());
 
 		System.out.println(assemblyOpFormatHash);
-		
+	
 		String insName = op.getInstructionName();
 		InstructionFormatData insF = data.getInstructionFormat().get(insName);
 
@@ -62,50 +65,25 @@ public class Assembler {
 		System.out.println(binaryLine);
 	}
 
-	private HashMap<String, String> makeAssemblyOpFormatHash(ArrayList<String> assemblyLine, ArrayList<String> mnemonicFormat) {
+	private HashMap<String, String> makeAssemblyOpFormatHash(String assemblyLine, String mnemonicFormat) {
 
 		HashMap<String, String> assemblyOpFormatHash = new HashMap<String, String>();
-
+		
+		String[] splitFormatTerms = mnemonicFormat.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+				
 		int i = 0;
 
-		for (String assemblyTerm : assemblyLine) {
-			String formatTerm = mnemonicFormat.get(i);
-
-			String[] splitFormatTerms = formatTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");																	
-
-			boolean hasNonAlpha = false;
-			ArrayList<String> delimiters = new ArrayList<String>();
-
-			for (String token: splitFormatTerms) {
-				if (!isAlphaNumeric(token)) {					
-					delimiters.add(token);
-					hasNonAlpha = true;
-				}
+		for (String term : splitFormatTerms) {
+			if (!isAlphaNumeric(term)) {
+				// correct
+			} 
+			else {
+				String assemblyTerm = splitAssemblyTerms[i];
+				assemblyOpFormatHash.put(term, assemblyTerm);
 			}
-			
-			String[] splitAssemblyTerms = new String[10];			
-
-			if(hasNonAlpha){
-				String regex = getRegex(delimiters);
-				splitAssemblyTerms = assemblyTerm.split(regex);
-			}
-			else{
-				splitAssemblyTerms[0] = assemblyTerm;
-			}
-			
-			int y = 0;			
-
-			for (String furtherFormatTerm : splitFormatTerms) {
-				if (!isAlphaNumeric(furtherFormatTerm)) {
-					//correct
-				}
-				else {
-					assemblyOpFormatHash.put(furtherFormatTerm, splitAssemblyTerms[y]);					
-				}
-				y++;
-			}	
 			i++;
-		}
+		}		
 		return assemblyOpFormatHash;
 	}
 

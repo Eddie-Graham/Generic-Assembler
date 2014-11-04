@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class DataSource {
 	
-	ArrayList<ArrayList<String>> assemblyCode;
+	ArrayList<String> assemblyCode;
 	
 	ArrayList<String> architecture;
 	HashMap<String, MnemonicFormatData> mnemonicTable;
@@ -22,7 +22,7 @@ public class DataSource {
 	
 	public DataSource(){
 		
-		assemblyCode = new ArrayList<ArrayList<String>>();
+		assemblyCode = new ArrayList<String>();
 		
 		architecture = new ArrayList<String>();
 		mnemonicTable = new HashMap<String, MnemonicFormatData>();
@@ -31,11 +31,11 @@ public class DataSource {
 		
 	}
 
-	public ArrayList<ArrayList<String>> getAssemblyCode() {
+	public ArrayList<String> getAssemblyCode() {
 		return assemblyCode;
 	}
 
-	public void setAssemblyCode(ArrayList<ArrayList<String>> assemblyCode) {
+	public void setAssemblyCode(ArrayList<String> assemblyCode) {
 		this.assemblyCode = assemblyCode;
 	}
 

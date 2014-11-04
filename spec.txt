@@ -6,11 +6,13 @@ ADD op1, op2, op3
 	opcode=000000, func=100000, shamt=00000 
 	R-type
 	
-LHU rt offset(base)
+	
+	
+LHU (offset,base[rt])
 	opcode=100101
 	I-type
-	
-	
+
+
 registers:
 v0-v1 = 2-3 	
 cp		= 45

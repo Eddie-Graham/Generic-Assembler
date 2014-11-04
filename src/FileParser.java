@@ -13,13 +13,16 @@ import java.util.Scanner;
 public class FileParser {
 	
 	DataSource data;
+	
 	boolean architecture, registers, mnemonicFormat, instructionFormat, operandsyntax;
 	boolean atMnemonicFormat, atCodes, atInsName, firstTab;
+	
 	MnemonicFormatData currentMnemonicFormat;
 	
 	public FileParser(String assemblyFile, String specFile){
 		
 		data = new DataSource();
+		
 		architecture = false;
 		registers = false;
 		mnemonicFormat = false;
@@ -29,7 +32,7 @@ public class FileParser {
 		atMnemonicFormat = true;
 		atCodes = false;
 		atInsName = false;
-		firstTab = true;
+		firstTab = true;		
 		
 		currentMnemonicFormat = null;
 		
@@ -48,21 +51,14 @@ public class FileParser {
 			System.exit(0);
 		}
 
-		while (inputFile.hasNextLine()) {
+		while (inputFile.hasNextLine()) {			
 			
-			ArrayList<String> assembly = new ArrayList<String>();
 			String line = inputFile.nextLine();
 			
-			if(!line.isEmpty()){
-				String[] tokens = line.replaceAll("^[,\\s]+", "").split("[,\\s]+");
-			
-				for(String token: tokens)
-					assembly.add(token);
-				
-			data.getAssemblyCode().add(assembly);
-			}
-		}
-		
+			if (line.trim().length() > 0){
+				data.getAssemblyCode().add(line);
+			}						
+		}		
 		inputFile.close();
 	}
 	
@@ -81,7 +77,7 @@ public class FileParser {
 			boolean title = false;
 			String line = inputFile.nextLine();
 
-			if (!line.isEmpty()) {
+			if (line.trim().length() > 0){
 				
 				if (line.startsWith("architecture:")) {
 					setBooleanValues(true, false, false, false, false);
@@ -178,59 +174,43 @@ public class FileParser {
 	
 	private void analyseMnemonicFormat(String line){		
 		
-		String[] tokens = line.split("\\s+");
-		MnemonicFormatData mnemonicFormat = currentMnemonicFormat; 
-		boolean inCodes = false;
-		String opCodes = "";
+		MnemonicFormatData mnemonicFormat = currentMnemonicFormat;
 		
-		if(line.startsWith("\t")){
-			if(firstTab){				
-				atCodes = true;
-				atMnemonicFormat = false;
-				firstTab = false;
-			}
-			else{
-				atCodes = false;
-				atInsName = true;
-			}
-		}
-		
-		else{
-			mnemonicFormat = new MnemonicFormatData();
-			resetBooleanValues();
-			currentMnemonicFormat = mnemonicFormat;
-		}
-		
-		boolean first = true;
-		
-		for(String token: tokens){
-			
-			if (atMnemonicFormat) {				
-				if(first){
-					mnemonicFormat.setMnemonic(token);
-					first = false;
+		if (line.trim().length() > 0) {
+			if (line.startsWith("\t")) {
+				if (firstTab) {
+					atCodes = true;
+					atMnemonicFormat = false;
+					firstTab = false;
+				} else {
+					atCodes = false;
+					atInsName = true;
 				}
-		
-				token = token.replaceAll("[,]", "");
-				mnemonicFormat.getMnemonicFormat().add(token);
-			} 
+			}
+			else {
+				mnemonicFormat = new MnemonicFormatData();
+				resetBooleanValues();
+				currentMnemonicFormat = mnemonicFormat;
+			}
 			
+			if (atMnemonicFormat) {
+				String[] tokens = line.split("\\s+");
+				String mnemonicName = tokens[0];
+
+				mnemonicFormat.setMnemonic(mnemonicName);
+				mnemonicFormat.setMnemonicFormat(line);
+			}
 			else if (atCodes) {
-				opCodes += token;
-				inCodes = true;
-			} 
-			
-			else if (atInsName) {				
-				if(!token.isEmpty()){
-					mnemonicFormat.setInstructionName(token);	
-					String mnemonic = mnemonicFormat.getMnemonic();
-					data.getMnemonicTable().put(mnemonic, currentMnemonicFormat);
-				}
-			}			
+				formatOpcodes(mnemonicFormat, line);
+			}
+			else if (atInsName) {
+				String insName = line.replaceAll("\\s+", "");				
+				mnemonicFormat.setInstructionName(insName);
+				
+				String mnemonic = mnemonicFormat.getMnemonic();				
+				data.getMnemonicTable().put(mnemonic, currentMnemonicFormat);
+			}
 		}
-		
-		if(inCodes)
-			formatOpcodes(mnemonicFormat, opCodes);		
 	}
 	
 	private void resetBooleanValues() {
@@ -244,6 +224,8 @@ public class FileParser {
 	}
 
 	private void formatOpcodes(MnemonicFormatData mnemonicFormat, String opcodes) {
+
+		opcodes = opcodes.replaceAll("\\s+", "");
 
 		String[] conditions = opcodes.split(",");		
 		
@@ -271,8 +253,7 @@ public class FileParser {
 				String operand = tokenTerms[0];
 				int bitSize = Integer.parseInt(tokenTerms[1]);
 				insF.getOperands().add(operand);
-				insF.getOperandBitHash().put(operand, bitSize);
-							
+				insF.getOperandBitHash().put(operand, bitSize);							
 			}
 		}
 		insF.setInstructionName(insName);
@@ -318,8 +299,7 @@ public class FileParser {
 			String hex = registers.get(1);			
 			data.getRegisterHash().put(regLabel, hex);
 		}
-	}
-	
+	}	
 
 	public DataSource getData() {
 		return data;

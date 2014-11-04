@@ -11,14 +11,14 @@ import java.util.HashMap;
 public class MnemonicFormatData {
 	
 	String mnemonic;
-	ArrayList<String> mnemonicFormat;
+	String mnemonicFormat;
 	HashMap<String,String> opcodes;
 	String instructionName;
 	
 	public MnemonicFormatData(){
 		
 		mnemonic = "";
-		mnemonicFormat = new ArrayList<String>();
+		mnemonicFormat = "";
 		opcodes = new HashMap<String, String>();
 		instructionName = "";
 	}
@@ -31,11 +31,11 @@ public class MnemonicFormatData {
 		this.mnemonic = mnemonic;
 	}
 
-	public ArrayList<String> getMnemonicFormat() {
+	public String getMnemonicFormat() {
 		return mnemonicFormat;
 	}
 
-	public void setMnemonicFormat(ArrayList<String> mnemonicFormat) {
+	public void setMnemonicFormat(String mnemonicFormat) {
 		this.mnemonicFormat = mnemonicFormat;
 	}
 

@@ -49,6 +49,7 @@ public class Main {
 //		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
 //		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpcodes());
 //		System.out.println("opFor " + data.getMnemonicTable().get(s).getMnemonicFormat());
+//		System.out.println("opIns " + data.getMnemonicTable().get(s).getInstructionName());
 		
 //		System.out.println(data.getMemorySyntax());
 		
