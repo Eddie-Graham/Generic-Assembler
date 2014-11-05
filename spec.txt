@@ -1,24 +1,28 @@
 architecture:
 x86 
 
-mnemonicformat:
-ADD op1, op2, op3	
+mnemonicformat:	;comment
+ADD op1, op2, op3	 
 	opcode=000000, func=100000, shamt=00000 
-	R-type
+	R-type 
 	
+
 	
 	
 LHU (offset,base[rt])
 	opcode=100101
 	I-type
+	
+DEL op1, [[op2, op3]]
+	opcode = 11111, func=000000, shamt = 11111
+	R-type
 
 
 registers:
-v0-v1 = 2-3 	
-cp		= 45
-a0-a3 = 4-7 	
-t0-t7 = 8-15 	
-sp = 43
+Values in binary
+A 000
+B 111
+t0 11
 
 
 instructionformat:

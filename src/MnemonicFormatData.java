@@ -10,10 +10,10 @@ import java.util.HashMap;
 
 public class MnemonicFormatData {
 	
-	String mnemonic;
-	String mnemonicFormat;
-	HashMap<String,String> opcodes;
-	String instructionName;
+	private String mnemonic;
+	private String mnemonicFormat;
+	private HashMap<String,String> opcodes;
+	private String instructionName;
 	
 	public MnemonicFormatData(){
 		

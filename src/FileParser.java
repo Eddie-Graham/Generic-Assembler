@@ -7,17 +7,17 @@
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class FileParser {
 	
-	DataSource data;
+	private DataSource data;
 	
-	boolean architecture, registers, mnemonicFormat, instructionFormat, operandsyntax;
-	boolean atMnemonicFormat, atCodes, atInsName, firstTab;
-	
-	MnemonicFormatData currentMnemonicFormat;
+	private boolean architecture, registers, mnemonicFormat, instructionFormat, operandsyntax;
+	private boolean atMnemonicFormat, atCodes, atInsName, firstTab;
+	private boolean regFirst;
+	private String regValueType;	
+	private MnemonicFormatData currentMnemonicFormat;
 	
 	public FileParser(String assemblyFile, String specFile){
 		
@@ -32,7 +32,11 @@ public class FileParser {
 		atMnemonicFormat = true;
 		atCodes = false;
 		atInsName = false;
-		firstTab = true;		
+		firstTab = true;
+		
+		regFirst = true;
+		
+		regValueType = "";
 		
 		currentMnemonicFormat = null;
 		
@@ -55,7 +59,10 @@ public class FileParser {
 			
 			String line = inputFile.nextLine();
 			
-			if (line.trim().length() > 0){
+			if (line.trim().length() > 0 && !line.startsWith(";")){				
+				String[] commentSplit = line.split(";");
+				line = commentSplit[0];
+				
 				data.getAssemblyCode().add(line);
 			}						
 		}		
@@ -74,52 +81,44 @@ public class FileParser {
 		}	
 
 		while (inputFile.hasNextLine()) {
-			boolean title = false;
+			
 			String line = inputFile.nextLine();
 
-			if (line.trim().length() > 0){
+			if (line.trim().length() > 0 && !line.startsWith(";")){
 				
-				if (line.startsWith("architecture:")) {
+				String[] commentSplit = line.split(";");
+				line = commentSplit[0];
+				
+				if (line.startsWith("architecture:")) 
 					setBooleanValues(true, false, false, false, false);
-					title = true;
-				}
 
-				else if (line.startsWith("registers:")) {
+				else if (line.startsWith("registers:")) 
 					setBooleanValues(false, true, false, false, false);
-					title = true;
-				}
 
-				else if (line.startsWith("mnemonicformat:")) {
+				else if (line.startsWith("mnemonicformat:")) 
 					setBooleanValues(false, false, true, false, false);
-					title = true;
-				}
 
-				else if (line.startsWith("instructionformat:")) {
+				else if (line.startsWith("instructionformat:")) 
 					setBooleanValues(false, false, false, true, false);
-					title = true;
-				}
 				
-				else if (line.startsWith("operandsyntax:")) {
-					setBooleanValues(false, false, false, false, true);
-					title = true;
-				}
-		
-				if (!title) {
-					if (architecture)
-						analyseArchitecture(line);
+				else if (line.startsWith("operandsyntax:")) 
+					setBooleanValues(false, false, false, false, true);					
+	
+				else if (architecture)
+					analyseArchitecture(line);
 
-					else if (registers)
-						analyseRegisters(line);
+				else if (registers)
+					analyseRegisters(line);
 
-					else if (mnemonicFormat)
-						analyseMnemonicFormat(line);
+				else if (mnemonicFormat)
+					analyseMnemonicFormat(line);
 
-					else if (instructionFormat)
-						analyseInstructionFormat(line);
-					
-					else if (operandsyntax)
-						analyseOperandSyntax(line);
-				}
+				else if (instructionFormat)
+					analyseInstructionFormat(line);
+
+				else if (operandsyntax)
+					analyseOperandSyntax(line);
+				
 			}
 		}
 		inputFile.close();
@@ -160,15 +159,34 @@ public class FileParser {
 	
 	private void analyseRegisters(String line){
 		
-		String[] tokens = line.split("\\s+");
-		ArrayList<String> registers = new ArrayList<String>();
-		
-		for (String token : tokens) {
-			if(!token.equals("="))
-				registers.add(token);										
+		if(regFirst){
+			String[] tokens = line.split("Values in ");			
+			regValueType = tokens[1];													
+			
+			regFirst = false;
 		}
+		else{
+			
+			String[] tokens = line.split("\\s+");
 		
-		putRegistersInHashMap(registers);
+			String regLabel = tokens[0];
+			String regValue = tokens[1];
+	
+			if(regValueType.equals("binary")){
+				data.getRegisterHash().put(regLabel, regValue);
+			}
+			else if(regValueType.equals("hex")){
+				regValue = Assembler.hexToBinary(regValue);
+				data.getRegisterHash().put(regLabel, regValue);
+			}
+			else if(regValueType.equals("decimal")){
+				regValue = Assembler.decimalToBinary(regValue);
+				data.getRegisterHash().put(regLabel, regValue);
+			}
+			else{
+				//error
+			}
+		}
 	}
 	
 	
@@ -176,13 +194,14 @@ public class FileParser {
 		
 		MnemonicFormatData mnemonicFormat = currentMnemonicFormat;
 		
-		if (line.trim().length() > 0) {
+		if (line.trim().length() > 0) {	
 			if (line.startsWith("\t")) {
 				if (firstTab) {
 					atCodes = true;
 					atMnemonicFormat = false;
 					firstTab = false;
-				} else {
+				} 
+				else {
 					atCodes = false;
 					atInsName = true;
 				}
@@ -201,7 +220,7 @@ public class FileParser {
 				mnemonicFormat.setMnemonicFormat(line);
 			}
 			else if (atCodes) {
-				formatOpcodes(mnemonicFormat, line);
+				analyseOpcodes(mnemonicFormat, line);
 			}
 			else if (atInsName) {
 				String insName = line.replaceAll("\\s+", "");				
@@ -223,14 +242,14 @@ public class FileParser {
 		currentMnemonicFormat = null;	
 	}
 
-	private void formatOpcodes(MnemonicFormatData mnemonicFormat, String opcodes) {
+	private void analyseOpcodes(MnemonicFormatData mnemonicFormat, String opcodes) {
 
 		opcodes = opcodes.replaceAll("\\s+", "");
 
-		String[] conditions = opcodes.split(",");		
+		String[] tokens = opcodes.split(",");		
 		
-		for(String condition: conditions){
-			String[] elements = condition.split("=");
+		for(String token: tokens){
+			String[] elements = token.split("=");
 			mnemonicFormat.getOpcodes().put(elements[0], elements[1]);
 		}	
 	}
@@ -258,48 +277,7 @@ public class FileParser {
 		}
 		insF.setInstructionName(insName);
 		data.getInstructionFormat().put(insName, insF);
-	}	
-	
-	private void putRegistersInHashMap(ArrayList<String> registers){		
-		
-		if(registers.get(0).contains("-")){
-				
-			String label = registers.get(0);
-			String hexTerm = registers.get(1);						
-			
-			String[] labelNoDash = label.split("-");	// needed for final conversion before entry into hashmap
-			String[] hexNoDash = hexTerm.split("-");	// needed for final conversion before entry into hashmap
-			
-			String tempLabelNum = label.replaceAll("[^\\d.^-]", "");	// remove all except numbers and "-"
-			String[] LabelNumTerms = tempLabelNum.split("-");	// split label numbers in array
-			
-			String tempHex = hexTerm.replaceAll("[^\\d.^-]", "");	// remove all except numbers and "-"
-			String[] hexNumTerms = tempHex.split("-");	// split hex numbers in array
-			
-			int lowerIntHex = Integer.parseInt(hexNumTerms[0]);	// get first hex Int
-			
-			int lowerIntLabel = Integer.parseInt(LabelNumTerms[0]);	// get first label Int
-			int upperIntLabel = Integer.parseInt(LabelNumTerms[1]);	// get last label Int
-			
-			String currentLabel = labelNoDash[0];	// current label to work with 
-			String currentHex = hexNoDash[0];	// current hex to work with 
-			
-			while(lowerIntLabel <= upperIntLabel){
-				String regLabel = currentLabel.replaceAll("[\\d]", Integer.toString(lowerIntLabel));
-				String hex = currentHex.replaceAll("[\\d]", Integer.toString(lowerIntHex));
-				
-				lowerIntHex++;
-				lowerIntLabel++;
-
-				data.getRegisterHash().put(regLabel, hex);
-			}
-		}
-		else{
-			String regLabel = registers.get(0);
-			String hex = registers.get(1);			
-			data.getRegisterHash().put(regLabel, hex);
-		}
-	}	
+	}		
 
 	public DataSource getData() {
 		return data;

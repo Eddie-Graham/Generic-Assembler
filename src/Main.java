@@ -25,7 +25,8 @@ public class Main {
 				
 		FileParser file = new FileParser(args[0], args[1]);
 		
-		DataSource data = file.getData();		
+		DataSource data = file.getData();	
+		
 		
 //		String x = "0x012A4020";
 //		String x = "8";
@@ -38,6 +39,10 @@ public class Main {
 		
 //		String x = "00000001000011010110000000100000";
 //		String s = Assembler.binaryToHex(x);
+//		System.out.println(s);
+		
+//		String x = "7f45";
+//		String s = Assembler.hexToBinary(x);
 //		System.out.println(s);
 				
 //		System.out.println("assembly: " + data.getAssemblyCode());	

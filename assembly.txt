@@ -1,9 +1,9 @@
 
 
+ADD t0, t0, t0 
 
-LHU (t7,t0[t5])
 
-ADD t0, t0, t0
+
 
 
 

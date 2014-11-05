@@ -10,15 +10,15 @@ import java.util.HashMap;
 
 public class DataSource {
 	
-	ArrayList<String> assemblyCode;
+	private ArrayList<String> assemblyCode;
 	
-	ArrayList<String> architecture;
-	HashMap<String, MnemonicFormatData> mnemonicTable;
-	HashMap<String, InstructionFormatData> instructionFormat;	
-	HashMap<String, String> registerHash;
-	String immediateSyntax;
-	String registerSyntax;
-	String memorySyntax;
+	private ArrayList<String> architecture;
+	private HashMap<String, MnemonicFormatData> mnemonicTable;
+	private HashMap<String, InstructionFormatData> instructionFormat;	
+	private HashMap<String, String> registerHash;
+	private String immediateSyntax;
+	private String registerSyntax;
+	private String memorySyntax;
 	
 	public DataSource(){
 		

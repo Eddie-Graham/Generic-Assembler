@@ -11,9 +11,9 @@ import java.util.HashMap;
 
 public class InstructionFormatData {
 	
-	String instructionName;
-	HashMap<String, Integer> operandBitHash;
-	ArrayList<String> operands;
+	private String instructionName;
+	private HashMap<String, Integer> operandBitHash;
+	private ArrayList<String> operands;
 	
 	public InstructionFormatData(){
 		

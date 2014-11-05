@@ -11,8 +11,8 @@ import java.util.HashMap;
 
 public class Assembler {
 
-	DataSource data;
-	ArrayList<String> objectCode;
+	private DataSource data;
+	private ArrayList<String> objectCode;
 
 	public Assembler(DataSource data) {
 
@@ -57,7 +57,7 @@ public class Assembler {
 				String reg = assemblyOpFormatHash.get(operand);
 				String regHex = data.getRegisterHash().get(reg);
 				int bits = insF.getOperandBitHash().get(operand);
-				String binary = binaryFromHexFormatted(regHex, bits);
+				String binary = binaryFromBinaryFormatted(regHex, bits);
 
 				binaryLine += binary + " ";
 			}
@@ -68,6 +68,9 @@ public class Assembler {
 	private HashMap<String, String> makeAssemblyOpFormatHash(String assemblyLine, String mnemonicFormat) {
 
 		HashMap<String, String> assemblyOpFormatHash = new HashMap<String, String>();
+		
+		mnemonicFormat = mnemonicFormat.replaceAll("\\s+", " ");
+		assemblyLine = assemblyLine.replaceAll("\\s+", " ");
 		
 		String[] splitFormatTerms = mnemonicFormat.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
