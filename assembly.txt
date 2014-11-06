@@ -1,6 +1,6 @@
 
 
-ADD t0, t0, t0 
+ADD A, B, C
 
 
 

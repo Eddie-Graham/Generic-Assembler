@@ -15,8 +15,6 @@ public class FileParser {
 	
 	private boolean architecture, registers, mnemonicFormat, instructionFormat, operandsyntax;
 	private boolean atMnemonicFormat, atCodes, atInsName, firstTab;
-	private boolean regFirst;
-	private String regValueType;	
 	private MnemonicFormatData currentMnemonicFormat;
 	
 	public FileParser(String assemblyFile, String specFile){
@@ -33,10 +31,6 @@ public class FileParser {
 		atCodes = false;
 		atInsName = false;
 		firstTab = true;
-		
-		regFirst = true;
-		
-		regValueType = "";
 		
 		currentMnemonicFormat = null;
 		
@@ -101,7 +95,7 @@ public class FileParser {
 				else if (line.startsWith("instructionformat:")) 
 					setBooleanValues(false, false, false, true, false);
 				
-				else if (line.startsWith("operandsyntax:")) 
+				else if (line.startsWith("operandprefixes:")) 
 					setBooleanValues(false, false, false, false, true);					
 	
 				else if (architecture)
@@ -117,26 +111,32 @@ public class FileParser {
 					analyseInstructionFormat(line);
 
 				else if (operandsyntax)
-					analyseOperandSyntax(line);
+					analyseOperandPrefixes(line);
 				
 			}
 		}
 		inputFile.close();
 	}
 	
-	private void analyseOperandSyntax(String line) {
+	private void analyseOperandPrefixes(String line) {
 		
 		String[] tokens = line.split("\\s+");
 
-		if (tokens[0].equals("immediate:")) {
-			data.setImmediateSyntax(tokens[1]);
+		if (tokens[0].equals("immediate:")) {			
+			data.getPrefixHash().put(tokens[1], DataSource.OperandType.IMMEDIATE.name());
+			data.getPrefixes().add(tokens[1]);
 		}
 		else if (tokens[0].equals("register:")) {
-			data.setRegisterSyntax(tokens[1]);
+			data.getPrefixHash().put(tokens[1], DataSource.OperandType.REGISTER.name());
+			data.getPrefixes().add(tokens[1]);
 		}
 		else if (tokens[0].equals("memory:")) {
-			data.setMemorySyntax(tokens[1]);
-		}		
+			data.getPrefixHash().put(tokens[1], DataSource.OperandType.MEMORY.name());
+			data.getPrefixes().add(tokens[1]);
+		}
+		else{
+			//error
+		}
 	}
 
 	private void setBooleanValues(boolean architecture, boolean registers, boolean mnemonicFormat, boolean instructionFormat, boolean operandSyntax){
@@ -150,45 +150,34 @@ public class FileParser {
 	
 	private void analyseArchitecture(String line){
 		
-		String[] tokens = line.split("\\s+");
-		
-		for (String token : tokens) {
-			data.getArchitecture().add(token);					
-		}		
+		data.setArchitecture(line);	
 	}
 	
 	private void analyseRegisters(String line){
 		
-		if(regFirst){
-			String[] tokens = line.split("Values in ");			
-			regValueType = tokens[1];													
+		char dataType = line.charAt(line.length()-1);
+		line = line.substring(0, line.length()-1);
 			
-			regFirst = false;
+		String[] tokens = line.split("\\s+");
+		
+		String regLabel = tokens[0];
+		String regValue = tokens[1];
+	
+		if(dataType == 'B'){
+			data.getRegisterHash().put(regLabel, regValue);
+		}
+		else if(dataType == 'H'){
+			regValue = Assembler.hexToBinary(regValue);
+			data.getRegisterHash().put(regLabel, regValue);
+		}
+		else if(dataType == 'D'){
+			regValue = Assembler.decimalToBinary(regValue);
+			data.getRegisterHash().put(regLabel, regValue);
 		}
 		else{
-			
-			String[] tokens = line.split("\\s+");
-		
-			String regLabel = tokens[0];
-			String regValue = tokens[1];
-	
-			if(regValueType.equals("binary")){
-				data.getRegisterHash().put(regLabel, regValue);
-			}
-			else if(regValueType.equals("hex")){
-				regValue = Assembler.hexToBinary(regValue);
-				data.getRegisterHash().put(regLabel, regValue);
-			}
-			else if(regValueType.equals("decimal")){
-				regValue = Assembler.decimalToBinary(regValue);
-				data.getRegisterHash().put(regLabel, regValue);
-			}
-			else{
-				//error
-			}
+			//error
 		}
-	}
-	
+	}	
 	
 	private void analyseMnemonicFormat(String line){		
 		

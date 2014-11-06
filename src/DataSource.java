@@ -10,25 +10,32 @@ import java.util.HashMap;
 
 public class DataSource {
 	
+	public static enum OperandType {
+	    IMMEDIATE, REGISTER, MEMORY
+	}
+	
 	private ArrayList<String> assemblyCode;
 	
-	private ArrayList<String> architecture;
+	private String architecture;
 	private HashMap<String, MnemonicFormatData> mnemonicTable;
 	private HashMap<String, InstructionFormatData> instructionFormat;	
 	private HashMap<String, String> registerHash;
-	private String immediateSyntax;
-	private String registerSyntax;
-	private String memorySyntax;
+	private HashMap<String, String> prefixHash;
+	
+	private ArrayList<String> prefixes;
+
 	
 	public DataSource(){
 		
 		assemblyCode = new ArrayList<String>();
 		
-		architecture = new ArrayList<String>();
+		architecture = "";
 		mnemonicTable = new HashMap<String, MnemonicFormatData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
+		prefixHash = new HashMap<String, String>();
 		
+		prefixes = new ArrayList<String>();
 	}
 
 	public ArrayList<String> getAssemblyCode() {
@@ -39,11 +46,11 @@ public class DataSource {
 		this.assemblyCode = assemblyCode;
 	}
 
-	public ArrayList<String> getArchitecture() {
+	public String getArchitecture() {
 		return architecture;
 	}
 
-	public void setArchitecture(ArrayList<String> architecture) {
+	public void setArchitecture(String architecture) {
 		this.architecture = architecture;
 	}
 
@@ -72,27 +79,19 @@ public class DataSource {
 		this.registerHash = registerHash;
 	}
 
-	public String getImmediateSyntax() {
-		return immediateSyntax;
+	public HashMap<String, String> getPrefixHash() {
+		return prefixHash;
 	}
 
-	public void setImmediateSyntax(String immediateSyntax) {
-		this.immediateSyntax = immediateSyntax;
+	public void setPrefixHash(HashMap<String, String> prefixHash) {
+		this.prefixHash = prefixHash;
 	}
 
-	public String getRegisterSyntax() {
-		return registerSyntax;
+	public ArrayList<String> getPrefixes() {
+		return prefixes;
 	}
 
-	public void setRegisterSyntax(String registerSyntax) {
-		this.registerSyntax = registerSyntax;
+	public void setPrefixes(ArrayList<String> prefixes) {
+		this.prefixes = prefixes;
 	}
-
-	public String getMemorySyntax() {
-		return memorySyntax;
-	}
-
-	public void setMemorySyntax(String memorySyntax) {
-		this.memorySyntax = memorySyntax;
-	}	
 }

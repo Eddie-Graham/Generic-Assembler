@@ -27,6 +27,8 @@ public class Main {
 		
 		DataSource data = file.getData();	
 		
+		System.out.println(data.getPrefixHash());		
+		System.out.println(data.getPrefixes());
 		
 //		String x = "0x012A4020";
 //		String x = "8";
@@ -41,7 +43,7 @@ public class Main {
 //		String s = Assembler.binaryToHex(x);
 //		System.out.println(s);
 		
-//		String x = "7f45";
+//		String x = "0x8d480060";
 //		String s = Assembler.hexToBinary(x);
 //		System.out.println(s);
 				

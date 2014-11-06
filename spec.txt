@@ -1,13 +1,10 @@
 architecture:
 x86 
 
-mnemonicformat:	;comment
-ADD op1, op2, op3	 
+mnemonicformat:			;reg, memory or immediate	
+ADD rd, rs, rt	 
 	opcode=000000, func=100000, shamt=00000 
-	R-type 
-	
-
-	
+	R-type 	
 	
 LHU (offset,base[rt])
 	opcode=100101
@@ -18,22 +15,22 @@ DEL op1, [[op2, op3]]
 	R-type
 
 
-registers:
-Values in binary
-A 000
-B 111
-t0 11
+registers:				;B for binary, H for hex, D for decimal
+A 	000B
+B 	111B
+C 	11B
 
 
 instructionformat:
-R-type: opcode(6) op2(5) op3(5) op1(5) shamt(5) func(6)
+R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
 I-type: opcode(6) base(5) rt(5) offset(16)
 
 
-operandsyntax:
-register: $...	
-immediate: #...
-memory: 0x...
+operandprefixes:
+	
+immediate: #
+memory: 0x
+register: $
 
 
 
