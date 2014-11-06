@@ -1,8 +1,12 @@
 
 
-ADD A, B, C
+ADD $t0, $t1, $t2
 
+LUI  $t0, 0x0123
 
+SB $t0, 0x123($t0)
+
+ANDI $a2, $a2, #43
 
 
 

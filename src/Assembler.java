@@ -22,7 +22,7 @@ public class Assembler {
 		assemble();
 	}
 
-	public void assemble() {
+	private void assemble() {
 
 		for (String assemblyLine : data.getAssemblyCode()) {
 			System.out.println("**************************************************************");
@@ -32,6 +32,8 @@ public class Assembler {
 	}
 
 	private void populateInstruction(String assemblyLine) {
+		
+		System.out.println(assemblyLine);
 
 		String[] tokens = assemblyLine.split("\\s+");
 		String mnemonic = tokens[0];
@@ -47,22 +49,94 @@ public class Assembler {
 
 		String binaryLine = "";
 
-		for (String operand : insF.getOperands()) { // ins format operands
+		for (String formatOperand : insF.getOperands()) { // ins format operands
+			
+			DataSource.OperandType opType = null;
 
-			if (op.getOpcodes().get(operand) != null) {
-				String binaryOp = op.getOpcodes().get(operand);
+			if (op.getOpcodes().get(formatOperand) != null) {	// an opcode
+				String binaryOp = op.getOpcodes().get(formatOperand);
 				binaryLine += binaryOp + " ";
-			} else { // registers??
+			} 
+			else { // register, immediate or memory???
 
-				String reg = assemblyOpFormatHash.get(operand);
-				String regHex = data.getRegisterHash().get(reg);
-				int bits = insF.getOperandBitHash().get(operand);
-				String binary = binaryFromBinaryFormatted(regHex, bits);
-
-				binaryLine += binary + " ";
+				String assemblyOperand = assemblyOpFormatHash.get(formatOperand);
+				opType = getOpType(assemblyOperand);
+				int bits = insF.getOperandBitHash().get(formatOperand);
+				
+				if(opType == DataSource.OperandType.REGISTER){
+					String regOperand = removePrefix(assemblyOperand);				
+					String regBinary = data.getRegisterHash().get(regOperand);					
+					String binary = binaryFromBinaryFormatted(regBinary, bits);
+					
+					binaryLine += binary + " ";
+					
+				}
+				else if(opType == DataSource.OperandType.MEMORY) {
+					String memOperand = removePrefix(assemblyOperand);								
+					String binary = getBinaryFromNumSys(memOperand, opType, bits);
+					
+					binaryLine += binary + " ";
+				}
+				else if(opType == DataSource.OperandType.IMMEDIATE) {
+					String immOperand = removePrefix(assemblyOperand);				
+					String binary = getBinaryFromNumSys(immOperand, opType, bits);
+					
+					binaryLine += binary + " ";
+				}
+				else{
+					// error??
+				}
 			}
 		}
 		System.out.println(binaryLine);
+	}
+	
+	private String getBinaryFromNumSys(String value, DataSource.OperandType opType, int bits) {
+		
+		String binary = "";
+		
+		if(opType.getSys() == DataSource.TypeNumSystem.DECIMAL){
+			binary = binaryFromDecimalFormatted(value, bits);
+		}
+		else if(opType.getSys() == DataSource.TypeNumSystem.HEX){
+			binary = binaryFromHexFormatted(value, bits);
+		}
+		return binary;
+	}
+
+	private String removePrefix(String operand) {
+
+		ArrayList<String> prefixes = data.getPrefixes();
+
+		for (String prefix : prefixes) {
+			if (operand.startsWith(prefix)) {
+				
+				if(!isAlphaNumeric(prefix)){
+					operand = operand.replaceFirst("\\"+prefix, "");	// what if more than single char prefix??
+					break;
+				}
+				else{
+					operand = operand.replaceFirst(prefix, "");
+				}
+			}
+		}		
+		return operand;
+	}
+
+	private DataSource.OperandType getOpType(String assemblyOperand) {
+		
+		DataSource.OperandType opType = null;
+		
+		ArrayList<String> prefixes = data.getPrefixes();
+		
+		for(String prefix: prefixes){
+			
+			if(assemblyOperand.startsWith(prefix)){
+				opType = data.getPrefixTypeHash().get(prefix);
+				break;
+			}
+		}
+		return opType;
 	}
 
 	private HashMap<String, String> makeAssemblyOpFormatHash(String assemblyLine, String mnemonicFormat) {
@@ -72,14 +146,22 @@ public class Assembler {
 		mnemonicFormat = mnemonicFormat.replaceAll("\\s+", " ");
 		assemblyLine = assemblyLine.replaceAll("\\s+", " ");
 		
+		ArrayList<String> prefixes = data.getPrefixes();
+		String prefixRegex = "";
+		
+		for(String prefix: prefixes){
+			if(!isAlphaNumeric(prefix))
+				prefixRegex += prefix;
+		}
+		
 		String[] splitFormatTerms = mnemonicFormat.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-				
+		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9" + prefixRegex + "])|(?<=[^a-zA-Z0-9" + prefixRegex + "])");
+	
 		int i = 0;
 
 		for (String term : splitFormatTerms) {
 			if (!isAlphaNumeric(term)) {
-				// correct
+				// skip
 			} 
 			else {
 				String assemblyTerm = splitAssemblyTerms[i];
@@ -115,14 +197,27 @@ public class Assembler {
 		
 		return regex;
 	}
+	
+	public static String binaryFromDecimalFormatted(String decimal, int bits) {
+
+		String binary = decimalToBinary(decimal);
+
+		int initialLength = binary.length();
+		int zerosNeeded = bits - initialLength;
+
+		String zeros = "";
+
+		for (; zerosNeeded > 0; zerosNeeded -= 1)
+			zeros += "0";
+
+		String finalString = zeros + binary;
+
+		return finalString;
+	}
 
 	public static String binaryFromHexFormatted(String hex, int bits) {
 
-		if (hex.charAt(0) == '$') {
-			hex = hex.substring(1);
-		}
-
-		String binary = decimalToBinary(hex);
+		String binary = hexToBinary(hex);
 
 		int initialLength = binary.length();
 		int zerosNeeded = bits - initialLength;

@@ -1,36 +1,51 @@
 architecture:
-x86 
+MIPS
 
-mnemonicformat:			;reg, memory or immediate	
+mnemonicformat:				
 ADD rd, rs, rt	 
 	opcode=000000, func=100000, shamt=00000 
 	R-type 	
 	
-LHU (offset,base[rt])
-	opcode=100101
+LUI rt, immediate
+	opcode=001111, rs=00000
 	I-type
-	
-DEL op1, [[op2, op3]]
-	opcode = 11111, func=000000, shamt = 11111
-	R-type
+
+SB rt, immediate(rs)
+	opcode=101000
+	I-type
+
+ANDI rt, rs, immediate
+	opcode=001100
+	I-type
 
 
 registers:				;B for binary, H for hex, D for decimal
-A 	000B
-B 	111B
-C 	11B
+v0	2H
+v1	3H
+a0	4H
+a1	5H	
+a2	6H
+a3	7H
+t0	8H
+t1	9H
+t2	10H
+t3	11H
+t4	12H
+t5	13H
+t6	14H
+t7	15H
 
 
 instructionformat:
 R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
-I-type: opcode(6) base(5) rt(5) offset(16)
+I-type: opcode(6) rs(5) rt(5) immediate(16)
 
 
-operandprefixes:
+operandprefixes:	; Decimal or Hex
 	
-immediate: #
-memory: 0x
-register: $
+immediate: #  Decimal
+memory: 0x	Hex
+register: $	
 
 
 

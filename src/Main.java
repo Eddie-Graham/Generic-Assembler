@@ -27,8 +27,8 @@ public class Main {
 		
 		DataSource data = file.getData();	
 		
-		System.out.println(data.getPrefixHash());		
-		System.out.println(data.getPrefixes());
+//		System.out.println(data.getPrefixHash());		
+//		System.out.println(data.getPrefixes());
 		
 //		String x = "0x012A4020";
 //		String x = "8";
@@ -52,7 +52,7 @@ public class Main {
 //		System.out.println("insF " + data.getInstructionFormat());	
 //		System.out.println("regHash " + data.getRegisterHash());
 		
-//		String s = "LHU";
+//		String s = "ADD";
 //		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
 //		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpcodes());
 //		System.out.println("opFor " + data.getMnemonicTable().get(s).getMnemonicFormat());

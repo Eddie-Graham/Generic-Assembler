@@ -121,17 +121,36 @@ public class FileParser {
 	private void analyseOperandPrefixes(String line) {
 		
 		String[] tokens = line.split("\\s+");
+		
+		DataSource.TypeNumSystem sysType = null;
+		DataSource.OperandType opType = null;
+		
+		if(tokens.length > 2){
+			if(tokens[2].equalsIgnoreCase("Decimal")){
+				sysType = DataSource.TypeNumSystem.DECIMAL;
+			}
+			else if(tokens[2].equalsIgnoreCase("Hex")){
+				sysType = DataSource.TypeNumSystem.HEX;	
+			}
+		}		
 
-		if (tokens[0].equals("immediate:")) {			
-			data.getPrefixHash().put(tokens[1], DataSource.OperandType.IMMEDIATE.name());
+		if (tokens[0].equals("immediate:")) {	
+			opType = DataSource.OperandType.IMMEDIATE;
+			opType.setType(sysType);
+			data.getPrefixTypeHash().put(tokens[1], opType);
 			data.getPrefixes().add(tokens[1]);
+			
 		}
 		else if (tokens[0].equals("register:")) {
-			data.getPrefixHash().put(tokens[1], DataSource.OperandType.REGISTER.name());
+			opType = DataSource.OperandType.REGISTER;
+			opType.setType(sysType);
+			data.getPrefixTypeHash().put(tokens[1], opType);
 			data.getPrefixes().add(tokens[1]);
 		}
 		else if (tokens[0].equals("memory:")) {
-			data.getPrefixHash().put(tokens[1], DataSource.OperandType.MEMORY.name());
+			opType = DataSource.OperandType.MEMORY;
+			opType.setType(sysType);
+			data.getPrefixTypeHash().put(tokens[1], opType);
 			data.getPrefixes().add(tokens[1]);
 		}
 		else{

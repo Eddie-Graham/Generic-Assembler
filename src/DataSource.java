@@ -11,30 +11,42 @@ import java.util.HashMap;
 public class DataSource {
 	
 	public static enum OperandType {
-	    IMMEDIATE, REGISTER, MEMORY
+	    IMMEDIATE, REGISTER, MEMORY;
+	    
+	    public void setType(TypeNumSystem sys) {
+	        this.sys = sys;
+	      }
+	    
+	    public TypeNumSystem getSys(){
+	    	return sys;
+	    }	    
+	    
+	    public TypeNumSystem sys;
+	}	
+	
+	public static enum TypeNumSystem{
+		DECIMAL, HEX
 	}
 	
-	private ArrayList<String> assemblyCode;
+	
+	private ArrayList<String> assemblyCode;	
 	
 	private String architecture;
 	private HashMap<String, MnemonicFormatData> mnemonicTable;
 	private HashMap<String, InstructionFormatData> instructionFormat;	
 	private HashMap<String, String> registerHash;
-	private HashMap<String, String> prefixHash;
-	
+	private HashMap<String, OperandType> prefixTypeHash;	
 	private ArrayList<String> prefixes;
-
 	
 	public DataSource(){
 		
-		assemblyCode = new ArrayList<String>();
+		assemblyCode = new ArrayList<String>();	
 		
 		architecture = "";
 		mnemonicTable = new HashMap<String, MnemonicFormatData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
-		prefixHash = new HashMap<String, String>();
-		
+		prefixTypeHash = new HashMap<String, OperandType>();		
 		prefixes = new ArrayList<String>();
 	}
 
@@ -79,12 +91,12 @@ public class DataSource {
 		this.registerHash = registerHash;
 	}
 
-	public HashMap<String, String> getPrefixHash() {
-		return prefixHash;
+	public HashMap<String, OperandType> getPrefixTypeHash() {
+		return prefixTypeHash;
 	}
 
-	public void setPrefixHash(HashMap<String, String> prefixHash) {
-		this.prefixHash = prefixHash;
+	public void setPrefixTypeHash(HashMap<String, OperandType> prefixTypeHash) {
+		this.prefixTypeHash = prefixTypeHash;
 	}
 
 	public ArrayList<String> getPrefixes() {
@@ -93,5 +105,5 @@ public class DataSource {
 
 	public void setPrefixes(ArrayList<String> prefixes) {
 		this.prefixes = prefixes;
-	}
+	}	
 }
