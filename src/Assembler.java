@@ -154,14 +154,17 @@ public class Assembler {
 				prefixRegex += prefix;
 		}
 		
+		mnemonicFormat = mnemonicFormat.trim();	// remove leading and trailing whitespace
+		assemblyLine = assemblyLine.trim();
+		
 		String[] splitFormatTerms = mnemonicFormat.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9" + prefixRegex + "])|(?<=[^a-zA-Z0-9" + prefixRegex + "])");
-	
+			
 		int i = 0;
 
 		for (String term : splitFormatTerms) {
 			if (!isAlphaNumeric(term)) {
-				// skip
+				// correct
 			} 
 			else {
 				String assemblyTerm = splitAssemblyTerms[i];

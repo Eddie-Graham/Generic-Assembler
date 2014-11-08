@@ -1,7 +1,11 @@
+;*******************************MIPS*******************************
+; comments 
+
 architecture:
 MIPS
 
-mnemonicformat:				
+mnemonicformat:		
+		
 ADD rd, rs, rt	 
 	opcode=000000, func=100000, shamt=00000 
 	R-type 	
@@ -14,12 +18,13 @@ SB rt, immediate(rs)
 	opcode=101000
 	I-type
 
-ANDI rt, rs, immediate
+ANDI rt, rs, immediate  
 	opcode=001100
 	I-type
 
 
 registers:				;B for binary, H for hex, D for decimal
+
 v0	2H
 v1	3H
 a0	4H
@@ -37,6 +42,7 @@ t7	15H
 
 
 instructionformat:
+
 R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
 I-type: opcode(6) rs(5) rt(5) immediate(16)
 
