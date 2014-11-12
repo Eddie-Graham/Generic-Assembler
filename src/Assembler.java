@@ -52,10 +52,10 @@ public class Assembler {
 		for (String formatOperand : insF.getOperands()) { // ins format operands
 			
 			DataSource.OperandType opType = null;
+			String binary = "";
 
-			if (op.getOpcodes().get(formatOperand) != null) {	// an opcode
-				String binaryOp = op.getOpcodes().get(formatOperand);
-				binaryLine += binaryOp + " ";
+			if (op.getOpCodes().get(formatOperand) != null) {	// an opcode
+				binary = op.getOpCodes().get(formatOperand);
 			} 
 			else { // register, immediate or memory???
 
@@ -66,27 +66,21 @@ public class Assembler {
 				if(opType == DataSource.OperandType.REGISTER){
 					String regOperand = removePrefix(assemblyOperand);				
 					String regBinary = data.getRegisterHash().get(regOperand);					
-					String binary = binaryFromBinaryFormatted(regBinary, bits);
-					
-					binaryLine += binary + " ";
-					
+					binary = binaryFromBinaryFormatted(regBinary, bits);					
 				}
 				else if(opType == DataSource.OperandType.MEMORY) {
 					String memOperand = removePrefix(assemblyOperand);								
-					String binary = getBinaryFromNumSys(memOperand, opType, bits);
-					
-					binaryLine += binary + " ";
+					binary = getBinaryFromNumSys(memOperand, opType, bits);
 				}
 				else if(opType == DataSource.OperandType.IMMEDIATE) {
 					String immOperand = removePrefix(assemblyOperand);				
-					String binary = getBinaryFromNumSys(immOperand, opType, bits);
-					
-					binaryLine += binary + " ";
+					binary = getBinaryFromNumSys(immOperand, opType, bits);
 				}
 				else{
 					// error??
-				}
+				}	
 			}
+			binaryLine += binary + " ";
 		}
 		System.out.println(binaryLine);
 	}
@@ -117,6 +111,7 @@ public class Assembler {
 				}
 				else{
 					operand = operand.replaceFirst(prefix, "");
+					break;
 				}
 			}
 		}		
@@ -146,6 +141,9 @@ public class Assembler {
 		mnemonicFormat = mnemonicFormat.replaceAll("\\s+", " ");
 		assemblyLine = assemblyLine.replaceAll("\\s+", " ");
 		
+		mnemonicFormat = mnemonicFormat.trim();	// remove leading and trailing whitespace
+		assemblyLine = assemblyLine.trim();
+		
 		ArrayList<String> prefixes = data.getPrefixes();
 		String prefixRegex = "";
 		
@@ -153,9 +151,6 @@ public class Assembler {
 			if(!isAlphaNumeric(prefix))
 				prefixRegex += prefix;
 		}
-		
-		mnemonicFormat = mnemonicFormat.trim();	// remove leading and trailing whitespace
-		assemblyLine = assemblyLine.trim();
 		
 		String[] splitFormatTerms = mnemonicFormat.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9" + prefixRegex + "])|(?<=[^a-zA-Z0-9" + prefixRegex + "])");

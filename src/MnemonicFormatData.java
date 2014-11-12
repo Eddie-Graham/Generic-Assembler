@@ -12,14 +12,16 @@ public class MnemonicFormatData {
 	
 	private String mnemonic;
 	private String mnemonicFormat;
-	private HashMap<String,String> opcodes;
+	private HashMap<String,String> opCodes;
+	private ArrayList<ArrayList<DataSource.OperandType>> opFormats;
 	private String instructionName;
 	
 	public MnemonicFormatData(){
 		
 		mnemonic = "";
 		mnemonicFormat = "";
-		opcodes = new HashMap<String, String>();
+		opCodes = new HashMap<String, String>();
+		opFormats = new ArrayList<ArrayList<DataSource.OperandType>>();
 		instructionName = "";
 	}
 
@@ -39,12 +41,20 @@ public class MnemonicFormatData {
 		this.mnemonicFormat = mnemonicFormat;
 	}
 
-	public HashMap<String, String> getOpcodes() {
-		return opcodes;
+	public HashMap<String, String> getOpCodes() {
+		return opCodes;
 	}
 
-	public void setOpcodes(HashMap<String, String> opcodes) {
-		this.opcodes = opcodes;
+	public void setOpCodes(HashMap<String, String> opCodes) {
+		this.opCodes = opCodes;
+	}
+
+	public ArrayList<ArrayList<DataSource.OperandType>> getOpFormats() {
+		return opFormats;
+	}
+
+	public void setOpFormats(ArrayList<ArrayList<DataSource.OperandType>> opFormats) {
+		this.opFormats = opFormats;
 	}
 
 	public String getInstructionName() {

@@ -6,7 +6,9 @@ MIPS
 
 mnemonicformat:		
 		
-ADD rd, rs, rt	 
+ADD rd, rs, rt		
+		REG, REG, REG			; REG, MEMORY, IMMEDIATE, LABEL, NO OPERANDS
+		REG, MEMORY, REG	 
 	opcode=000000, func=100000, shamt=00000 
 	R-type 	
 	
@@ -15,6 +17,8 @@ LUI rt, immediate
 	I-type
 
 SB rt, immediate(rs)
+		REG, IMMEDIATE, REG
+		NO-OPERANDS
 	opcode=101000
 	I-type
 
@@ -22,24 +26,40 @@ ANDI rt, rs, immediate
 	opcode=001100
 	I-type
 
-
+LW rt, immediate(rs)
+	opcode=100011
+	I-type
+	
 registers:				;B for binary, H for hex, D for decimal
 
 v0	2H
 v1	3H
+
 a0	4H
 a1	5H	
 a2	6H
 a3	7H
+
 t0	8H
 t1	9H
-t2	10H
+t2	10H			
 t3	11H
 t4	12H
 t5	13H
 t6	14H
 t7	15H
 
+s0	16H
+s1	17H
+s2	18H
+s3	19H			
+s4	20H	
+s5	21H
+s6	22H
+s7	23H
+
+t8	24H
+t9	25H
 
 instructionformat:
 

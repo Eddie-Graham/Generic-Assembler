@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class DataSource {
 	
 	public static enum OperandType {
-	    IMMEDIATE, REGISTER, MEMORY;
+	    IMMEDIATE, REGISTER, MEMORY, LABEL, NOOPERAND;
 	    
 	    public void setType(TypeNumSystem sys) {
 	        this.sys = sys;

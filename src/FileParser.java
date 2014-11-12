@@ -7,6 +7,8 @@
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class FileParser {
@@ -14,7 +16,7 @@ public class FileParser {
 	private DataSource data;
 	
 	private boolean architecture, registers, mnemonicFormat, instructionFormat, operandsyntax;
-	private boolean atMnemonicFormat, atCodes, atInsName, firstTab;
+	private boolean atMnemonicFormat, atOpFormat, atOpCodes, atInsName, firstTab;
 	private MnemonicFormatData currentMnemonicFormat;
 	
 	public FileParser(String assemblyFile, String specFile){
@@ -28,7 +30,8 @@ public class FileParser {
 		operandsyntax = false;
 		
 		atMnemonicFormat = true;
-		atCodes = false;
+		atOpFormat = false;
+		atOpCodes = false;
 		atInsName = false;
 		firstTab = true;
 		
@@ -52,10 +55,11 @@ public class FileParser {
 		while (inputFile.hasNextLine()) {			
 			
 			String line = inputFile.nextLine();
+			String[] commentSplit = line.split(";");
+			line = commentSplit[0];
 			
 			if (line.trim().length() > 0 && !line.startsWith(";")){				
-				String[] commentSplit = line.split(";");
-				line = commentSplit[0];
+				line.replaceAll("\\s+$", "");	// remove end whitespace
 				
 				data.getAssemblyCode().add(line);
 			}						
@@ -77,11 +81,13 @@ public class FileParser {
 		while (inputFile.hasNextLine()) {
 			
 			String line = inputFile.nextLine();
+			String[] commentSplit = line.split(";");
+			line = commentSplit[0];
 
 			if (line.trim().length() > 0 && !line.startsWith(";")){
 				
-				String[] commentSplit = line.split(";");
-				line = commentSplit[0];
+				
+				line = line.replaceAll("\\s+$", "");	// remove end whitespace
 				
 				if (line.startsWith("architecture:")) 
 					setBooleanValues(true, false, false, false, false);
@@ -200,57 +206,96 @@ public class FileParser {
 	
 	private void analyseMnemonicFormat(String line){		
 		
-		MnemonicFormatData mnemonicFormat = currentMnemonicFormat;
-		
 		if (line.trim().length() > 0) {	
-			if (line.startsWith("\t")) {
+			if(line.startsWith("\t\t")){	// op formats			
+				atMnemonicFormat = false;
+				atOpFormat = true;
+				atOpCodes = false;
+				atInsName = false;
+			}
+			else if (line.startsWith("\t")) {	//opcodes
 				if (firstTab) {
-					atCodes = true;
 					atMnemonicFormat = false;
+					atOpFormat = false;
+					atOpCodes = true;					
+					atInsName = false;
+					
 					firstTab = false;
 				} 
-				else {
-					atCodes = false;
+				else {	// ins name
+					atOpCodes = false;
+					atOpFormat = false;
+					atMnemonicFormat = false;
 					atInsName = true;
 				}
 			}
-			else {
-				mnemonicFormat = new MnemonicFormatData();
+			else {	// new mnemonic
 				resetBooleanValues();
-				currentMnemonicFormat = mnemonicFormat;
+				currentMnemonicFormat = new MnemonicFormatData();
 			}
 			
 			if (atMnemonicFormat) {
 				String[] tokens = line.split("\\s+");
 				String mnemonicName = tokens[0];
 
-				mnemonicFormat.setMnemonic(mnemonicName);
-				mnemonicFormat.setMnemonicFormat(line);
+				currentMnemonicFormat.setMnemonic(mnemonicName);
+				currentMnemonicFormat.setMnemonicFormat(line);
 			}
-			else if (atCodes) {
-				analyseOpcodes(mnemonicFormat, line);
+			else if (atOpFormat) {
+				analyseOpFormat(line);
+			}			
+			else if (atOpCodes) {
+				analyseOpcodes(line);
 			}
 			else if (atInsName) {
 				String insName = line.replaceAll("\\s+", "");				
-				mnemonicFormat.setInstructionName(insName);
+				currentMnemonicFormat.setInstructionName(insName);
 				
-				String mnemonic = mnemonicFormat.getMnemonic();				
+				String mnemonic = currentMnemonicFormat.getMnemonic();				
 				data.getMnemonicTable().put(mnemonic, currentMnemonicFormat);
 			}
 		}
 	}
 	
+	private void analyseOpFormat(String line) {
+		
+		ArrayList<DataSource.OperandType> format = new ArrayList<DataSource.OperandType>();
+		
+		line = line.trim();
+		line = line.replaceAll("\\s+", "");
+		String[] types = line.split(",");
+		
+		for(String type: types){
+			if(type.equalsIgnoreCase("REG"))
+				format.add(DataSource.OperandType.REGISTER);
+			
+			else if(type.equalsIgnoreCase("MEMORY"))
+				format.add(DataSource.OperandType.MEMORY);
+			
+			else if(type.equalsIgnoreCase("IMMEDIATE"))
+				format.add(DataSource.OperandType.IMMEDIATE);
+			
+			else if(type.equalsIgnoreCase("LABEL"))
+				format.add(DataSource.OperandType.LABEL);
+			
+			else if(type.equalsIgnoreCase("NO-OPERANDS"))
+				format.add(DataSource.OperandType.NOOPERAND);			
+		}
+		currentMnemonicFormat.getOpFormats().add(format);		
+	}
+
 	private void resetBooleanValues() {
 		
 		atMnemonicFormat = true;
-		atCodes = false;
+		atOpFormat = false;
+		atOpCodes = false;
 		atInsName = false;
 		firstTab = true;
 		
 		currentMnemonicFormat = null;	
 	}
 
-	private void analyseOpcodes(MnemonicFormatData mnemonicFormat, String opcodes) {
+	private void analyseOpcodes(String opcodes) {
 
 		opcodes = opcodes.replaceAll("\\s+", "");
 
@@ -258,7 +303,7 @@ public class FileParser {
 		
 		for(String token: tokens){
 			String[] elements = token.split("=");
-			mnemonicFormat.getOpcodes().put(elements[0], elements[1]);
+			currentMnemonicFormat.getOpCodes().put(elements[0], elements[1]);
 		}	
 	}
 
