@@ -22,16 +22,21 @@ public class Assembler {
 		assemble();
 	}
 
-	private void assemble() {
+	private void assemble(){
 
 		for (String assemblyLine : data.getAssemblyCode()) {
 			System.out.println("**************************************************************");
 
-			populateInstruction(assemblyLine);
+			try {
+				populateInstruction(assemblyLine);
+			} catch (AssemblerException e) {
+				System.out.println("Exception: " + e.getMessage());
+				System.out.println("At line: " + assemblyLine);
+			}
 		}
 	}
 
-	private void populateInstruction(String assemblyLine) {
+	private void populateInstruction(String assemblyLine) throws AssemblerException {
 		
 		System.out.println(assemblyLine);
 
@@ -86,7 +91,7 @@ public class Assembler {
 		System.out.println(binaryLine);
 	}
 
-	private HashMap<String, DataSource.OperandType> makeAndCheckAssemblyOpTypeHash(String assemblyLine,	MnemonicFormatData op) {
+	private HashMap<String, DataSource.OperandType> makeAndCheckAssemblyOpTypeHash(String assemblyLine,	MnemonicFormatData op) throws AssemblerException {
 		
 		HashMap<String, DataSource.OperandType> assemblyOpTypeHash = new HashMap<String, DataSource.OperandType>();
 		
@@ -135,9 +140,20 @@ public class Assembler {
 		}
 		
 		if(!legitTypes){
-			// error
-			System.out.println("Type mismatch");
-			System.exit(0);
+			String expected = "";
+			boolean first = true;
+			
+			for(ArrayList<DataSource.OperandType> format: opFormats){
+				if(!first)
+					expected += "or ";
+				
+				for(DataSource.OperandType opType :format)
+					expected += opType + " ";;
+				
+				first = false;
+			}
+			
+			throw new AssemblerException("Operand type error\n" + "Expected operand types: " + expected);
 		}
 		
 		
