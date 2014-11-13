@@ -41,6 +41,7 @@ public class Assembler {
 		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic);
 
 		HashMap<String, String> assemblyOpFormatHash = makeAssemblyOpFormatHash(assemblyLine, op.getMnemonicFormat());
+		HashMap<String, DataSource.OperandType> assemblyOpTypeHash = makeAndCheckAssemblyOpTypeHash(assemblyLine, op);
 
 		System.out.println(assemblyOpFormatHash);
 	
@@ -60,7 +61,7 @@ public class Assembler {
 			else { // register, immediate or memory???
 
 				String assemblyOperand = assemblyOpFormatHash.get(formatOperand);
-				opType = getOpType(assemblyOperand);
+				opType = assemblyOpTypeHash.get(assemblyOperand);
 				int bits = insF.getOperandBitHash().get(formatOperand);
 				
 				if(opType == DataSource.OperandType.REGISTER){
@@ -84,7 +85,65 @@ public class Assembler {
 		}
 		System.out.println(binaryLine);
 	}
-	
+
+	private HashMap<String, DataSource.OperandType> makeAndCheckAssemblyOpTypeHash(String assemblyLine,	MnemonicFormatData op) {
+		
+		HashMap<String, DataSource.OperandType> assemblyOpTypeHash = new HashMap<String, DataSource.OperandType>();
+		
+		ArrayList<ArrayList<DataSource.OperandType>> opFormats = op.getOpFormats();
+		ArrayList<DataSource.OperandType> assemblyOpTypes = new ArrayList<DataSource.OperandType>();
+		
+		ArrayList<String> prefixes = data.getPrefixes();
+		String prefixRegex = "";
+		
+		for(String prefix: prefixes){
+			if(!isAlphaNumeric(prefix))
+				prefixRegex += prefix;
+		}
+		
+		String[] splitAssemblyTerms = assemblyLine.split("[^a-zA-Z0-9" + prefixRegex + "]+");		
+		
+		for(String operand: splitAssemblyTerms){
+			
+			if(data.getMnemonicTable().get(operand) == null){	// not the mnemonic
+				DataSource.OperandType opType = getOpType(operand);
+				
+				assemblyOpTypeHash.put(operand, opType);
+				assemblyOpTypes.add(opType);
+			}
+		}	
+		
+		// perform check
+		
+		boolean legitTypes = true;
+		
+		for(ArrayList<DataSource.OperandType> format: opFormats){
+			legitTypes = true;
+			int i = 0;
+
+			for(DataSource.OperandType opType :format){	
+				DataSource.OperandType assemblyType = assemblyOpTypes.get(i);
+				
+				if(opType != assemblyType){
+					legitTypes = false;
+					break;
+				}				
+				i++;
+			}			
+			if(legitTypes)
+				break;
+		}
+		
+		if(!legitTypes){
+			// error
+			System.out.println("Type mismatch");
+			System.exit(0);
+		}
+		
+		
+		return assemblyOpTypeHash;
+	}
+
 	private String getBinaryFromNumSys(String value, DataSource.OperandType opType, int bits) {
 		
 		String binary = "";

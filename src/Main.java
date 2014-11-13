@@ -52,14 +52,13 @@ public class Main {
 //		System.out.println("insF " + data.getInstructionFormat());	
 //		System.out.println("regHash " + data.getRegisterHash());
 		
-		String s = "SB";
+		String s = "LUI";
 		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
 		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpCodes());
 		System.out.println("MnFor " + data.getMnemonicTable().get(s).getMnemonicFormat());
 		System.out.println("opIns " + data.getMnemonicTable().get(s).getInstructionName());
 		System.out.println("Opfor " + data.getMnemonicTable().get(s).getOpFormats());
 		
-//		System.out.println(data.getMemorySyntax());
 		
 		Assembler assembler = new Assembler(data);
 		

@@ -58,7 +58,7 @@ public class FileParser {
 			String[] commentSplit = line.split(";");
 			line = commentSplit[0];
 			
-			if (line.trim().length() > 0 && !line.startsWith(";")){				
+			if (line.trim().length() > 0){				
 				line.replaceAll("\\s+$", "");	// remove end whitespace
 				
 				data.getAssemblyCode().add(line);
@@ -84,7 +84,7 @@ public class FileParser {
 			String[] commentSplit = line.split(";");
 			line = commentSplit[0];
 
-			if (line.trim().length() > 0 && !line.startsWith(";")){
+			if (line.trim().length() > 0){
 				
 				
 				line = line.replaceAll("\\s+$", "");	// remove end whitespace

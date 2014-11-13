@@ -13,6 +13,7 @@ ADD rd, rs, rt
 	R-type 	
 	
 LUI rt, immediate
+		REG, MEMORY
 	opcode=001111, rs=00000
 	I-type
 
