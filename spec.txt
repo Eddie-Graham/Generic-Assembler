@@ -84,6 +84,7 @@ statement : label mnem operands
 
 
 operands : op op
+operans : op op op
 
 op : imm
 op : reg

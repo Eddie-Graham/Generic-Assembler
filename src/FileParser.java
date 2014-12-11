@@ -59,15 +59,7 @@ public class FileParser {
 		while (inputFile.hasNextLine()) {			
 			
 			String line = inputFile.nextLine();
-			String[] commentSplit = line.split(";");
-			line = commentSplit[0];
-			
-			if (line.trim().length() > 0){	
-				
-				line.replaceAll("\\s+$", "");	// remove end whitespace
-				
-				data.getAssemblyCode().add(line);
-			}						
+			data.getAssemblyCode().add(line);									
 		}		
 		
 		inputFile.close();
@@ -248,7 +240,6 @@ public class FileParser {
 				String mnemonicName = tokens[0];
 
 				currentMnemonicFormat.setMnemonic(mnemonicName);
-//				currentMnemonicFormat.setMnemonicFormat(line);
 			}
 			
 			else if (atOpFormat) 

@@ -34,56 +34,69 @@ public class Assembler {
 	}
 
 	private void assemble() {
+		
+		int lineCounter = 0;
 
 		for (String assemblyLine : data.getAssemblyCode()) {
 			
-			if (assemblyLine.startsWith("section .data")) 
-				setBooleanValues(false, true, false);
+			lineCounter ++;
 			
-			else if(assemblyLine.startsWith("section .bss"))
-				setBooleanValues(true, false, false);
+			String[] commentSplit = assemblyLine.split(";");
+			assemblyLine = commentSplit[0];
 			
-			else if(assemblyLine.startsWith("section .text")){
-				setBooleanValues(false, false, true);
-				first = true;
-			}
+			if (assemblyLine.trim().length() > 0){	
+				
+				assemblyLine.replaceAll("\\s+$", "");	// remove end whitespace			
 			
-			else if (atData){
+				if (assemblyLine.startsWith("section .data")) 
+					setBooleanValues(false, true, false);
+			
+				else if(assemblyLine.startsWith("section .bss"))
+					setBooleanValues(true, false, false);
+			
+				else if(assemblyLine.startsWith("section .text")){
+					setBooleanValues(false, false, true);
+					first = true;
+				}
+			
+				else if (atData){
 				
-			}
+				}
 				
-			else if (atBss){
+				else if (atBss){
 				
-			}
+				}
 				
-			else if (atText){
+				else if (atText){
 				
-				if(first){
+					if(first){
 					
-					if(assemblyLine.startsWith("\tglobal main")){
+						if(assemblyLine.startsWith("\tglobal main")){
 						
-						first = false;
-						second = true;
-					}						
-				}
-				
-				else if(second){
-					
-					if(assemblyLine.startsWith("main:"))						
-						second = false;					
-				}
-				
-				else{
-					
-					System.out.println("*****************************");
-					
-					try {
-						populateInstruction(assemblyLine);
-					} catch (AssemblerException e) {
-						System.out.println("Exception: " + e.getMessage());
-						System.out.println("At line: " + assemblyLine);
+							first = false;
+							second = true;
+						}						
 					}
-				}				
+				
+					else if(second){
+					
+						if(assemblyLine.startsWith("main:"))						
+							second = false;					
+					}
+				
+					else{
+					
+						System.out.println("*****************************");
+					
+						try {
+							populateInstruction(assemblyLine);
+						} catch (AssemblerException e) {
+							System.out.println("Exception: " + e.getMessage());
+							System.out.println("At line no: " + lineCounter);
+							System.out.println("Line : " + assemblyLine.trim());
+						}
+					}				
+				}
 			}
 		}
 	}
@@ -99,7 +112,7 @@ public class Assembler {
 		
 		reset();
 
-		System.out.println(assemblyLine);
+		System.out.println(assemblyLine.trim());
 
 //		String[] tokens = assemblyLine.split("\\s+");
 //		String mnemonic = tokens[0];
