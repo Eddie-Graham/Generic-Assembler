@@ -16,7 +16,7 @@ public class FileParser {
 	private DataSource data;
 	
 	private boolean architecture, registers, mnemonicFormat, instructionFormat, adt;
-	private boolean atMnemonicFormat, atOpFormat, atOpCodes, atInsName, firstTab;
+	private boolean atMnemonicFormat, atOpFormat, atOpCodes, atInsName, firstTabSection, secondTab;
 	private boolean firstEntry;
 	private MnemonicFormatData currentMnemonicFormat;
 	
@@ -34,7 +34,8 @@ public class FileParser {
 		atOpFormat = false;
 		atOpCodes = false;
 		atInsName = false;
-		firstTab = true;
+		firstTabSection = true;
+		secondTab = false;
 		
 		firstEntry = true;
 		
@@ -87,48 +88,48 @@ public class FileParser {
 			
 			String line = inputFile.nextLine();
 			String[] commentSplit = line.split(";");
-			line = commentSplit[0];
-
-			if (line.trim().length() > 0){				
+			line = commentSplit[0];				
 				
-				line = line.replaceAll("\\s+$", "");	// remove end whitespace
+			line = line.replaceAll("\\s+$", "");	// remove end whitespace
 				
-				if (line.startsWith("architecture:")) 
-					setBooleanValues(true, false, false, false, false);
+			if (line.startsWith("architecture:")) 
+				setBooleanValues(true, false, false, false, false);
 
-				else if (line.startsWith("registers:")) 
-					setBooleanValues(false, true, false, false, false);
+			else if (line.startsWith("registers:")) 
+				setBooleanValues(false, true, false, false, false);
 
-				else if (line.startsWith("mnemonicformat:")) 
-					setBooleanValues(false, false, true, false, false);
+			else if (line.startsWith("mnemonicformat:")) 
+				setBooleanValues(false, false, true, false, false);
 
-				else if (line.startsWith("instructionformat:")) 
-					setBooleanValues(false, false, false, true, false);
+			else if (line.startsWith("instructionformat:")) 
+				setBooleanValues(false, false, false, true, false);
 				
-				else if (line.startsWith("adt:")) 
-					setBooleanValues(false, false, false, false, true);					
+			else if (line.startsWith("adt:")) 
+				setBooleanValues(false, false, false, false, true);					
 	
-				else if (architecture)
-					analyseArchitecture(line);
+			else if (architecture)
+				analyseArchitecture(line);
 
-				else if (registers)
-					analyseRegisters(line);
+			else if (registers)
+				analyseRegisters(line);
 
-				else if (mnemonicFormat)
-					analyseMnemonicFormat(line);
+			else if (mnemonicFormat)
+				analyseMnemonicFormat(line);
 
-				else if (instructionFormat)
-					analyseInstructionFormat(line);
+			else if (instructionFormat)
+				analyseInstructionFormat(line);
 
-				else if (adt)
-					analyseADT(line);				
+			else if (adt)
+				analyseADT(line);				
 			}
-		}
 		
 		inputFile.close();
 	}
 	
 	private void analyseADT(String line) {
+		
+		if (line.trim().length() == 0)
+			return;
 		
 		ADT adt = data.getAdt();
 		
@@ -168,10 +169,16 @@ public class FileParser {
 	
 	private void analyseArchitecture(String line){
 		
+		if (line.trim().length() == 0)
+			return;
+		
 		data.setArchitecture(line);	
 	}
 	
 	private void analyseRegisters(String line){
+		
+		if (line.trim().length() == 0)
+			return;
 		
 		char dataType = line.charAt(line.length()-1);
 		line = line.substring(0, line.length()-1);
@@ -205,31 +212,28 @@ public class FileParser {
 		
 		if (line.trim().length() > 0) {	
 			
-			if(line.startsWith("\t\t")){	// op formats	
+			if (line.startsWith("\t")) {	
 				
-				atMnemonicFormat = false;
-				atOpFormat = true;
-				atOpCodes = false;
-				atInsName = false;
-			}
-			
-			else if (line.startsWith("\t")) {	//opcodes
+				if(!atOpFormat){				
 				
-				if (firstTab) {
+					if (firstTabSection) {	// op formats
 					
-					atMnemonicFormat = false;
-					atOpFormat = false;
-					atOpCodes = true;					
-					atInsName = false;
-					
-					firstTab = false;
-				} 
+						atMnemonicFormat = false;
+						atOpFormat = true;
+					} 
 				
-				else {	// ins name
-					atOpCodes = false;
-					atOpFormat = false;
-					atMnemonicFormat = false;
-					atInsName = true;
+					else if(secondTab){	// opcodes
+						
+						atOpFormat = false;
+						atOpCodes = true;						
+						secondTab = false;
+					}
+					
+					else{	// ins name
+						
+						atOpCodes = false;
+						atInsName = true;
+					}
 				}
 			}
 			
@@ -244,7 +248,7 @@ public class FileParser {
 				String mnemonicName = tokens[0];
 
 				currentMnemonicFormat.setMnemonic(mnemonicName);
-				currentMnemonicFormat.setMnemonicFormat(line);
+//				currentMnemonicFormat.setMnemonicFormat(line);
 			}
 			
 			else if (atOpFormat) 
@@ -262,35 +266,20 @@ public class FileParser {
 				data.getMnemonicTable().put(mnemonic, currentMnemonicFormat);
 			}
 		}
+		
+		else if(atOpFormat){
+			
+			firstTabSection = false;
+			atOpFormat = false;
+			secondTab = true;
+		}
 	}
 	
 	private void analyseOpFormat(String line) {
 		
-		ArrayList<DataSource.OperandType> format = new ArrayList<DataSource.OperandType>();
-		
 		line = line.trim();
-		line = line.replaceAll("\\s+", "");
-		String[] types = line.split(",");
 		
-		for(String type: types){
-			
-			if(type.equalsIgnoreCase("REG"))
-				format.add(DataSource.OperandType.REGISTER);
-			
-			else if(type.equalsIgnoreCase("MEMORY"))
-				format.add(DataSource.OperandType.MEMORY);
-			
-			else if(type.equalsIgnoreCase("IMMEDIATE"))
-				format.add(DataSource.OperandType.IMMEDIATE);
-			
-			else if(type.equalsIgnoreCase("LABEL"))
-				format.add(DataSource.OperandType.LABEL);
-			
-			else if(type.equalsIgnoreCase("NO-OPERANDS"))
-				format.add(DataSource.OperandType.NOOPERAND);			
-		}
-		
-		currentMnemonicFormat.getOpFormats().add(format);		
+		currentMnemonicFormat.getOpFormats().add(line);		
 	}
 
 	private void resetBooleanValues() {
@@ -299,7 +288,7 @@ public class FileParser {
 		atOpFormat = false;
 		atOpCodes = false;
 		atInsName = false;
-		firstTab = true;
+		firstTabSection = true;
 		
 		currentMnemonicFormat = null;	
 	}
@@ -318,6 +307,9 @@ public class FileParser {
 	}
 
 	private void analyseInstructionFormat(String line){	
+		
+		if (line.trim().length() == 0)
+			return;
 		
 		String[] tokens = line.split("\\s+");
 		

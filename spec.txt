@@ -6,28 +6,33 @@ MIPS
 
 mnemonicformat:		
 		
-ADD op, op, op		
-		mnem reg, reg, reg			; REG, MEMORY, IMMEDIATE, LABEL, NO OPERANDS
-	;	REG, MEMORY, REG	 
+ADD 
+	mnem reg, reg, reg			
+		
 	opcode=000000, func=100000, shamt=00000 
 	R-type 	
 	
-LUI rt, immediate
-		REG, MEMORY
+LUI 
+	mnem reg, imm
+	
 	opcode=001111, rs=00000
-	I-type
+	I-type	
 
-SB rt, immediate(rs)
-		REG, IMMEDIATE, REG
-		NO-OPERANDS
+SB
+	mnem reg, mem
+	
 	opcode=101000
 	I-type
 
-ANDI rt, rs, immediate  
+ANDI
+	mnem reg, reg, imm
+ 
 	opcode=001100
 	I-type
 
-LW rt, immediate(rs)
+LW 
+	mnem reg, mem
+	
 	opcode=100011
 	I-type
 	
@@ -66,7 +71,6 @@ instructionformat:
 
 R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
 I-type: opcode(6) rs(5) rt(5) immediate(16)
-
 
 adt:
 
