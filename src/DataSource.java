@@ -35,8 +35,8 @@ public class DataSource {
 	private HashMap<String, MnemonicFormatData> mnemonicTable;
 	private HashMap<String, InstructionFormatData> instructionFormat;	
 	private HashMap<String, String> registerHash;
-	private HashMap<String, OperandType> prefixTypeHash;	
-	private ArrayList<String> prefixes;
+	private ADT adt;
+	
 	
 	public DataSource(){
 		
@@ -46,8 +46,7 @@ public class DataSource {
 		mnemonicTable = new HashMap<String, MnemonicFormatData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
-		prefixTypeHash = new HashMap<String, OperandType>();		
-		prefixes = new ArrayList<String>();
+		adt = new ADT();
 	}
 
 	public ArrayList<String> getAssemblyCode() {
@@ -91,19 +90,11 @@ public class DataSource {
 		this.registerHash = registerHash;
 	}
 
-	public HashMap<String, OperandType> getPrefixTypeHash() {
-		return prefixTypeHash;
+	public ADT getAdt() {
+		return adt;
 	}
 
-	public void setPrefixTypeHash(HashMap<String, OperandType> prefixTypeHash) {
-		this.prefixTypeHash = prefixTypeHash;
-	}
-
-	public ArrayList<String> getPrefixes() {
-		return prefixes;
-	}
-
-	public void setPrefixes(ArrayList<String> prefixes) {
-		this.prefixes = prefixes;
+	public void setAdt(ADT adt) {
+		this.adt = adt;
 	}	
 }

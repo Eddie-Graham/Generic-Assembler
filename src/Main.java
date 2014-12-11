@@ -14,10 +14,13 @@ public class Main {
 	public static void main(String[] args) {
 	
 		if(args.length == 0){
+			
 			System.out.println("Assembly file and specification file not given.");
 			System.exit(0);
 		}
+		
 		else if(args.length == 1){
+			
 			System.out.println("Specification file not given.");
 			System.out.println("Assembly file: " + args[0]);
 			System.exit(0);
@@ -52,13 +55,13 @@ public class Main {
 //		System.out.println("insF " + data.getInstructionFormat());	
 //		System.out.println("regHash " + data.getRegisterHash());
 		
-		String s = "LUI";
-		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
-		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpCodes());
-		System.out.println("MnFor " + data.getMnemonicTable().get(s).getMnemonicFormat());
-		System.out.println("opIns " + data.getMnemonicTable().get(s).getInstructionName());
-		System.out.println("Opfor " + data.getMnemonicTable().get(s).getOpFormats());
-		
+//		String s = "LUI";
+//		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
+//		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpCodes());
+//		System.out.println("MnFor " + data.getMnemonicTable().get(s).getMnemonicFormat());
+//		System.out.println("opIns " + data.getMnemonicTable().get(s).getInstructionName());
+//		System.out.println("Opfor " + data.getMnemonicTable().get(s).getOpFormats());
+//		System.out.println("ADT " + data.getAdt().getAdtHash());
 		
 		Assembler assembler = new Assembler(data);
 		

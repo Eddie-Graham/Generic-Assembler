@@ -13,18 +13,21 @@ public class Assembler {
 
 	private DataSource data;
 	private ArrayList<String> objectCode;
+	private ArrayList<ArrayList<ArrayList<String>>> legitPaths;
 
 	public Assembler(DataSource data) {
 
 		this.data = data;
 		objectCode = new ArrayList<String>();
+		legitPaths = new ArrayList<ArrayList<ArrayList<String>>>();
 
 		assemble();
 	}
 
-	private void assemble(){
+	private void assemble() {
 
 		for (String assemblyLine : data.getAssemblyCode()) {
+			
 			System.out.println("**************************************************************");
 
 			try {
@@ -38,239 +41,392 @@ public class Assembler {
 
 	private void populateInstruction(String assemblyLine) throws AssemblerException {
 		
+		reset();
+
 		System.out.println(assemblyLine);
 
-		String[] tokens = assemblyLine.split("\\s+");
-		String mnemonic = tokens[0];
+//		String[] tokens = assemblyLine.split("\\s+");
+//		String mnemonic = tokens[0];
+//		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic);
 
-		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic);
-
-		HashMap<String, String> assemblyOpFormatHash = makeAssemblyOpFormatHash(assemblyLine, op.getMnemonicFormat());
-		HashMap<String, DataSource.OperandType> assemblyOpTypeHash = makeAndCheckAssemblyOpTypeHash(assemblyLine, op);
-
-		System.out.println(assemblyOpFormatHash);
-	
-		String insName = op.getInstructionName();
-		InstructionFormatData insF = data.getInstructionFormat().get(insName);
-
-		String binaryLine = "";
-
-		for (String formatOperand : insF.getOperands()) { // ins format operands
-			
-			DataSource.OperandType opType = null;
-			String binary = "";
-
-			if (op.getOpCodes().get(formatOperand) != null) {	// an opcode
-				binary = op.getOpCodes().get(formatOperand);
-			} 
-			else { // register, immediate or memory???
-
-				String assemblyOperand = assemblyOpFormatHash.get(formatOperand);
-				opType = assemblyOpTypeHash.get(assemblyOperand);
-				int bits = insF.getOperandBitHash().get(formatOperand);
-				
-				if(opType == DataSource.OperandType.REGISTER){
-					String regOperand = removePrefix(assemblyOperand);				
-					String regBinary = data.getRegisterHash().get(regOperand);					
-					binary = binaryFromBinaryFormatted(regBinary, bits);					
-				}
-				else if(opType == DataSource.OperandType.MEMORY) {
-					String memOperand = removePrefix(assemblyOperand);								
-					binary = getBinaryFromNumSys(memOperand, opType, bits);
-				}
-				else if(opType == DataSource.OperandType.IMMEDIATE) {
-					String immOperand = removePrefix(assemblyOperand);				
-					binary = getBinaryFromNumSys(immOperand, opType, bits);
-				}
-				else{
-					// error??
-				}	
-			}
-			binaryLine += binary + " ";
-		}
-		System.out.println(binaryLine);
+		analyseWithADT(assemblyLine);
+		
+		System.out.println(legitPaths);
 	}
 
-	private HashMap<String, DataSource.OperandType> makeAndCheckAssemblyOpTypeHash(String assemblyLine,	MnemonicFormatData op) throws AssemblerException {
+	private void reset() {
 		
-		HashMap<String, DataSource.OperandType> assemblyOpTypeHash = new HashMap<String, DataSource.OperandType>();
-		
-		ArrayList<ArrayList<DataSource.OperandType>> opFormats = op.getOpFormats();
-		ArrayList<DataSource.OperandType> assemblyOpTypes = new ArrayList<DataSource.OperandType>();
-		
-		ArrayList<String> prefixes = data.getPrefixes();
-		String prefixRegex = "";
-		
-		for(String prefix: prefixes){
-			if(!isAlphaNumeric(prefix))
-				prefixRegex += prefix;
-		}
-		
-		String[] splitAssemblyTerms = assemblyLine.split("[^a-zA-Z0-9" + prefixRegex + "]+");		
-		
-		for(String operand: splitAssemblyTerms){
-			
-			if(data.getMnemonicTable().get(operand) == null){	// not the mnemonic
-				DataSource.OperandType opType = getOpType(operand);
-				
-				assemblyOpTypeHash.put(operand, opType);
-				assemblyOpTypes.add(opType);
-			}
-		}	
-		
-		// perform check
-		
-		boolean legitTypes = true;
-		
-		for(ArrayList<DataSource.OperandType> format: opFormats){
-			legitTypes = true;
-			int i = 0;
+		legitPaths = new ArrayList<ArrayList<ArrayList<String>>>();		
+	}
 
-			for(DataSource.OperandType opType :format){	
-				DataSource.OperandType assemblyType = assemblyOpTypes.get(i);
+	private void analyseWithADT(String assemblyLine) {
+
+		ADT adt = data.getAdt();
+		String adtRoot = adt.getRootTerm();
+		
+		ArrayList<String> rootTermList = new ArrayList<String>();
+		rootTermList.add(adtRoot);
+
+		String[] assemblySplit = assemblyLine.split("\\s+|,");
+		
+		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
+		ArrayList<String> currentPath = new ArrayList<String>();
+		ArrayList<String> assemblyList = new ArrayList<String>();
+
+		for (String str : assemblySplit) {
+			
+			if (!str.isEmpty())
+				assemblyList.add(str);
+		}
+			
+		analyseOperands(rootTermList, assemblyList, rootTermList, paths, currentPath, adtRoot);
+	}
+
+	private boolean analyseOperands(ArrayList<String> terms,
+			ArrayList<String> assemblyList, ArrayList<String> termsIter,
+			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath,
+			String parent) {
+
+		boolean done = false;
+
+		for (String term : terms) {
+
+			String[] splitTerm = term.split("\\s+");			
+
+			if (splitTerm.length > 1) { // more than one term, update iter
+
+				ArrayList<String> splitTermList = new ArrayList<String>();
+
+				for (String str : splitTerm) 
+					splitTermList.add(str);				
 				
-				if(opType != assemblyType){
-					legitTypes = false;
-					break;
-				}				
-				i++;
-			}			
-			if(legitTypes)
-				break;
+				ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, parent);
+
+				done = analyseOperands(splitTermList, assemblyList, newTermsIter, paths, currentPath, parent);
+
+				if (done)
+					return true;
+			} 
+			
+			else { // one term
+
+				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(term);
+
+				if (termsListFromHash != null) { // not leaf
+					
+					ArrayList<String> newCurrentPath = clone(currentPath);					
+					newCurrentPath.add(term);
+					
+					done = analyseOperands(termsListFromHash, assemblyList, termsIter, paths, newCurrentPath, term);
+
+					if (done)
+						return true;
+
+				} 
+				
+				else { // leaf
+					
+					String assemblyTerm = assemblyList.get(0);
+
+					if (match(term, assemblyTerm)) {				
+
+						currentPath.add(term);
+						
+						ArrayList<ArrayList<String>> newPaths = clone2(paths);
+						newPaths.add(currentPath);
+						
+						currentPath = new ArrayList<String>();
+
+						termsIter = removeFirstElementString(termsIter);
+						assemblyList = removeFirstElement(assemblyList);
+
+						if (termsIter.isEmpty() || assemblyList.isEmpty()) {
+
+							if ((termsIter.isEmpty() && !assemblyList.isEmpty())
+									|| (!termsIter.isEmpty() && assemblyList
+											.isEmpty())) {								
+
+								return false;
+							}
+							
+							else{	// done and legit
+								legitPaths.add(newPaths);
+								paths = new ArrayList<ArrayList<String>>();
+							}
+							
+							return true;							
+						}
+						
+						done = analyseOperands(termsIter, assemblyList, termsIter, newPaths, currentPath, data.getAdt().getRootTerm());
+
+						if (done)
+							return true;
+					}
+
+					else { // not found						
+
+					}
+				}
+			}
+		}
+//		currentPath = removeFromPath(currentPath, parent);
+
+		return done;
+	}
+
+	private ArrayList<ArrayList<String>> clone2(
+			ArrayList<ArrayList<String>> sourceList) {
+		
+		ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
+		
+		for (ArrayList<String> list : sourceList){
+			
+			ArrayList<String> temp = new ArrayList<String>();
+			
+			for(String str: list)
+				temp.add(str);
+			
+			newList.add(temp);
 		}
 		
-		if(!legitTypes){
-			String expected = "";
-			boolean first = true;
+		return newList;
+	}
+
+	private ArrayList<String> clone(ArrayList<String> sourceList) {
+		
+		ArrayList<String> newList = new ArrayList<String>();
+		
+		for(String str: sourceList)
+			newList.add(str);
+		
+		return newList;
+	}
+
+	private boolean match(String term, String assemblyTerm) {		
+		
+		term = term.replaceAll("\"", "");
+		
+		if(term.equals(assemblyTerm))
+			return true;
+		
+		else if(checkTerm(term, assemblyTerm, "HEX"))
+			return true;
+		
+		else if(checkTerm(term, assemblyTerm, "DECIMAL"))
+			return true;
 			
-			for(ArrayList<DataSource.OperandType> format: opFormats){
-				if(!first)
-					expected += "or ";
+		else
+			return checkNestedTerm(term, assemblyTerm);		
+	}
+
+	private boolean checkNestedTerm(String term, String assemblyTerm) {
+		
+		String[] splitTerms = term.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+
+		String prefix = "";		
+		boolean first = true;
+		
+		for(String str: splitTerms){	
+			
+			if(!isAlphaNumeric(str)) {	
 				
-				for(DataSource.OperandType opType :format)
-					expected += opType + " ";;
+				if(!first)
+					prefix += "|";
+				
+				prefix += "\\"+ str;
 				
 				first = false;
+			}				
+		}
+	
+		String[] splitAssemblyTerms = assemblyTerm.split("(?="+prefix+")|(?<="+prefix+")");
+		
+		if(splitTerms.length == splitAssemblyTerms.length){
+
+			int i = 0;			
+			
+			for(String str: splitTerms){
+				
+				boolean legit = false;
+				
+				if(!isAlphaNumeric(str)) {
+					
+					if(!str.equals(splitAssemblyTerms[i]))
+						return false;
+				}
+				
+				else{
+					ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(str);
+					
+					if(termsListFromHash != null){						
+						
+						for(String termFromHash: termsListFromHash){
+							
+							if(match(termFromHash, splitAssemblyTerms[i])){
+								legit = true;
+								break;
+							}								
+						}
+						
+						if(!legit)
+							return false;
+					}
+					
+					else
+						return false;					
+				}	
+				
+				i++;
 			}
 			
-			throw new AssemblerException("Operand type error\n" + "Expected operand types: " + expected);
+			return true;			
+		}
+		else
+			return false;		
+	}
+
+	private boolean checkTerm(String term, String assemblyTerm, String type) {
+		
+		String prefix = "";
+		
+		String[] splitHexTerm = term.split("(?=" + type + ")|(?<=" + type + ")");
+		
+		if(splitHexTerm.length > 1){
+		
+			for(String str: splitHexTerm){
+				
+				if(!str.equals(type))
+					prefix += str;				
+			}
+			
+			String[] splitAssemblyTerm = assemblyTerm.split("(?="+prefix+")|(?<="+prefix+")");
+			
+			if(splitAssemblyTerm.length > 1){
+			
+				ArrayList<String> splitAssemblyList = removeEmptyElements(splitAssemblyTerm);
+				
+				if(splitHexTerm.length == splitAssemblyList.size()){
+					
+					int i = 0;
+					
+					for(String str: splitHexTerm){
+						
+						if(!str.equals(type)){
+							
+							if(!str.equals(splitAssemblyList.get(i)))
+								return false;							
+						}
+						
+						i++;
+					}
+				
+					return true;
+				}				
+			}
 		}
 		
+		return false;
+	}
+
+	private ArrayList<String> removeEmptyElements(String[] splitAssemblyTerm) {
 		
-		return assemblyOpTypeHash;
+		ArrayList<String> newArray = new ArrayList<String>();
+		
+		for(String str: splitAssemblyTerm){
+			
+			if(!str.isEmpty())
+				newArray.add(str);
+		}
+		
+		return newArray;
+	}
+
+	private ArrayList<String> updateTermsIter(ArrayList<String> splitTermList,
+			ArrayList<String> termsIter, String parent) {
+		
+		ArrayList<String> newTermsIter = new ArrayList<String>();
+		
+		String newStr = "";
+		String st = termsIter.get(0);
+
+		String[] split = st.split("\\s+");
+		
+		for (String str : split) {
+
+			if(str.equals(parent)){
+				
+				for(String str2: splitTermList)
+					newStr += str2 + " ";				
+			}
+			
+			else
+				newStr += str + " ";
+		}
+		
+		newStr = newStr.trim();
+		newTermsIter.add(newStr);
+		
+		return newTermsIter;
+	}
+
+	private ArrayList<String> removeFirstElementString(ArrayList<String> termsIter) {
+
+		ArrayList<String> newList = new ArrayList<String>();
+
+		String st = termsIter.get(0);
+
+		String[] split = st.split("\\s+");
+
+		boolean first = true;
+		String newStr = "";
+
+		for (String str : split) {
+
+			if (first) 
+				first = false;
+			 
+			else
+				newStr += str + " ";
+		}
+		
+		newStr = newStr.trim();
+
+		if (newStr != "")
+			newList.add(newStr);
+
+		return newList;
+	}
+
+	private ArrayList<String> removeFirstElement(ArrayList<String> list) {
+
+		boolean first = true;
+		ArrayList<String> newList = new ArrayList<String>();
+
+		for (String st : list) {
+			
+			if (first) 
+				first = false;
+			
+			else 
+				newList.add(st);			
+		}
+		
+		return newList;
 	}
 
 	private String getBinaryFromNumSys(String value, DataSource.OperandType opType, int bits) {
-		
+
 		String binary = "";
-		
-		if(opType.getSys() == DataSource.TypeNumSystem.DECIMAL){
+
+		if (opType.getSys() == DataSource.TypeNumSystem.DECIMAL) 
 			binary = binaryFromDecimalFormatted(value, bits);
-		}
-		else if(opType.getSys() == DataSource.TypeNumSystem.HEX){
+		
+		else if (opType.getSys() == DataSource.TypeNumSystem.HEX) 
 			binary = binaryFromHexFormatted(value, bits);
-		}
+		
 		return binary;
 	}
 
-	private String removePrefix(String operand) {
-
-		ArrayList<String> prefixes = data.getPrefixes();
-
-		for (String prefix : prefixes) {
-			if (operand.startsWith(prefix)) {
-				
-				if(!isAlphaNumeric(prefix)){
-					operand = operand.replaceFirst("\\"+prefix, "");	// what if more than single char prefix??
-					break;
-				}
-				else{
-					operand = operand.replaceFirst(prefix, "");
-					break;
-				}
-			}
-		}		
-		return operand;
-	}
-
-	private DataSource.OperandType getOpType(String assemblyOperand) {
-		
-		DataSource.OperandType opType = null;
-		
-		ArrayList<String> prefixes = data.getPrefixes();
-		
-		for(String prefix: prefixes){
-			
-			if(assemblyOperand.startsWith(prefix)){
-				opType = data.getPrefixTypeHash().get(prefix);
-				break;
-			}
-		}
-		return opType;
-	}
-
-	private HashMap<String, String> makeAssemblyOpFormatHash(String assemblyLine, String mnemonicFormat) {
-
-		HashMap<String, String> assemblyOpFormatHash = new HashMap<String, String>();
-		
-		mnemonicFormat = mnemonicFormat.replaceAll("\\s+", " ");
-		assemblyLine = assemblyLine.replaceAll("\\s+", " ");
-		
-		mnemonicFormat = mnemonicFormat.trim();	// remove leading and trailing whitespace
-		assemblyLine = assemblyLine.trim();
-		
-		ArrayList<String> prefixes = data.getPrefixes();
-		String prefixRegex = "";
-		
-		for(String prefix: prefixes){
-			if(!isAlphaNumeric(prefix))
-				prefixRegex += prefix;
-		}
-		
-		String[] splitFormatTerms = mnemonicFormat.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-		String[] splitAssemblyTerms = assemblyLine.split("(?=[^a-zA-Z0-9" + prefixRegex + "])|(?<=[^a-zA-Z0-9" + prefixRegex + "])");
-			
-		int i = 0;
-
-		for (String term : splitFormatTerms) {
-			if (!isAlphaNumeric(term)) {
-				// correct
-			} 
-			else {
-				String assemblyTerm = splitAssemblyTerms[i];
-				assemblyOpFormatHash.put(term, assemblyTerm);
-			}
-			i++;
-		}		
-		return assemblyOpFormatHash;
-	}
-
-	private String getRegex(ArrayList<String> delimiters){
-		
-		String firstPart = "(?=[\\";
-		String secondPart = "|(?<=[\\";
-		
-		boolean first = true;
-		
-		for(String delimiter: delimiters){
-			if(!first){
-				firstPart += "|\\";
-				secondPart += "|\\";
-			}			
-		
-			firstPart += delimiter;
-			secondPart += delimiter;
-			first = false;
-		}
-		
-		firstPart += "])";
-		secondPart += "])";
-		
-		String regex = firstPart + secondPart;
-		
-		return regex;
-	}
-	
 	public static String binaryFromDecimalFormatted(String decimal, int bits) {
 
 		String binary = decimalToBinary(decimal);
@@ -331,6 +487,7 @@ public class Assembler {
 			int i = Integer.parseInt(hex, 16);
 			binary = Integer.toBinaryString(i);
 		}
+		
 		return binary;
 	}
 
@@ -338,6 +495,7 @@ public class Assembler {
 
 		Long l = Long.parseLong(binary, 2);
 		String hex = String.format("%X", l);
+		
 		return hex;
 	}
 
@@ -350,10 +508,12 @@ public class Assembler {
 	}
 
 	private boolean isAlphaNumeric(String s) {
+		
 		String pattern = "^[a-zA-Z0-9]*$";
-		if (s.matches(pattern)) {
+		
+		if (s.matches(pattern)) 
 			return true;
-		}
+		
 		return false;
 	}
 }

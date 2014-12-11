@@ -6,9 +6,9 @@ MIPS
 
 mnemonicformat:		
 		
-ADD rd, rs, rt		
-		REG, REG, REG			; REG, MEMORY, IMMEDIATE, LABEL, NO OPERANDS
-		REG, MEMORY, REG	 
+ADD op, op, op		
+		mnem, reg, reg, reg			; REG, MEMORY, IMMEDIATE, LABEL, NO OPERANDS
+	;	REG, MEMORY, REG	 
 	opcode=000000, func=100000, shamt=00000 
 	R-type 	
 	
@@ -68,11 +68,42 @@ R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
 I-type: opcode(6) rs(5) rt(5) immediate(16)
 
 
-operandprefixes:	; Decimal or Hex
-	
-immediate: #  Decimal
-memory: 0x	Hex
-register: $	
+adt:
+
+
+;line : statement	;breaks, extra boolean?
+
+;statement : mnem imm
+statement : mnem operands
+
+;operands : op op
+;operands : op
+operands: op op op
+
+;operands : ops
+
+ops : op op op
+
+op : imm
+op : reg
+op : mem
+
+imm : #DECIMAL
+
+mem : 0xHEX 
+mem : reg[mem]
+
+reg : "$t0"
+reg : "$t1"
+reg : "$t2"
+reg : "$t3"
+reg : "$t5" 
+reg : "$t6"
+reg : "$t7"
+
+mnem : "ADD"
+mnem : "DEL"
+mnem : "LUI"
 
 
 
