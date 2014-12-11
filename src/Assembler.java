@@ -13,13 +13,22 @@ public class Assembler {
 
 	private DataSource data;
 	private ArrayList<String> objectCode;
-	private ArrayList<ArrayList<ArrayList<String>>> legitPaths;
+	private ArrayList<ArrayList<String>> legitPaths;
+	private boolean atBss, atData, atText;
+	private boolean first, second;
 
 	public Assembler(DataSource data) {
 
 		this.data = data;
 		objectCode = new ArrayList<String>();
-		legitPaths = new ArrayList<ArrayList<ArrayList<String>>>();
+		legitPaths = new ArrayList<ArrayList<String>>();
+		
+		atBss = false;
+		atData = false;
+		atText = false;
+		
+		first = false;
+		second = false;
 
 		assemble();
 	}
@@ -28,15 +37,62 @@ public class Assembler {
 
 		for (String assemblyLine : data.getAssemblyCode()) {
 			
-			System.out.println("**************************************************************");
-
-			try {
-				populateInstruction(assemblyLine);
-			} catch (AssemblerException e) {
-				System.out.println("Exception: " + e.getMessage());
-				System.out.println("At line: " + assemblyLine);
+			if (assemblyLine.startsWith("section .data")) 
+				setBooleanValues(false, true, false);
+			
+			else if(assemblyLine.startsWith("section .bss"))
+				setBooleanValues(true, false, false);
+			
+			else if(assemblyLine.startsWith("section .text")){
+				setBooleanValues(false, false, true);
+				first = true;
+			}
+			
+			else if (atData){
+				
+			}
+				
+			else if (atBss){
+				
+			}
+				
+			else if (atText){
+				
+				if(first){
+					
+					if(assemblyLine.startsWith("\tglobal main")){
+						
+						first = false;
+						second = true;
+					}						
+				}
+				
+				else if(second){
+					
+					if(assemblyLine.startsWith("main:"))						
+						second = false;					
+				}
+				
+				else{
+					
+					System.out.println("*****************************");
+					
+					try {
+						populateInstruction(assemblyLine);
+					} catch (AssemblerException e) {
+						System.out.println("Exception: " + e.getMessage());
+						System.out.println("At line: " + assemblyLine);
+					}
+				}				
 			}
 		}
+	}
+
+	private void setBooleanValues(boolean atBss, boolean atData, boolean atText) {
+		
+		this.atBss = atBss;
+		this.atData = atData;
+		this.atText = atText;
 	}
 
 	private void populateInstruction(String assemblyLine) throws AssemblerException {
@@ -56,10 +112,10 @@ public class Assembler {
 
 	private void reset() {
 		
-		legitPaths = new ArrayList<ArrayList<ArrayList<String>>>();		
+		legitPaths = new ArrayList<ArrayList<String>>();		
 	}
 
-	private void analyseWithADT(String assemblyLine) {
+	private void analyseWithADT(String assemblyLine) throws AssemblerException {
 
 		ADT adt = data.getAdt();
 		String adtRoot = adt.getRootTerm();
@@ -80,6 +136,9 @@ public class Assembler {
 		}
 			
 		analyseOperands(rootTermList, assemblyList, rootTermList, paths, currentPath, adtRoot);
+		
+		if(legitPaths.isEmpty())
+			throw new AssemblerException("Line not consistent with ADT");
 	}
 
 	private boolean analyseOperands(ArrayList<String> terms,
@@ -150,7 +209,7 @@ public class Assembler {
 							}
 							
 							else{	// done and legit
-								legitPaths.add(newPaths);
+								legitPaths = newPaths;
 								paths = new ArrayList<ArrayList<String>>();
 							}
 							

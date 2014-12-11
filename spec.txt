@@ -7,7 +7,7 @@ MIPS
 mnemonicformat:		
 		
 ADD op, op, op		
-		mnem, reg, reg, reg			; REG, MEMORY, IMMEDIATE, LABEL, NO OPERANDS
+		mnem reg, reg, reg			; REG, MEMORY, IMMEDIATE, LABEL, NO OPERANDS
 	;	REG, MEMORY, REG	 
 	opcode=000000, func=100000, shamt=00000 
 	R-type 	
@@ -74,15 +74,12 @@ adt:
 ;line : statement	;breaks, extra boolean?
 
 ;statement : mnem imm
-statement : mnem operands
 
-;operands : op op
-;operands : op
-operands: op op op
+statement :  mnem operands
+statement : label mnem operands
 
-;operands : ops
 
-ops : op op op
+operands : op op
 
 op : imm
 op : reg
@@ -92,6 +89,7 @@ imm : #DECIMAL
 
 mem : 0xHEX 
 mem : reg[mem]
+mem : imm(reg)
 
 reg : "$t0"
 reg : "$t1"
@@ -104,6 +102,9 @@ reg : "$t7"
 mnem : "ADD"
 mnem : "DEL"
 mnem : "LUI"
+mnem : "LW"
+
+label : "loop"
 
 
 
