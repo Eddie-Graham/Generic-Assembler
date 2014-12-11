@@ -169,8 +169,7 @@ public class Assembler {
 				}
 			}
 		}
-//		currentPath = removeFromPath(currentPath, parent);
-
+		
 		return done;
 	}
 
@@ -202,7 +201,7 @@ public class Assembler {
 		return newList;
 	}
 
-	private boolean match(String term, String assemblyTerm) {		
+	private boolean match(String term, String assemblyTerm) {	
 		
 		term = term.replaceAll("\"", "");
 		
@@ -311,10 +310,15 @@ public class Assembler {
 					
 					for(String str: splitHexTerm){
 						
-						if(!str.equals(type)){
+						if(str.equals(type)){
 							
+							if(!isAlphaNumeric(splitAssemblyList.get(i)))
+								return false;														
+						}
+						
+						else{
 							if(!str.equals(splitAssemblyList.get(i)))
-								return false;							
+								return false;
 						}
 						
 						i++;
