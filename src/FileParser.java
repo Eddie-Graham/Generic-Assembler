@@ -285,7 +285,7 @@ public class FileParser {
 	}
 
 	private void analyseOpcodes(String opcodes) {
-
+		
 		opcodes = opcodes.replaceAll("\\s+", "");
 
 		String[] tokens = opcodes.split(",");		

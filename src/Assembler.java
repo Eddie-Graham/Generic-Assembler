@@ -16,6 +16,7 @@ public class Assembler {
 	private ArrayList<ArrayList<String>> legitPaths;
 	private boolean atBss, atData, atText;
 	private boolean first, second;
+	private boolean debug = false;
 
 	public Assembler(DataSource data) {
 
@@ -86,14 +87,12 @@ public class Assembler {
 				
 					else{
 					
-						System.out.println("*****************************");
-					
 						try {
 							populateInstruction(assemblyLine);
 						} catch (AssemblerException e) {
-							System.out.println("Exception: " + e.getMessage());
-							System.out.println("At line no: " + lineCounter);
-							System.out.println("Line : " + assemblyLine.trim());
+							System.out.println("Exception at line " + lineCounter);
+							System.out.println(e.getMessage());
+							System.out.println("Line: " + assemblyLine.trim());
 						}
 					}				
 				}
@@ -112,7 +111,9 @@ public class Assembler {
 		
 		reset();
 
+		System.out.println("*****************************");
 		System.out.println(assemblyLine.trim());
+		System.out.println("*****************************");
 
 //		String[] tokens = assemblyLine.split("\\s+");
 //		String mnemonic = tokens[0];
@@ -160,8 +161,22 @@ public class Assembler {
 			String parent) {
 
 		boolean done = false;
+		
+		if(debug){		
+			System.out.println("--------------------");
+			System.out.println("terms: "+terms);
+			System.out.println("asslist: "+assemblyList);
+			System.out.println("termsIter: "+termsIter);
+			System.out.println("paths: "+paths);
+			System.out.println("curpath: "+currentPath);
+			System.out.println("parent: "+parent);
+			System.out.println();
+		}
 
 		for (String term : terms) {
+			
+			if(debug)
+				System.out.println(term);
 
 			String[] splitTerm = term.split("\\s+");			
 
@@ -182,7 +197,9 @@ public class Assembler {
 			
 			else { // one term
 
-				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(term);
+				String tempTerm = term.replaceAll("\\+", "");
+				
+				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(tempTerm);
 
 				if (termsListFromHash != null) { // not leaf
 					
@@ -200,17 +217,25 @@ public class Assembler {
 					
 					String assemblyTerm = assemblyList.get(0);
 
-					if (match(term, assemblyTerm)) {				
+					if (match(term, assemblyTerm)) {
+						
+						if(debug)						
+							System.out.println("found: " + term);
 
 						currentPath.add(term);
+						
+						if(!legitIter(termsIter, currentPath))
+							return false;
 						
 						ArrayList<ArrayList<String>> newPaths = clone2(paths);
 						newPaths.add(currentPath);
 						
-						currentPath = new ArrayList<String>();
-
-						termsIter = removeFirstElementString(termsIter);
+						termsIter = updateIter(termsIter, currentPath);
 						assemblyList = removeFirstElement(assemblyList);
+						
+						currentPath = new ArrayList<String>();
+						
+						
 
 						if (termsIter.isEmpty() || assemblyList.isEmpty()) {
 
@@ -236,13 +261,42 @@ public class Assembler {
 					}
 
 					else { // not found						
-
+						
 					}
 				}
 			}
 		}
 		
 		return done;
+	}
+
+	private boolean legitIter(ArrayList<String> termsIter,
+			ArrayList<String> currentPath) {
+		
+		boolean legit = false;
+		
+		String st = termsIter.get(0);
+
+		String[] splitTermsIter = st.split("\\s+");
+		
+		for(String str: splitTermsIter){
+			
+			for(String str2: currentPath){
+				
+				if(str.equals(str2)){
+					legit = true;
+					break;
+				}
+			}
+			
+			if(legit)
+				return true;
+			
+			else if(!(str.charAt(str.length()-1) == '+'))
+				return false;				
+		}
+		
+		return false;
 	}
 
 	private ArrayList<ArrayList<String>> clone2(
@@ -445,26 +499,45 @@ public class Assembler {
 		return newTermsIter;
 	}
 
-	private ArrayList<String> removeFirstElementString(ArrayList<String> termsIter) {
+	private ArrayList<String> updateIter(ArrayList<String> termsIter, ArrayList<String> currentPath) {
 
 		ArrayList<String> newList = new ArrayList<String>();
+		String newStr = "";
 
 		String st = termsIter.get(0);
 
 		String[] split = st.split("\\s+");
-
-		boolean first = true;
-		String newStr = "";
-
-		for (String str : split) {
-
-			if (first) 
-				first = false;
-			 
-			else
-				newStr += str + " ";
+		
+		boolean found = false;
+		int index = 0;
+		
+		for(String str: split){
+			
+			for(String str2: currentPath){
+				
+				if(str.equals(str2)){
+					index++;
+					found = true;
+					break;
+				}			
+			}
+			
+			if(found)
+				break;
+			
+			else if(str.charAt(str.length()-1) == '+')
+				index++;			
 		}
 		
+		for(String str: split){
+			
+			if(index <= 0)
+				newStr += str + " ";
+			
+			index--;
+			
+		}
+
 		newStr = newStr.trim();
 
 		if (newStr != "")

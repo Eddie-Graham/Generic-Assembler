@@ -13,7 +13,8 @@ ADD
 	R-type 	
 	
 LUI 
-	mnem reg, imm
+	mnem reg, imm		
+	mnem reg, reg
 	
 	opcode=001111, rs=00000
 	I-type	
@@ -74,17 +75,10 @@ I-type: opcode(6) rs(5) rt(5) immediate(16)
 
 adt:
 
+statement : label+ mnem operands
 
-;line : statement	;breaks, extra boolean?
-
-;statement : mnem imm
-
-statement :  mnem operands
-statement : label mnem operands
-
-
-operands : op op
-operans : op op op
+operands : op op 
+operands : op op op
 
 op : imm
 op : reg
@@ -100,14 +94,17 @@ reg : "$t0"
 reg : "$t1"
 reg : "$t2"
 reg : "$t3"
+reg : "$t4"
 reg : "$t5" 
 reg : "$t6"
 reg : "$t7"
 
 mnem : "ADD"
-mnem : "DEL"
+mnem : "SB"
 mnem : "LUI"
 mnem : "LW"
+mnem : "ANDI"
+mnem : "DEL"
 
 label : "loop"
 
