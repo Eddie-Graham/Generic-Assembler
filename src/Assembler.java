@@ -197,7 +197,7 @@ public class Assembler {
 			
 			else { // one term
 
-				String tempTerm = term.replaceAll("\\+", "");
+				String tempTerm = term.replaceAll("\\?|\\*", "");
 				
 				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(tempTerm);
 
@@ -230,26 +230,24 @@ public class Assembler {
 						ArrayList<ArrayList<String>> newPaths = clone2(paths);
 						newPaths.add(currentPath);
 						
-						termsIter = updateIter(termsIter, currentPath);
+						termsIter = updateTermsIter(termsIter, currentPath);
 						assemblyList = removeFirstElement(assemblyList);
 						
-						currentPath = new ArrayList<String>();
-						
-						
+						currentPath = new ArrayList<String>();						
 
 						if (termsIter.isEmpty() || assemblyList.isEmpty()) {
-
-							if ((termsIter.isEmpty() && !assemblyList.isEmpty())
-									|| (!termsIter.isEmpty() && assemblyList
-											.isEmpty())) {								
-
-								return false;
-							}
 							
-							else{	// done and legit
-								legitPaths = newPaths;
-								paths = new ArrayList<ArrayList<String>>();
-							}
+							if(termsIter.isEmpty() && !assemblyList.isEmpty())
+								return false;
+							
+							else if(!termsIter.isEmpty() && assemblyList.isEmpty()){
+								
+								if(!zeroOrMore(termsIter))
+									return false;
+							}			
+								
+							legitPaths = newPaths;		//legit
+							paths = new ArrayList<ArrayList<String>>();							
 							
 							return true;							
 						}
@@ -270,13 +268,26 @@ public class Assembler {
 		return done;
 	}
 
+	private boolean zeroOrMore(ArrayList<String> termsIter) {
+		
+		String st = termsIter.get(0);
+		String[] splitTermsIter = st.split("\\s+");
+		
+		for(String str: splitTermsIter){
+			
+			if(!(str.charAt(str.length()-1) == '?') && !(str.charAt(str.length()-1) == '*'))
+				return false;
+		}		
+		
+		return true;
+	}
+
 	private boolean legitIter(ArrayList<String> termsIter,
 			ArrayList<String> currentPath) {
 		
 		boolean legit = false;
 		
 		String st = termsIter.get(0);
-
 		String[] splitTermsIter = st.split("\\s+");
 		
 		for(String str: splitTermsIter){
@@ -292,8 +303,8 @@ public class Assembler {
 			if(legit)
 				return true;
 			
-			else if(!(str.charAt(str.length()-1) == '+'))
-				return false;				
+			else if(!(str.charAt(str.length()-1) == '?') && !(str.charAt(str.length()-1) == '*'))
+				return false;	
 		}
 		
 		return false;
@@ -499,7 +510,7 @@ public class Assembler {
 		return newTermsIter;
 	}
 
-	private ArrayList<String> updateIter(ArrayList<String> termsIter, ArrayList<String> currentPath) {
+	private ArrayList<String> updateTermsIter(ArrayList<String> termsIter, ArrayList<String> currentPath) {
 
 		ArrayList<String> newList = new ArrayList<String>();
 		String newStr = "";
@@ -516,17 +527,20 @@ public class Assembler {
 			for(String str2: currentPath){
 				
 				if(str.equals(str2)){
-					index++;
 					found = true;
 					break;
 				}			
+			}			
+			
+			if(found && str.charAt(str.length()-1) == '*')
+				return termsIter;
+			
+			if(found){
+				index++;
+				break;
 			}
 			
-			if(found)
-				break;
-			
-			else if(str.charAt(str.length()-1) == '+')
-				index++;			
+			index++;
 		}
 		
 		for(String str: split){
@@ -534,8 +548,7 @@ public class Assembler {
 			if(index <= 0)
 				newStr += str + " ";
 			
-			index--;
-			
+			index--;			
 		}
 
 		newStr = newStr.trim();

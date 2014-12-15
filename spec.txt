@@ -73,12 +73,9 @@ instructionformat:
 R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
 I-type: opcode(6) rs(5) rt(5) immediate(16)
 
-adt:
+adt:	; ? optional, + one or more, * zero or more
 
-statement : label+ mnem operands
-
-operands : op op 
-operands : op op op
+statement : label? mnem op* 
 
 op : imm
 op : reg

@@ -13,10 +13,10 @@ main:
 
 			ADD $t2, $t1, $t1[0x232]
 			DEL $t7, $t1, $t4
-	loop	LUI  $t0, 0x0123
+	loop    LUI  $t0, 0x0123
 			SB $t0, #8($t0)
 			ANDI $t0, $t2, #43
-			ADD $t1, $t1, $t1
+			ADD $t1, $t1, $t1 
 			LW $t0, #0($t1)
 
 
