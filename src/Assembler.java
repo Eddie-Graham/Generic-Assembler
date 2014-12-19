@@ -137,7 +137,7 @@ public class Assembler {
 		ArrayList<String> rootTermList = new ArrayList<String>();
 		rootTermList.add(adtRoot);
 
-		String[] assemblySplit = assemblyLine.split("\\s+|,");
+		String[] assemblySplit = assemblyLine.split("\\s+|,");		//space or comma
 		
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
@@ -268,6 +268,24 @@ public class Assembler {
 		return done;
 	}
 
+	private boolean notInTermsIter(String term, ArrayList<String> termsIter) {
+		
+		String st = termsIter.get(0);
+		String[] split = st.split("\\s+");
+		
+		for(String str: split){			
+			
+			if(term.equals(str))
+				return false;
+				
+			else
+				return true;
+			
+		}
+		
+		return false;		
+	}
+
 	private boolean zeroOrMore(ArrayList<String> termsIter) {
 		
 		String st = termsIter.get(0);
@@ -337,19 +355,15 @@ public class Assembler {
 		
 		return newList;
 	}
-
+	
 	private boolean match(String term, String assemblyTerm) {	
 		
-		term = term.replaceAll("\"", "");
-		
-		if(term.equals(assemblyTerm))
-			return true;
-		
-		else if(checkTerm(term, assemblyTerm, "HEX"))
-			return true;
-		
-		else if(checkTerm(term, assemblyTerm, "DECIMAL"))
-			return true;
+		if(term.startsWith("\"") && term.endsWith("\"")){
+			
+			term = term.replaceAll("\"", "");
+			
+			return term.equals(assemblyTerm);
+		}		
 			
 		else
 			return checkNestedTerm(term, assemblyTerm);		
@@ -377,11 +391,21 @@ public class Assembler {
 	
 		String[] splitAssemblyTerms = assemblyTerm.split("(?="+prefix+")|(?<="+prefix+")");
 		
-		if(splitTerms.length == splitAssemblyTerms.length){
+		
+		if(splitTerms.length != splitAssemblyTerms.length)
+			return false;
 
-			int i = 0;			
+		int i = 0;			
 			
-			for(String str: splitTerms){
+		for(String str: splitTerms){
+				
+			if(str.isEmpty() || splitAssemblyTerms[i].isEmpty()){
+					
+				if(!(str.isEmpty() && splitAssemblyTerms[i].isEmpty()))
+					return false;
+			}
+			
+			else{					
 				
 				boolean legit = false;
 				
@@ -408,65 +432,17 @@ public class Assembler {
 							return false;
 					}
 					
-					else
-						return false;					
-				}	
-				
-				i++;
-			}
-			
-			return true;			
-		}
-		else
-			return false;		
-	}
-
-	private boolean checkTerm(String term, String assemblyTerm, String type) {
-		
-		String prefix = "";
-		
-		String[] splitHexTerm = term.split("(?=" + type + ")|(?<=" + type + ")");
-		
-		if(splitHexTerm.length > 1){
-		
-			for(String str: splitHexTerm){
-				
-				if(!str.equals(type))
-					prefix += str;				
-			}
-			
-			String[] splitAssemblyTerm = assemblyTerm.split("(?="+prefix+")|(?<="+prefix+")");
-			
-			if(splitAssemblyTerm.length > 1){
-			
-				ArrayList<String> splitAssemblyList = removeEmptyElements(splitAssemblyTerm);
-				
-				if(splitHexTerm.length == splitAssemblyList.size()){
+					else if(!(str.equals("HEX") | str.equals("DECIMAL")))
+						return false;
 					
-					int i = 0;
-					
-					for(String str: splitHexTerm){
-						
-						if(str.equals(type)){
-							
-							if(!isAlphaNumeric(splitAssemblyList.get(i)))
-								return false;														
-						}
-						
-						else{
-							if(!str.equals(splitAssemblyList.get(i)))
-								return false;
-						}
-						
-						i++;
-					}
-				
-					return true;
+										
 				}				
 			}
+				
+			i++;
 		}
-		
-		return false;
+			
+		return true;					
 	}
 
 	private ArrayList<String> removeEmptyElements(String[] splitAssemblyTerm) {
@@ -488,8 +464,8 @@ public class Assembler {
 		ArrayList<String> newTermsIter = new ArrayList<String>();
 		
 		String newStr = "";
+		
 		String st = termsIter.get(0);
-
 		String[] split = st.split("\\s+");
 		
 		for (String str : split) {
