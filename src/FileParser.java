@@ -16,9 +16,11 @@ public class FileParser {
 	private DataSource data;
 	
 	private boolean architecture, registers, mnemonicFormat, instructionFormat, adt;
-	private boolean atMnemonicFormat, atOpFormat, atOpCodes, atInsName, firstTabSection, secondTab;
+	private boolean atGlobalOpcodes, first, working, emptyLine, atMnemType;
+	private boolean atInsLabels, atOpCodes;
 	private boolean firstEntry;
-	private MnemonicFormatData currentMnemonicFormat;
+	private MnemonicData currentMnemonicFormat;
+	private MnemType currentMnemType;
 	
 	public FileParser(String assemblyFile, String specFile){
 		
@@ -30,16 +32,18 @@ public class FileParser {
 		instructionFormat = false;
 		adt = false;
 		
-		atMnemonicFormat = true;
-		atOpFormat = false;
+		atGlobalOpcodes = true;
+		first = false;
+		working = false;
+		emptyLine = false;
+		atMnemType = false;
+		atInsLabels = true;
 		atOpCodes = false;
-		atInsName = false;
-		firstTabSection = true;
-		secondTab = false;
 		
 		firstEntry = true;
 		
 		currentMnemonicFormat = null;
+		currentMnemType = null;
 		
 		scanAssemblyFile(assemblyFile);
 		scanSpecFile(specFile);
@@ -202,89 +206,117 @@ public class FileParser {
 	
 	private void analyseMnemonicFormat(String line){		
 		
-		if (line.trim().length() > 0) {	
+		if (line.trim().length() > 0) {				
 			
-			if (line.startsWith("\t")) {	
+			if (line.startsWith("\t")) {
 				
-				if(!atOpFormat){				
-				
-					if (firstTabSection) {	// op formats
+				if(first && !emptyLine){
 					
-						atMnemonicFormat = false;
-						atOpFormat = true;
-					} 
-				
-					else if(secondTab){	// opcodes
-						
-						atOpFormat = false;
-						atOpCodes = true;						
-						secondTab = false;
-					}
-					
-					else{	// ins name
-						
-						atOpCodes = false;
-						atInsName = true;
-					}
+					atGlobalOpcodes = true;
+					first = false;
 				}
+				
+				else
+					atMnemType = true;
+								
 			}
 			
 			else {	// new mnemonic
+				
 				resetBooleanValues();
-				currentMnemonicFormat = new MnemonicFormatData();
+				
+				String mnem = line.trim();
+				
+				currentMnemonicFormat = new MnemonicData();				
+				currentMnemonicFormat.setMnemonic(mnem);
+				
+				data.getMnemonicTable().put(mnem, currentMnemonicFormat);
+				
+				working = true;
 			}
 			
-			if (atMnemonicFormat) {
+			if(atGlobalOpcodes){
+
+				analyseGlobalOpcodes(line);
+				atGlobalOpcodes = false;
+			}
+			
+			else if(atMnemType)
+				analyseMnemType(line);
+			
+		}
+		
+		else if(working)			
+			emptyLine = true;		
+	}	
+	
+	private void analyseMnemType(String line) {
+		
+		if (line.startsWith("\t\t")) {
+
+			if(atInsLabels){
+
+				line = line.trim();				
+				
+				currentMnemType.setInsLabels(line);
+				
+				atInsLabels = false;
+				atOpCodes = true;
+			}
+			
+			else if(atOpCodes){
+				
+				line = line.replaceAll("\\s+", "");
+				String[] tokens = line.split(",");		
+				
+				for(String token: tokens){
+					
+					String[] elements = token.split("=");
+					currentMnemType.getOpCodes().put(elements[0], elements[1]);
+				}
+				
+				atOpCodes = false;				
+			}
+			
+			else{
+				
+				line = line.trim();
 				
 				String[] tokens = line.split("\\s+");
-				String mnemonicName = tokens[0];
+				
+				for(String str: tokens)
+					currentMnemType.getInstructionFormat().add(str);
+			}
+			
+		}
+		
+		else if (line.startsWith("\t")){
+			
+			String mnemType = line.trim();
 
-				currentMnemonicFormat.setMnemonic(mnemonicName);
-			}
+			currentMnemType = new MnemType();
+			currentMnemType.setMnemType(mnemType);
 			
-			else if (atOpFormat) 
-				analyseOpFormat(line);
-					
-			else if (atOpCodes) 
-				analyseOpcodes(line);
+			currentMnemonicFormat.getMnemTypes().add(mnemType);
+			currentMnemonicFormat.getMnemTypeHash().put(mnemType, currentMnemType);
 			
-			else if (atInsName) {
-				
-				String insName = line.replaceAll("\\s+", "");				
-				currentMnemonicFormat.setInstructionName(insName);
-				
-				String mnemonic = currentMnemonicFormat.getMnemonic();				
-				data.getMnemonicTable().put(mnemonic, currentMnemonicFormat);
-			}
-		}
-		
-		else if(atOpFormat){
-			
-			firstTabSection = false;
-			atOpFormat = false;
-			secondTab = true;
-		}
-	}
-	
-	private void analyseOpFormat(String line) {
-		
-		line = line.trim();
-		
-		currentMnemonicFormat.getOpFormats().add(line);		
+			atInsLabels = true;
+			atOpCodes = false;
+		}		
 	}
 
 	private void resetBooleanValues() {
 		
-		atMnemonicFormat = true;
-		atOpFormat = false;
-		atOpCodes = false;
-		atInsName = false;
-		firstTabSection = true;
+		atGlobalOpcodes = false;
+		first = true;
+		working = false;
+		emptyLine = false;
+		atMnemType = false;
 		
 		currentMnemonicFormat = null;	
 	}
 
-	private void analyseOpcodes(String opcodes) {
+	private void analyseGlobalOpcodes(String opcodes) {
 		
 		opcodes = opcodes.replaceAll("\\s+", "");
 
@@ -293,7 +325,7 @@ public class FileParser {
 		for(String token: tokens){
 			
 			String[] elements = token.split("=");
-			currentMnemonicFormat.getOpCodes().put(elements[0], elements[1]);
+			currentMnemonicFormat.getGlobalOpCodes().put(elements[0], elements[1]);
 		}	
 	}
 

@@ -32,7 +32,7 @@ public class DataSource {
 	private ArrayList<String> assemblyCode;	
 	
 	private String architecture;
-	private HashMap<String, MnemonicFormatData> mnemonicTable;
+	private HashMap<String, MnemonicData> mnemonicTable;
 	private HashMap<String, InstructionFormatData> instructionFormat;	
 	private HashMap<String, String> registerHash;
 	private ADT adt;
@@ -43,7 +43,7 @@ public class DataSource {
 		assemblyCode = new ArrayList<String>();	
 		
 		architecture = "";
-		mnemonicTable = new HashMap<String, MnemonicFormatData>();
+		mnemonicTable = new HashMap<String, MnemonicData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
 		adt = new ADT();
@@ -65,11 +65,11 @@ public class DataSource {
 		this.architecture = architecture;
 	}
 
-	public HashMap<String, MnemonicFormatData> getMnemonicTable() {
+	public HashMap<String, MnemonicData> getMnemonicTable() {
 		return mnemonicTable;
 	}
 
-	public void setMnemonicTable(HashMap<String, MnemonicFormatData> mnemonicTable) {
+	public void setMnemonicTable(HashMap<String, MnemonicData> mnemonicTable) {
 		this.mnemonicTable = mnemonicTable;
 	}
 

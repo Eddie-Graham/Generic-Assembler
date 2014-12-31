@@ -55,11 +55,11 @@ public class Main {
 //		System.out.println("insF " + data.getInstructionFormat());	
 //		System.out.println("regHash " + data.getRegisterHash());
 		
-//		String s = "SB";
+//		String s = "ADD";
 //		System.out.println("opMn " + data.getMnemonicTable().get(s).getMnemonic());
-//		System.out.println("opCond " + data.getMnemonicTable().get(s).getOpCodes());
-//		System.out.println("opIns " + data.getMnemonicTable().get(s).getInstructionName());
-//		System.out.println("Opfor " + data.getMnemonicTable().get(s).getOpFormats());
+//		System.out.println("globalops " + data.getMnemonicTable().get(s).getGlobalOpCodes());
+//		System.out.println("globalops " + data.getMnemonicTable().get(s).getMnemTypeHash());
+//		System.out.println("mnemTypes " + data.getMnemonicTable().get(s).getMnemTypes());
 		
 		
 //		System.out.println("ADT " + data.getAdt().getAdtHash());

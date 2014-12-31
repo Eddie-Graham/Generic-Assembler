@@ -109,24 +109,148 @@ public class Assembler {
 
 	private void populateInstruction(String assemblyLine) throws AssemblerException {
 		
-		reset();
+		legitPaths = new ArrayList<ArrayList<String>>();
 
 		System.out.println("*****************************");
 		System.out.println(assemblyLine.trim());
 		System.out.println("*****************************");
 
-//		String[] tokens = assemblyLine.split("\\s+");
-//		String mnemonic = tokens[0];
-//		MnemonicFormatData op = data.getMnemonicTable().get(mnemonic);
-
 		analyseWithADT(assemblyLine);
 		
-		System.out.println(legitPaths);
+		MnemonicData mnemData = getMnemData(assemblyLine);		
+		
+		ArrayList<String> mnemTypes = mnemData.getMnemTypes();		// get mnem types
+		String mnemType = "";
+		
+		for(String type: mnemTypes){
+			
+			if(checkType(type))
+				mnemType = type;	// find type			
+		}
+		
+		if(mnemType == "")
+			throw new AssemblerException("Mnem type mismatch.");
+		
+		MnemType type = mnemData.getMnemTypeHash().get(mnemType);		// get type data		
+		String insLabels = type.getInsLabels();
+		
+		HashMap<String, String> insHash = createInsHash(assemblyLine, insLabels);	
+		
+		ArrayList<String> instructionFormat = type.getInstructionFormat();	// gets instructions
+		
+		String binary = "";
+		
+		for(String ins: instructionFormat){
+			
+			InstructionFormatData insFormat = data.getInstructionFormat().get(ins);
+			
+			ArrayList<String> instructions = insFormat.getOperands();
+			
+			for(String insTerm: instructions){
+				
+				if(mnemData.getGlobalOpCodes().get(insTerm)!= null)
+					binary += mnemData.getGlobalOpCodes().get(insTerm) + " ";				
+				
+				else if(type.getOpCodes().get(insTerm) != null)
+					binary += type.getOpCodes().get(insTerm) + " ";
+				
+				else{
+					String reg = insHash.get(insTerm);
+					binary += data.getRegisterHash().get(reg) + " ";
+				}
+			}
+		}		
+		
+		System.out.println(binary);
 	}
 
-	private void reset() {
+	private MnemonicData getMnemData(String assemblyLine) throws AssemblerException {
 		
-		legitPaths = new ArrayList<ArrayList<String>>();		
+		String[] assemblySplit = assemblyLine.split("\\s+");		//space 
+		ArrayList<String> assemblyList = new ArrayList<String>();
+
+		for (String str : assemblySplit) {
+			
+			if (!str.isEmpty()){
+				
+				if(str.startsWith(","))
+					str = str.substring(1);
+			
+				if(str.endsWith(","))
+					str = str.substring(0, str.length()-1);
+				
+				assemblyList.add(str);
+			}
+		}
+		
+		MnemonicData mnemData = null;
+		
+		for(String term: assemblyList){
+			
+			if(data.getMnemonicTable().get(term) != null){
+				
+				mnemData = data.getMnemonicTable().get(term);
+				break;
+			}
+		}
+		
+		if(mnemData == null)
+			throw new AssemblerException("Unable to find mnemonic data.");		
+		
+		return mnemData;
+	}
+
+	private HashMap<String, String> createInsHash(String assemblyLine,
+			String insLabels) {
+		
+		HashMap<String,String> insHash = new HashMap<String,String>();
+		
+		String assemblyLineTrim = assemblyLine.trim();
+		String[] splitAssemblyTerms = assemblyLineTrim.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		String[] splitInsTerms = insLabels.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+			
+		int i = 0;
+		
+		for(String term: splitAssemblyTerms){
+			
+			if(isAlphaNumeric(term)){
+				
+				String insTerm = splitInsTerms[i];
+				insHash.put(insTerm, term);
+			}
+			
+			i++;
+		}	
+		
+		return insHash;
+	}
+
+	private boolean checkType(String type) {
+		
+		String[] tokens = type.replaceAll("^[,\\s]+", "").split("[,\\s]+");
+		
+		int i = 0;
+		boolean found = false;
+		
+		for(ArrayList<String> path: legitPaths){
+			
+			for(String term: path){
+				
+				if(term.equals(tokens[i])){
+					
+					found = true;
+					i++;
+					break;
+				}				
+			}
+			
+			if(!found)
+				return false;
+			
+			found = false;		
+		}
+		
+		return true;
 	}
 
 	private void analyseWithADT(String assemblyLine) throws AssemblerException {
@@ -137,7 +261,7 @@ public class Assembler {
 		ArrayList<String> rootTermList = new ArrayList<String>();
 		rootTermList.add(adtRoot);
 
-		String[] assemblySplit = assemblyLine.split("\\s+|,");		//space or comma
+		String[] assemblySplit = assemblyLine.split("\\s+");		//space 
 		
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
@@ -145,8 +269,16 @@ public class Assembler {
 
 		for (String str : assemblySplit) {
 			
-			if (!str.isEmpty())
+			if (!str.isEmpty()){
+				
+				if(str.startsWith(","))
+					str = str.substring(1);
+			
+				if(str.endsWith(","))
+					str = str.substring(0, str.length()-1);
+				
 				assemblyList.add(str);
+			}
 		}
 			
 		analyseOperands(rootTermList, assemblyList, rootTermList, paths, currentPath, adtRoot);
@@ -210,7 +342,6 @@ public class Assembler {
 
 					if (done)
 						return true;
-
 				} 
 				
 				else { // leaf
@@ -247,7 +378,7 @@ public class Assembler {
 							}			
 								
 							legitPaths = newPaths;		//legit
-							paths = new ArrayList<ArrayList<String>>();							
+//							paths = new ArrayList<ArrayList<String>>();							
 							
 							return true;							
 						}
@@ -366,31 +497,14 @@ public class Assembler {
 		}		
 			
 		else
-			return checkNestedTerm(term, assemblyTerm);		
+			return legitMatch(term, assemblyTerm);		
 	}
 
-	private boolean checkNestedTerm(String term, String assemblyTerm) {
+	private boolean legitMatch(String term, String assemblyTerm) {
 		
 		String[] splitTerms = term.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-
-		String prefix = "";		
-		boolean first = true;
 		
-		for(String str: splitTerms){	
-			
-			if(!isAlphaNumeric(str)) {	
-				
-				if(!first)
-					prefix += "|";
-				
-				prefix += "\\"+ str;
-				
-				first = false;
-			}				
-		}
-	
-		String[] splitAssemblyTerms = assemblyTerm.split("(?="+prefix+")|(?<="+prefix+")");
-		
+		String[] splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");		
 		
 		if(splitTerms.length != splitAssemblyTerms.length)
 			return false;
@@ -433,9 +547,7 @@ public class Assembler {
 					}
 					
 					else if(!(str.equals("HEX") | str.equals("DECIMAL")))
-						return false;
-					
-										
+						return false;										
 				}				
 			}
 				

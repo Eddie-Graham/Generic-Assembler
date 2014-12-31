@@ -1,0 +1,21 @@
+; assembly
+
+
+section .data
+
+
+section .bss
+
+
+section .text
+	global main
+main:
+
+		 ADD cl, al
+
+
+
+
+
+
+

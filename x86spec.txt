@@ -1,0 +1,156 @@
+;*******************************x86*******************************
+
+architecture:
+x86
+
+mnemonicformat:		
+		
+
+	
+ADD 
+	op=000000, rs=00000
+	
+	mnem reg32, reg32
+		mnem rm, reg
+		d=0, s=1, mod=11
+		opcode mod-r/m
+
+	mnem reg8, reg8
+		mnem rm, reg
+		d=0, s=0, mod=11
+		opcode mod-r/m	
+
+		
+
+DEL 
+	opcode=000000, rs=00000
+	
+	mnem reg32, reg32
+		mnem reg, r/m
+		d=0, s=1, mod=11
+		opcode mod-r/m
+
+	mnem reg8, reg8
+		mnem reg, r/m
+		d=0, s=0, mod=11
+		opcode mod-r/m
+		
+
+	
+	
+	
+
+
+
+	
+registers:	;B for binary, H for hex, D for decimal
+
+al  000B
+cl  001B
+dl  010B
+bl  011B
+ah  100B
+ch  101B
+dh	110B
+bh  111B			
+
+ax 	000B
+cx	001B
+dx	010B
+bx	011B
+sp	100B
+bp  101B
+si	110B
+di 	111B
+
+eax	000B
+ecx	001B
+edx	010B
+ebx	011B
+esp	100B
+ebp	101B
+esi	110B
+edi	111B
+
+instructionformat:
+
+opcode: op(6) d(1) s(1)
+
+mod-r/m: mod(2) reg(3) rm(3)
+
+sib: ss(2) index(3) base(3)
+
+displacement: dis(8)
+
+immediate: imm(8) 
+
+adt:	; ? optional, + one or more, * zero or more
+
+
+		; INT, the way hex and decimal parsed, "" TOFIX
+
+statement : label? mnem op*
+
+op : adrMode
+
+adrMode : reg
+adrMode : imm
+adrMode : dirMem
+adrMode : dirOff
+adrMode : baseInd
+adrMode : baseIndDisp
+
+reg : reg8
+reg : reg16
+reg : reg32
+
+reg8 : "al"
+reg8 : "cl"
+reg8 : "dl"
+reg8 : "bl"
+reg8 : "ah"
+reg8 : "ch"
+reg8 : "dh"
+reg8 : "bh"
+
+reg16 : "ax"
+reg16 : "cx"
+reg16 : "dx"
+reg16 : "bx"
+reg16 : "sp"
+reg16 : "bp"
+reg16 : "si"
+reg16 : "di"
+
+reg32 : "eax"
+reg32 : "ecx"
+reg32 : "edx"
+reg32 : "ebx"
+reg32 : "esp"
+reg32 : "ebp"
+reg32 : "esi"
+reg32 : "edi"
+
+imm : DECIMAL
+
+dirMem : [HEX]
+
+baseInd : [reg+reg]
+
+baseIndDisp : [reg+reg+DECIMAL]
+
+mnem : "MOV"
+mnem : "ADD"
+
+label : "loop"
+
+
+
+
+
+
+
+
+
+
+
