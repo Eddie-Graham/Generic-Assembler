@@ -267,15 +267,19 @@ public class FileParser {
 			else if(atOpCodes){
 				
 				line = line.replaceAll("\\s+", "");
-				String[] tokens = line.split(",");		
 				
-				for(String token: tokens){
+				if(!line.equals("--")){					
+				
+					String[] tokens = line.split(",");		
+				
+					for(String token: tokens){
 					
-					String[] elements = token.split("=");
-					currentMnemType.getOpCodes().put(elements[0], elements[1]);
+						String[] elements = token.split("=");
+						currentMnemType.getOpCodes().put(elements[0], elements[1]);
+					}
 				}
 				
-				atOpCodes = false;				
+				atOpCodes = false;					
 			}
 			
 			else{

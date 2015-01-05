@@ -113,9 +113,10 @@ public class Assembler {
 
 		System.out.println("*****************************");
 		System.out.println(assemblyLine.trim());
-		System.out.println("*****************************");
 
 		analyseWithADT(assemblyLine);
+		
+		System.out.println(legitPaths);
 		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
@@ -124,7 +125,7 @@ public class Assembler {
 		
 		for(String type: mnemTypes){
 			
-			if(checkType(type))
+			if(typeMatch(type))
 				mnemType = type;	// find type			
 		}
 		
@@ -148,19 +149,24 @@ public class Assembler {
 			
 			for(String insTerm: instructions){
 				
+				String binaryTemp = "";
+				
+				int bits = insFormat.getOperandBitHash().get(insTerm);
+				
 				if(mnemData.getGlobalOpCodes().get(insTerm)!= null)
-					binary += mnemData.getGlobalOpCodes().get(insTerm) + " ";				
+					binaryTemp = mnemData.getGlobalOpCodes().get(insTerm);				
 				
 				else if(type.getOpCodes().get(insTerm) != null)
-					binary += type.getOpCodes().get(insTerm) + " ";
+					binaryTemp = type.getOpCodes().get(insTerm);
 				
 				else{
 					String reg = insHash.get(insTerm);
-					binary += data.getRegisterHash().get(reg) + " ";
+					binaryTemp = data.getRegisterHash().get(reg);
 				}
+				
+				binary += binaryFromBinaryFormatted(binaryTemp, bits);
 			}
 		}		
-		
 		System.out.println(binary);
 	}
 
@@ -225,7 +231,7 @@ public class Assembler {
 		return insHash;
 	}
 
-	private boolean checkType(String type) {
+	private boolean typeMatch(String type) {
 		
 		String[] tokens = type.replaceAll("^[,\\s]+", "").split("[,\\s]+");
 		
@@ -547,7 +553,12 @@ public class Assembler {
 					}
 					
 					else if(!(str.equals("HEX") | str.equals("DECIMAL")))
-						return false;										
+						return false;	
+					
+					else{
+						if(data.getRegisterHash().get(splitAssemblyTerms[i]) != null)
+							return false;
+					}
 				}				
 			}
 				

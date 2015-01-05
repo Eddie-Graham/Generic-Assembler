@@ -12,7 +12,10 @@ section .text
 main:
 
 		 ADD cl, al
-
+	     ADD ecx, eax
+	     ADD edi, [ebx]
+	     ;ADD edi, [ebx+eax+5a6]
+	     
 
 
 
