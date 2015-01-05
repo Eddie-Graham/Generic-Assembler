@@ -14,6 +14,8 @@ public class Assembler {
 	private DataSource data;
 	private ArrayList<String> objectCode;
 	private ArrayList<ArrayList<String>> legitPaths;
+	private HashMap<String, String> assemblyTypeHash;
+	
 	private boolean atBss, atData, atText;
 	private boolean first, second;
 	private boolean debug = false;
@@ -23,6 +25,7 @@ public class Assembler {
 		this.data = data;
 		objectCode = new ArrayList<String>();
 		legitPaths = new ArrayList<ArrayList<String>>();
+		assemblyTypeHash = new HashMap<String, String>();
 		
 		atBss = false;
 		atData = false;
@@ -141,6 +144,8 @@ public class Assembler {
 		
 		String binary = "";
 		
+		System.out.println(assemblyTypeHash);
+		
 		for(String ins: instructionFormat){
 			
 			InstructionFormatData insFormat = data.getInstructionFormat().get(ins);
@@ -153,15 +158,28 @@ public class Assembler {
 				
 				int bits = insFormat.getOperandBitHash().get(insTerm);
 				
-				if(mnemData.getGlobalOpCodes().get(insTerm)!= null)
+				if(mnemData.getGlobalOpCodes().get(insTerm)!= null)	//global
 					binaryTemp = mnemData.getGlobalOpCodes().get(insTerm);				
 				
-				else if(type.getOpCodes().get(insTerm) != null)
+				else if(type.getOpCodes().get(insTerm) != null)	//local
 					binaryTemp = type.getOpCodes().get(insTerm);
 				
 				else{
-					String reg = insHash.get(insTerm);
-					binaryTemp = data.getRegisterHash().get(reg);
+					String insHashTerm = insHash.get(insTerm);
+					
+					if(data.getRegisterHash().get(insHashTerm) != null)	// reg
+						binaryTemp = data.getRegisterHash().get(insHashTerm);
+					
+					else{	// imm etc
+						
+						String numType = assemblyTypeHash.get(insHashTerm);
+						
+						if(numType.equals("DECIMAL"))
+							binaryTemp = decimalToBinary(insHashTerm);
+						
+						else if(numType.equals("HEX"))
+							binaryTemp = hexToBinary(insHashTerm);
+					}
 				}
 				
 				binary += binaryFromBinaryFormatted(binaryTemp, bits);
@@ -503,10 +521,10 @@ public class Assembler {
 		}		
 			
 		else
-			return legitMatch(term, assemblyTerm);		
+			return nestedMatch(term, assemblyTerm);		
 	}
 
-	private boolean legitMatch(String term, String assemblyTerm) {
+	private boolean nestedMatch(String term, String assemblyTerm) {
 		
 		String[] splitTerms = term.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		
@@ -555,10 +573,11 @@ public class Assembler {
 					else if(!(str.equals("HEX") | str.equals("DECIMAL")))
 						return false;	
 					
-					else{
-						if(data.getRegisterHash().get(splitAssemblyTerms[i]) != null)
-							return false;
-					}
+					else if(data.getRegisterHash().get(splitAssemblyTerms[i]) != null)
+						return false;
+					
+					else
+						assemblyTypeHash.put(splitAssemblyTerms[i], str);					
 				}				
 			}
 				

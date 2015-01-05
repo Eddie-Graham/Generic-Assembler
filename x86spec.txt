@@ -24,28 +24,11 @@ ADD
 		mnem reg, [rm]
 		d=1, s=1, mod=00
 		opcode mod-r/m
-
 		
-
-DEL 
-	opcode=000000, rs=00000
-	
-	mnem reg32, reg32
-		mnem reg, r/m
-		d=0, s=1, mod=11
-		opcode mod-r/m
-
-	mnem reg8, reg8
-		mnem reg, r/m
-		d=0, s=0, mod=11
-		opcode mod-r/m
-		
-
-	
-	
-	
-
-
+	mnem reg32, baseIndDisp
+		mnem reg, [rm+dis]
+		d=1, s=1, mod=10
+		opcode mod-r/m displacement
 
 	
 registers:	;B for binary, H for hex, D for decimal
@@ -85,7 +68,7 @@ mod-r/m: mod(2) reg(3) rm(3)
 
 sib: ss(2) index(3) base(3)
 
-displacement: dis(8)
+displacement: dis(32)
 
 immediate: imm(8) 
 
@@ -144,9 +127,9 @@ dirReg : [reg]
 
 baseInd : [reg+reg]
 
-baseIndDisp : [reg+reg+DECIMAL]
+baseIndDisp : [reg+imm]
 
-mnem : "MOV"
+mnem : "DEL"
 mnem : "ADD"
 
 label : "loop"
