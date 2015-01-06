@@ -21,6 +21,22 @@ ADDI
 		mnem $rt, $rs, immediate 
 		--
 		I-type
+		
+AND
+	opcode=001100, shamt=00000, func=100100
+	
+	mnem reg, reg, reg
+		mnem $rd, $rs, $rt
+		--
+		R-type
+		
+LB
+	opcode=100000
+	
+	mnem reg, mem
+		mnem $rt, immediate($rs)
+		--
+		I-type
 
 	
 registers:				;B for binary, H for hex, D for decimal
@@ -92,6 +108,8 @@ mnem : "LUI"
 mnem : "LW"
 mnem : "ANDI"
 mnem : "ADDI"
+mnem : "AND"
+mnem : "LB"
 
 label : "loop"
 

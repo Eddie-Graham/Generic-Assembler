@@ -113,6 +113,7 @@ public class Assembler {
 	private void populateInstruction(String assemblyLine) throws AssemblerException {
 		
 		legitPaths = new ArrayList<ArrayList<String>>();
+		assemblyTypeHash = new HashMap<String,String>();
 
 		System.out.println("*****************************");
 		System.out.println(assemblyLine.trim());
@@ -401,8 +402,7 @@ public class Assembler {
 									return false;
 							}			
 								
-							legitPaths = newPaths;		//legit
-//							paths = new ArrayList<ArrayList<String>>();							
+							legitPaths = newPaths;		//legit							
 							
 							return true;							
 						}
@@ -511,77 +511,90 @@ public class Assembler {
 		return newList;
 	}
 	
-	private boolean match(String term, String assemblyTerm) {	
+	private boolean match(String adtTerm, String assemblyTerm) {	
 		
-		if(term.startsWith("\"") && term.endsWith("\"")){
+		if(adtTerm.startsWith("\"") && adtTerm.endsWith("\"")){
 			
-			term = term.replaceAll("\"", "");
+			adtTerm = adtTerm.replaceAll("\"", "");
 			
-			return term.equals(assemblyTerm);
+			return adtTerm.equals(assemblyTerm);
 		}		
 			
 		else
-			return nestedMatch(term, assemblyTerm);		
+			return nestedMatch(adtTerm, assemblyTerm);		
 	}
-
-	private boolean nestedMatch(String term, String assemblyTerm) {
+	
+	private boolean nestedMatch(String adtTerm, String assemblyTerm) {
 		
-		String[] splitTerms = term.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		String[] splitAdtTerms = adtTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		
-		String[] splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");		
+		String prefixes = "";
 		
-		if(splitTerms.length != splitAssemblyTerms.length)
-			return false;
-
-		int i = 0;			
+		for(String str: splitAdtTerms){
 			
-		for(String str: splitTerms){
+			if(!isAlphaNumeric(str))
+				prefixes += "\\" + str;
+		}		
+
+		String[] splitAssemblyTerms;
+		
+		if(prefixes.isEmpty())
+			splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		
+		else
+			splitAssemblyTerms = assemblyTerm.split("(?=["+prefixes+"])|(?<=["+prefixes+"])");
+		
+		if(splitAdtTerms.length != splitAssemblyTerms.length)
+			return false;
+		
+		int i = 0;
+		
+		for(String term: splitAdtTerms){
+			
+			if(term.isEmpty() || splitAssemblyTerms[i].isEmpty()){
 				
-			if(str.isEmpty() || splitAssemblyTerms[i].isEmpty()){
-					
-				if(!(str.isEmpty() && splitAssemblyTerms[i].isEmpty()))
+				if(!(term.isEmpty() && splitAssemblyTerms[i].isEmpty()))
 					return false;
 			}
 			
-			else{					
+			else if(!isAlphaNumeric(term)) {
+				
+				if(!term.equals(splitAssemblyTerms[i]))
+					return false;
+			}
+			
+			else{
 				
 				boolean legit = false;
+				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(term);
 				
-				if(!isAlphaNumeric(str)) {
+				if(termsListFromHash != null){						
 					
-					if(!str.equals(splitAssemblyTerms[i]))
+					for(String termFromHash: termsListFromHash){
+						
+						if(match(termFromHash, splitAssemblyTerms[i])){
+							legit = true;
+							break;
+						}								
+					}
+					
+					if(!legit)
 						return false;
 				}
 				
-				else{
-					ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(str);
+				else if(data.getRegisterHash().get(splitAssemblyTerms[i]) != null)
+					return false;
+				
+				else if((term.equals("HEX") | term.equals("DECIMAL"))){
 					
-					if(termsListFromHash != null){						
-						
-						for(String termFromHash: termsListFromHash){
-							
-							if(match(termFromHash, splitAssemblyTerms[i])){
-								legit = true;
-								break;
-							}								
-						}
-						
-						if(!legit)
-							return false;
-					}
-					
-					else if(!(str.equals("HEX") | str.equals("DECIMAL")))
-						return false;	
-					
-					else if(data.getRegisterHash().get(splitAssemblyTerms[i]) != null)
+					if(!isAlphaNumeric(splitAssemblyTerms[i]))
 						return false;
 					
-					else
-						assemblyTypeHash.put(splitAssemblyTerms[i], str);					
-				}				
-			}
-				
-			i++;
+					assemblyTypeHash.put(splitAssemblyTerms[i], term);
+				}										
+			}				
+		
+			i++;			
 		}
 			
 		return true;					
