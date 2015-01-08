@@ -11,10 +11,11 @@ section .text
 	global main
 main:
 
-	ADD cl, al
-	ADD ecx, eax
-	ADD edi, [ebx]
-	ADD ebx, [ebp+1]
+			ADD cl, al
+	loop	ADD ecx, eax
+			ADD edi, [ebx]
+			ADD ebx, [ebp+1]
+			ADD ebp, [5+eax*1]
 	     
 	     
 	     

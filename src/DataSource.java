@@ -8,26 +8,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class DataSource {
-	
-	public static enum OperandType {
-	    IMMEDIATE, REGISTER, MEMORY, LABEL, NOOPERAND;
-	    
-	    public void setType(TypeNumSystem sys) {
-	        this.sys = sys;
-	      }
-	    
-	    public TypeNumSystem getSys(){
-	    	return sys;
-	    }	    
-	    
-	    public TypeNumSystem sys;
-	}	
-	
-	public static enum TypeNumSystem{
-		DECIMAL, HEX
-	}
-	
+public class DataSource {	
 	
 	private ArrayList<String> assemblyCode;	
 	

@@ -112,25 +112,29 @@ public class Assembler {
 
 	private void populateInstruction(String assemblyLine) throws AssemblerException {
 		
-		legitPaths = new ArrayList<ArrayList<String>>();
-		assemblyTypeHash = new HashMap<String,String>();
-
 		System.out.println("*****************************");
 		System.out.println(assemblyLine.trim());
+		
+		legitPaths = new ArrayList<ArrayList<String>>();
+		assemblyTypeHash = new HashMap<String,String>();	
 
 		analyseWithADT(assemblyLine);
-		
-		System.out.println(legitPaths);
 		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
 		ArrayList<String> mnemTypes = mnemData.getMnemTypes();		// get mnem types
 		String mnemType = "";
+		String operandsForWork = "";
 		
 		for(String type: mnemTypes){
 			
-			if(typeMatch(type))
-				mnemType = type;	// find type			
+			if(typeMatch(type)){
+				
+				mnemType = type;	// find type
+				operandsForWork = getOperandsForWork(type);
+				operandsForWork = operandsForWork.trim();
+				break;
+			}
 		}
 		
 		if(mnemType == "")
@@ -139,13 +143,15 @@ public class Assembler {
 		MnemType type = mnemData.getMnemTypeHash().get(mnemType);		// get type data		
 		String insLabels = type.getInsLabels();
 		
-		HashMap<String, String> insHash = createInsHash(assemblyLine, insLabels);	
+		HashMap<String, String> insHash = createInsHash(operandsForWork, insLabels);	
 		
 		ArrayList<String> instructionFormat = type.getInstructionFormat();	// gets instructions
 		
 		String binary = "";
 		
-		System.out.println(assemblyTypeHash);
+		System.out.println(legitPaths);
+		System.out.println("insHash: " + insHash);
+		System.out.println("assTypeHash: " + assemblyTypeHash);
 		
 		for(String ins: instructionFormat){
 			
@@ -185,6 +191,7 @@ public class Assembler {
 				
 				binary += binaryFromBinaryFormatted(binaryTemp, bits);
 			}
+			binary+= " "; //temp
 		}		
 		System.out.println(binary);
 	}
@@ -231,18 +238,15 @@ public class Assembler {
 		HashMap<String,String> insHash = new HashMap<String,String>();
 		
 		String assemblyLineTrim = assemblyLine.trim();
-		String[] splitAssemblyTerms = assemblyLineTrim.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-		String[] splitInsTerms = insLabels.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		String[] splitAssemblyTerms = assemblyLineTrim.split("[^a-zA-Z0-9]+");
+		String[] splitInsTerms = insLabels.split("[^a-zA-Z0-9]+");
 			
 		int i = 0;
 		
-		for(String term: splitAssemblyTerms){
-			
-			if(isAlphaNumeric(term)){
+		for(String term: splitAssemblyTerms){		
 				
-				String insTerm = splitInsTerms[i];
-				insHash.put(insTerm, term);
-			}
+			String insTerm = splitInsTerms[i];
+			insHash.put(insTerm, term);			
 			
 			i++;
 		}	
@@ -255,7 +259,7 @@ public class Assembler {
 		String[] tokens = type.replaceAll("^[,\\s]+", "").split("[,\\s]+");
 		
 		int i = 0;
-		boolean found = false;
+		boolean legit = false;
 		
 		for(ArrayList<String> path: legitPaths){
 			
@@ -263,19 +267,57 @@ public class Assembler {
 				
 				if(term.equals(tokens[i])){
 					
-					found = true;
+					legit = true;
 					i++;
 					break;
-				}				
+				}	
+				
+				else if((term.charAt(term.length()-1) == '?')){
+					
+					legit = true;
+					break;					
+				}
 			}
 			
-			if(!found)
+			if(!legit)
 				return false;
 			
-			found = false;		
+			legit = false;		
 		}
 		
 		return true;
+	}
+	
+	private String getOperandsForWork(String type) {
+		
+		String operands = "";
+		String[] tokens = type.replaceAll("^[,\\s]+", "").split("[,\\s]+");
+		
+		int i = 0;
+		
+		for(ArrayList<String> path: legitPaths){
+			
+			for(String term: path){
+				
+				if(term.equals(tokens[i])){
+					
+					operands += getAssemblyOperand(path) + " ";
+					i++;
+					break;
+				}	
+			}	
+		}
+		
+		return operands;
+	}
+
+	private String getAssemblyOperand(ArrayList<String> path) {
+		
+		String operand = path.get(path.size()-1);
+		
+		operand = operand.replaceAll("\"", "");		
+		
+		return operand;
 	}
 
 	private void analyseWithADT(String assemblyLine) throws AssemblerException {
@@ -357,11 +399,13 @@ public class Assembler {
 				String tempTerm = term.replaceAll("\\?|\\*", "");
 				
 				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(tempTerm);
+				
+				ArrayList<String> newCurrentPath = clone(currentPath);					
+				newCurrentPath.add(term);
 
 				if (termsListFromHash != null) { // not leaf
 					
-					ArrayList<String> newCurrentPath = clone(currentPath);					
-					newCurrentPath.add(term);
+					
 					
 					done = analyseOperands(termsListFromHash, assemblyList, termsIter, paths, newCurrentPath, term);
 
@@ -373,23 +417,23 @@ public class Assembler {
 					
 					String assemblyTerm = assemblyList.get(0);
 
-					if (match(term, assemblyTerm)) {
+					if (match(term, assemblyTerm, newCurrentPath)) {
 						
 						if(debug)						
 							System.out.println("found: " + term);
 
-						currentPath.add(term);
+//						currentPath.add(term);
 						
-						if(!legitIter(termsIter, currentPath))
+						if(!legitIter(termsIter, newCurrentPath))
 							return false;
 						
 						ArrayList<ArrayList<String>> newPaths = clone2(paths);
-						newPaths.add(currentPath);
+						newPaths.add(newCurrentPath);
 						
-						termsIter = updateTermsIter(termsIter, currentPath);
+						termsIter = updateTermsIter(termsIter, newCurrentPath);
 						assemblyList = removeFirstElement(assemblyList);
 						
-						currentPath = new ArrayList<String>();						
+						newCurrentPath = new ArrayList<String>();						
 
 						if (termsIter.isEmpty() || assemblyList.isEmpty()) {
 							
@@ -407,7 +451,7 @@ public class Assembler {
 							return true;							
 						}
 						
-						done = analyseOperands(termsIter, assemblyList, termsIter, newPaths, currentPath, data.getAdt().getRootTerm());
+						done = analyseOperands(termsIter, assemblyList, termsIter, newPaths, newCurrentPath, data.getAdt().getRootTerm());
 
 						if (done)
 							return true;
@@ -511,7 +555,7 @@ public class Assembler {
 		return newList;
 	}
 	
-	private boolean match(String adtTerm, String assemblyTerm) {	
+	private boolean match(String adtTerm, String assemblyTerm, ArrayList<String> currentPath) {	
 		
 		if(adtTerm.startsWith("\"") && adtTerm.endsWith("\"")){
 			
@@ -521,10 +565,10 @@ public class Assembler {
 		}		
 			
 		else
-			return nestedMatch(adtTerm, assemblyTerm);		
+			return nestedMatch(adtTerm, assemblyTerm, currentPath);		
 	}
 	
-	private boolean nestedMatch(String adtTerm, String assemblyTerm) {
+	private boolean nestedMatch(String adtTerm, String assemblyTerm, ArrayList<String> currentPath) {
 		
 		String[] splitAdtTerms = adtTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		
@@ -542,7 +586,7 @@ public class Assembler {
 			splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		
 		else
-			splitAssemblyTerms = assemblyTerm.split("(?=["+prefixes+"])|(?<=["+prefixes+"])");
+			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
 		
 		if(splitAdtTerms.length != splitAssemblyTerms.length)
 			return false;
@@ -572,7 +616,8 @@ public class Assembler {
 					
 					for(String termFromHash: termsListFromHash){
 						
-						if(match(termFromHash, splitAssemblyTerms[i])){
+						if(match(termFromHash, splitAssemblyTerms[i], currentPath)){
+							
 							legit = true;
 							break;
 						}								
@@ -597,6 +642,8 @@ public class Assembler {
 			i++;			
 		}
 			
+		currentPath.add(assemblyTerm);
+		
 		return true;					
 	}
 
@@ -705,19 +752,6 @@ public class Assembler {
 		}
 		
 		return newList;
-	}
-
-	private String getBinaryFromNumSys(String value, DataSource.OperandType opType, int bits) {
-
-		String binary = "";
-
-		if (opType.getSys() == DataSource.TypeNumSystem.DECIMAL) 
-			binary = binaryFromDecimalFormatted(value, bits);
-		
-		else if (opType.getSys() == DataSource.TypeNumSystem.HEX) 
-			binary = binaryFromHexFormatted(value, bits);
-		
-		return binary;
 	}
 
 	public static String binaryFromDecimalFormatted(String decimal, int bits) {
