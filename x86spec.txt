@@ -34,6 +34,56 @@ ADD
 		mnem reg, [dis+index*1]
 		d=1, s=1, mod=00, rm=100, base=101, ss=00
 		opcode mod-r/m sib displacement
+		
+	mnem reg32, imm
+		mnem reg, dis
+		d=1, s=1, mod=00, rm=101
+		opcode mod-r/m displacement
+		
+	mnem reg32, baseIndScale
+		mnem reg, [base+index*4]
+		d=1, s=1, ss=10, mod=00, rm=100
+		opcode mod-r/m sib
+		
+		
+		
+DIV 
+	op=111100, rs=00000
+	
+	mnem reg32, reg32
+		mnem rm, reg		; doesnt need to be punctuated
+		d=0, s=1, mod=11
+		opcode mod-r/m
+
+	mnem reg8, reg8
+		mnem rm, reg
+		d=0, s=0, mod=11
+		opcode mod-r/m	
+		
+	mnem reg32, dirReg
+		mnem reg, [rm]
+		d=1, s=1, mod=00
+		opcode mod-r/m
+		
+	mnem reg32, baseIndDisp
+		mnem reg, [rm+dis]
+		d=1, s=1, mod=10
+		opcode mod-r/m displacement
+		
+	mnem reg32, scaleOne	;sib
+		mnem reg, [dis+index*1]
+		d=1, s=1, mod=00, rm=100, base=101, ss=00
+		opcode mod-r/m sib displacement
+		
+	mnem reg32, imm
+		mnem reg, dis
+		d=1, s=1, mod=00, rm=101
+		opcode mod-r/m displacement
+		
+	mnem reg32, baseIndScale
+		mnem reg, [base+index*4]
+		d=1, s=1, ss=10, mod=00, rm=100
+		opcode mod-r/m sib
 
 	
 registers:	;B for binary, H for hex, D for decimal
@@ -67,22 +117,19 @@ edi	111B
 
 instructionformat:
 
-opcode: op(6) d(1) s(1)
+opcode : op(6) d(1) s(1)
 
-mod-r/m: mod(2) reg(3) rm(3)
+mod-r/m : mod(2) reg(3) rm(3)
 
-sib: ss(2) index(3) base(3)
+sib : ss(2) index(3) base(3)
 
-displacement: dis(32)
+displacement : dis(32)
 
-immediate: imm(8) 
+immediate : imm(8) 
 
 adt:	; ? optional, + one or more, * zero or more
 
-
-		; INT, the way hex and decimal parsed, "" TOFIX
-
-statement : label? mnem label? op*
+statement : label? mnem op*
 
 op : adrMode
 
@@ -93,6 +140,7 @@ adrMode : dirReg
 adrMode : baseInd
 adrMode : baseIndDisp
 adrMode : scale
+adrMode : baseIndScale
 
 reg : reg8
 reg : reg16
@@ -135,6 +183,8 @@ baseInd : [reg+reg]
 
 baseIndDisp : [reg+imm]
 
+baseIndScale : [reg+reg*numberFour]
+
 scale : scaleOne
 scale : scaleTwo
 
@@ -143,9 +193,12 @@ scaleTwo : [imm+reg*numberTwo]
 
 numberOne : "1"
 numberTwo : "2"
+numberThree : "3"
+numberFour: "4"
 
 mnem : "DEL"
 mnem : "ADD"
+mnem : "DIV"
 
 label : "loop"
 

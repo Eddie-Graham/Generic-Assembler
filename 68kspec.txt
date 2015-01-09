@@ -1,0 +1,96 @@
+;*******************************68k*******************************
+
+architecture:
+68000
+
+mnemonicformat:		
+		
+
+	
+ADD 
+	op=000000, rs=00000
+	
+	mnem reg32, reg32
+		mnem rm, reg		; doesnt need to be punctuated
+		d=0, s=1, mod=11
+		opcode mod-r/m
+		
+LINK
+	op=0100111001010
+	
+	mnem regDirect, imm
+		mnem reg, #dis
+		--
+		opcode displacement
+
+
+	
+registers:	;B for binary, H for hex, D for decimal
+
+D0	0D
+D1	1D
+D2	2D
+D3	3D
+D4	4D	
+D5	5D
+D6	6D
+D7	7D
+
+A0	0D
+A1	1D
+A2	2D
+A3	3D
+A4	4D
+A5	5D
+A6	6D
+A7	7D
+
+instructionformat:
+
+opcode: op(12) reg(3) 
+
+displacement: dis(16)
+
+adt:	; ? optional, + one or more, * zero or more
+
+statement : label? mnem op*
+
+op : adrMode
+
+adrMode : regDirect
+adrMode : regIndirect
+adrMode : absolute
+adrMode : imm
+
+regDirect : dataReg
+regDirect : addrReg
+
+regIndirect : simple
+regIndirect : postInc
+regIndirect : preDec
+regIndirect : addrOffset
+
+absolute : $HEX
+
+imm : #DECIMAL
+
+dataReg : "D0"
+dataReg : "D1"
+dataReg : "D2"
+dataReg : "D3"
+dataReg : "D4"
+dataReg : "D5"
+dataReg : "D6"
+dataReg : "D7"
+
+addrReg : "A0"
+addrReg : "A1"
+addrReg : "A2"
+addrReg : "A3"
+addrReg : "A4"
+addrReg : "A5"
+addrReg : "A6"
+addrReg : "A7"
+
+mnem : "LINK"
+

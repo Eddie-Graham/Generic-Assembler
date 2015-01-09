@@ -1,0 +1,15 @@
+; assembly
+
+
+section .data
+
+
+section .bss
+
+
+section .text
+	global main
+main:
+
+		LINK A6, #0
+			

@@ -168,7 +168,7 @@ public class FileParser {
 		if (line.trim().length() == 0)
 			return;
 		
-		data.setArchitecture(line);	
+		data.setArchitecture(line.trim());	
 	}
 	
 	private void analyseRegisters(String line){
@@ -176,6 +176,7 @@ public class FileParser {
 		if (line.trim().length() == 0)
 			return;
 		
+		line = line.trim();
 		char dataType = line.charAt(line.length()-1);
 		line = line.substring(0, line.length()-1);
 			
@@ -206,48 +207,49 @@ public class FileParser {
 	
 	private void analyseMnemonicFormat(String line){		
 		
-		if (line.trim().length() > 0) {				
+		if (line.trim().length() == 0){
 			
-			if (line.startsWith("\t")) {
-				
-				if(first && !emptyLine){
-					
-					atGlobalOpcodes = true;
-					first = false;
-				}
-				
-				else
-					atMnemType = true;
-								
-			}
+			if(working)			
+				emptyLine = true;
 			
-			else {	// new mnemonic
-				
-				resetBooleanValues();
-				
-				String mnem = line.trim();
-				
-				currentMnemonicFormat = new MnemonicData();				
-				currentMnemonicFormat.setMnemonic(mnem);
-				
-				data.getMnemonicTable().put(mnem, currentMnemonicFormat);
-				
-				working = true;
-			}
-			
-			if(atGlobalOpcodes){
-
-				analyseGlobalOpcodes(line);
-				atGlobalOpcodes = false;
-			}
-			
-			else if(atMnemType)
-				analyseMnemType(line);
-			
+			return;
 		}
-		
-		else if(working)			
-			emptyLine = true;		
+						
+		if (line.startsWith("\t")) {
+				
+			if(first && !emptyLine){
+					
+				atGlobalOpcodes = true;
+				first = false;
+			}
+				
+			else
+				atMnemType = true;
+								
+		}
+			
+		else {	// new mnemonic
+				
+			resetBooleanValues();
+				
+			String mnem = line.trim();
+				
+			currentMnemonicFormat = new MnemonicData();				
+			currentMnemonicFormat.setMnemonic(mnem);
+				
+			data.getMnemonicTable().put(mnem, currentMnemonicFormat);
+				
+			working = true;
+		}
+			
+		if(atGlobalOpcodes){
+
+			analyseGlobalOpcodes(line);
+			atGlobalOpcodes = false;
+		}
+			
+		else if(atMnemType)
+			analyseMnemType(line);				
 	}	
 	
 	private void analyseMnemType(String line) {
@@ -290,8 +292,7 @@ public class FileParser {
 				
 				for(String str: tokens)
 					currentMnemType.getInstructionFormat().add(str);
-			}
-			
+			}			
 		}
 		
 		else if (line.startsWith("\t")){
@@ -331,39 +332,36 @@ public class FileParser {
 			String[] elements = token.split("=");
 			currentMnemonicFormat.getGlobalOpCodes().put(elements[0], elements[1]);
 		}	
-	}
-
-	private void analyseInstructionFormat(String line){	
+	}		
+	
+	private void analyseInstructionFormat(String line){		
 		
 		if (line.trim().length() == 0)
-			return;
-		
-		String[] tokens = line.split("\\s+");
-		
-		String insName = "";
+			return;		
+
 		InstructionFormatData insF = new InstructionFormatData();
 		
-		for (String token : tokens) {
+		String[] tokens = line.split(":");		
+		
+		String insName = tokens[0].trim();		
+		String operands = tokens[1].trim();
+		
+		String[] operandTokens = operands.split("\\s+");
+		
+		for(String operand: operandTokens){
 			
-			if(token.endsWith(":")){
-				
-				token = token.replaceAll("[:]", "");
-				insName = token;
-			}
+			String[] tokenTerms = operand.split("\\(|\\)");
 			
-			else{
-				
-				String[] tokenTerms = token.split("\\(|\\)");
-				String operand = tokenTerms[0];
-				int bitSize = Integer.parseInt(tokenTerms[1]);
-				insF.getOperands().add(operand);
-				insF.getOperandBitHash().put(operand, bitSize);							
-			}
+			String op = tokenTerms[0];
+			int bitSize = Integer.parseInt(tokenTerms[1]);
+			
+			insF.getOperands().add(op);
+			insF.getOperandBitHash().put(op, bitSize);			
 		}
 		
 		insF.setInstructionName(insName);
 		data.getInstructionFormat().put(insName, insF);
-	}		
+	}	
 
 	public DataSource getData() {
 		return data;

@@ -132,7 +132,6 @@ public class Assembler {
 				
 				mnemType = type;	// find type
 				operandsForWork = getOperandsForWork(type);
-				operandsForWork = operandsForWork.trim();
 				break;
 			}
 		}
@@ -191,6 +190,7 @@ public class Assembler {
 				
 				binary += binaryFromBinaryFormatted(binaryTemp, bits);
 			}
+			
 			binary+= " "; //temp
 		}		
 		System.out.println(binary);
@@ -308,7 +308,7 @@ public class Assembler {
 			}	
 		}
 		
-		return operands;
+		return operands.trim();
 	}
 
 	private String getAssemblyOperand(ArrayList<String> path) {
@@ -421,8 +421,6 @@ public class Assembler {
 						
 						if(debug)						
 							System.out.println("found: " + term);
-
-//						currentPath.add(term);
 						
 						if(!legitIter(termsIter, newCurrentPath))
 							return false;
