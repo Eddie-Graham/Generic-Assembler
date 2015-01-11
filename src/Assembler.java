@@ -120,6 +120,8 @@ public class Assembler {
 
 		analyseWithADT(assemblyLine);
 		
+		System.out.println(legitPaths);
+		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
 		ArrayList<String> mnemTypes = mnemData.getMnemTypes();		// get mnem types
@@ -148,7 +150,7 @@ public class Assembler {
 		
 		String binary = "";
 		
-		System.out.println(legitPaths);
+//		System.out.println(legitPaths);
 		System.out.println("insHash: " + insHash);
 		System.out.println("assTypeHash: " + assemblyTypeHash);
 		
@@ -405,10 +407,19 @@ public class Assembler {
 
 				if (termsListFromHash != null) { // not leaf
 					
+					if(!iterTermIsStar(termsIter)){
+						
+						ArrayList<String> splitTermList = new ArrayList<String>();	
+						splitTermList.add(term);
 					
+						ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, parent);
 					
-					done = analyseOperands(termsListFromHash, assemblyList, termsIter, paths, newCurrentPath, term);
-
+						done = analyseOperands(termsListFromHash, assemblyList, newTermsIter, paths, newCurrentPath, term);
+					}
+					
+					else
+						done = analyseOperands(termsListFromHash, assemblyList, termsIter, paths, newCurrentPath, term);
+						
 					if (done)
 						return true;
 				} 
@@ -463,6 +474,24 @@ public class Assembler {
 		}
 		
 		return done;
+	}
+
+	private boolean iterTermIsStar(ArrayList<String> termsIter) {
+	
+		String iterStr = termsIter.get(0);
+			
+		String[] split = iterStr.split("\\s+");
+		
+		for(String str: split){
+			
+			if(str.charAt(str.length()-1) == '*')
+				return true;
+			
+			else 
+				return false;
+		}			
+		
+		return false;
 	}
 
 	private boolean notInTermsIter(String term, ArrayList<String> termsIter) {
@@ -668,12 +697,16 @@ public class Assembler {
 		String st = termsIter.get(0);
 		String[] split = st.split("\\s+");
 		
+		boolean done = false;
+		
 		for (String str : split) {
 
-			if(str.equals(parent)){
+			if(str.equals(parent) && !done){
 				
-				for(String str2: splitTermList)
-					newStr += str2 + " ";				
+				for(String str2: splitTermList){
+					newStr += str2 + " ";	
+					done = true;
+				}				
 			}
 			
 			else

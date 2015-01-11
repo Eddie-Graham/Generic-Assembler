@@ -101,7 +101,7 @@ public class FileParser {
 				setBooleanValues(false, false, false, true, false);
 				
 			else if (line.startsWith("adt:")) 
-				setBooleanValues(false, false, false, false, true);					
+				setBooleanValues(false, false, false, false, true);	
 	
 			else if (architecture)
 				analyseArchitecture(line);

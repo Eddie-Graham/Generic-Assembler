@@ -12,6 +12,7 @@ section .text
 main:
 
 			ADD cl, al
+			
 	loop	ADD ecx, eax
 			ADD edi, [ebx]
 			ADD ebx, [ebp+1]
