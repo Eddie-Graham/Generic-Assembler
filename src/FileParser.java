@@ -27,16 +27,17 @@ public class FileParser {
 
 	private boolean architecture, registers, mnemonicData, instructionFormat,
 			adt, endian;
-	private boolean atGlobalOpcodes, first, working, emptyLine, atMnemType,
-			atMnemHeader, atMnemName, abort;
+	private boolean atMnemName, working, atGlobalOpcodes, first, emptyLine,
+			atMnemTypeHeader, atMnemType, abort;
 	private boolean atLocalInsLabels, atLocalOpCodes, atLocalInsFormat;
-	private boolean firstEntry;
+	private boolean firstAdtEntry;
 	private MnemonicData currentMnemonicData;
 	private MnemType currentMnemType;
 
 	/**
 	 * <pre>
-	 * Constructor for class, initialises variables and calls methods which scan both files.
+	 * Constructor for class, initialises variables and calls methods which scan both files 
+	 * ("scanAssemblyFile(assemblyFile)" and "scanSpecFile(specFile)").
 	 * </pre>
 	 * 
 	 * @param specFile
@@ -52,20 +53,20 @@ public class FileParser {
 		instructionFormat = false;
 		adt = false;
 		endian = false;
-
-		atGlobalOpcodes = true;
-		first = false;
-		working = false;
-		emptyLine = false;
-		atMnemType = false;
-		atLocalInsLabels = false;
-		atLocalOpCodes = false;
-		abort = false;
-		atLocalInsFormat = false;
-		atMnemHeader = false;
+		
 		atMnemName = false;
+		working = false;
+		atGlobalOpcodes = true;
+		first = false;		
+		emptyLine = false;
+		atMnemTypeHeader = false;
+		atMnemType = false;
+		abort = false;		
+		atLocalInsLabels = false;
+		atLocalOpCodes = false;		
+		atLocalInsFormat = false;		
 
-		firstEntry = true;
+		firstAdtEntry = true;
 
 		currentMnemonicData = null;
 		currentMnemType = null;
@@ -76,7 +77,7 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Scans assembly file and stores it in data source.
+	 * Scans assembly file (line by line) and stores raw data in data source.
 	 * </pre>
 	 * 
 	 * @param fileName
@@ -103,7 +104,7 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Scans specification file and stores data in data source.
+	 * Scans specification file (line by line) and stores parsed data in data source.
 	 * </pre>
 	 * 
 	 * @param fileName
@@ -126,11 +127,12 @@ public class FileParser {
 			String assemblyLine = inputFile.nextLine();
 			lineCounter++;
 
+			// Comments (;...) omitted
 			String[] commentSplit = assemblyLine.split(";");
 			assemblyLine = commentSplit[0];
-
-			assemblyLine = assemblyLine.replaceAll("\\s+$", ""); // remove end
-																	// whitespace
+			
+			// Remove end whitespace
+			assemblyLine = assemblyLine.replaceAll("\\s+$", ""); 
 
 			try {
 				scanLine(assemblyLine);
@@ -147,7 +149,8 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Scans line from specification file and diverts it to relevant method for further analysis.
+	 * Scans line from specification file, determines what section in specification file 
+	 * it belongs to and diverts it to relevant method for further analysis.
 	 * </pre>
 	 * 
 	 * @param line
@@ -155,6 +158,7 @@ public class FileParser {
 	 */
 	private void scanLine(String line) throws AssemblerException {
 
+		// Section labels in specification file not case sensitive
 		String lowerCaseLine = line.toLowerCase();
 
 		if (lowerCaseLine.startsWith("architecture:"))
@@ -236,11 +240,13 @@ public class FileParser {
 			return;
 		
 		line = line.trim();
+		
+		// Legit adt expression: 
+		// (!(space|colon))+ space* colon space* (!(space|colon))+ (space* (!(space|colon))+)*
+		boolean legitAdtExp = Pattern.matches(
+				"[^\\s:]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
 
-		boolean legit = Pattern.matches(
-				"^\\s*[^\\s:]*\\s*:[\\s*[^\\s:]*]+[\\s+[^\\s:]*]*\\s*$", line);	//TODO fix
-
-		if (!legit)
+		if (!legitAdtExp)
 			throw new AssemblerException(
 					"ADT syntax error, label : label label* expected.");
 
@@ -251,16 +257,18 @@ public class FileParser {
 		String label = colonSplit[0].trim();
 		String terms = colonSplit[2].trim();
 
-		if (firstEntry) {
+		// First entry must be root term
+		if (firstAdtEntry) {
 
 			String rootTerm = label;
 			adt.setRootTerm(rootTerm);
-			firstEntry = false;
+			firstAdtEntry = false;
 		}
 
 		ArrayList<String> termsList = new ArrayList<String>();
 		termsList.add(terms);
 
+		// If label already exists in hash, then add to existing list, else put label in hash
 		ArrayList<String> list = adt.getAdtHash().get(label);
 
 		if (list != null)
@@ -324,9 +332,11 @@ public class FileParser {
 
 		line = line.trim();
 
-		boolean legit = Pattern.matches("[^\\s]+\\s+[^\\s]+", line);
+		// Legit register expression:
+		// (!space)+ space+ (!space)+
+		boolean legitRegExp = Pattern.matches("[^\\s]+\\s+[^\\s]+", line);
 
-		if (!legit)
+		if (!legitRegExp)
 			throw new AssemblerException(
 					"Registers syntax error, regName regValue expected.");
 
@@ -381,20 +391,19 @@ public class FileParser {
 	 * Analyses mnemonic data, and diverts to relevant method for analysis, expected format:
 	 * 
 	 * mnemName
-	 * 		globalOpcodes
+	 * 	globalOpcodes
 	 * 
-	 * 		mnemType
-	 * 			insLabels
-	 * 			localOpcodes
-	 * 			insFormat
+	 * 	mnemType
+	 * 		insLabels
+	 * 		localOpcodes
+	 * 		insFormat
 	 * 
-	 * 		mnemType
-	 * 			...
+	 * 	mnemType
+	 * 		...
 	 * 
 	 * mnemName
-	 * 		...
+	 * 	...
 	 * </pre>
-	 * 
 	 * 
 	 * @param line
 	 * @throws AssemblerException
@@ -409,7 +418,8 @@ public class FileParser {
 			if (working)
 				emptyLine = true;
 
-			if (atMnemHeader || atLocalInsLabels || atLocalOpCodes || atLocalInsFormat) {
+			if (atMnemTypeHeader || atLocalInsLabels || atLocalOpCodes
+					|| atLocalInsFormat) {
 
 				abort = true;
 				throw new AssemblerException(
@@ -419,12 +429,14 @@ public class FileParser {
 			return;
 		}
 
-		if (!line.startsWith(" ") && !line.startsWith("\t"))// new mnemonic
+		// New mnemonic (no whitespace at beginning)
+		if (!line.startsWith(" ") && !line.startsWith("\t"))
 			atMnemName = true;
 
 		else if (abort)
 			return;
 
+		// Global opcodes (starts with tab and not passed an empty line)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine) {
 
 			if (first) {
@@ -434,27 +446,23 @@ public class FileParser {
 			}
 		}
 
+		// Mnemonic type header (starts with tab and empty line passed)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && emptyLine) {
 
 			if (!(atLocalInsLabels || atLocalOpCodes || atLocalInsFormat))
-				atMnemHeader = true;
+				atMnemTypeHeader = true;
 		}
 
+		// Mnemonic type data (starts with double tab and empty line passed)
 		else if (Pattern.matches("\t\t[^\t\\s].*", line) && emptyLine)
 			atMnemType = true;
 
-		else if (working) {
-
-			abort = true;
-			throw new AssemblerException(
-					"Mnemonic data syntax error, indentation error.");
-		}
-
+		// Exception (indentation not recognised)
 		else {
 
 			abort = true;
 			throw new AssemblerException(
-					"Mnemonic data syntax error, mnemonicName expected (no spaces at start allowed).");
+					"Mnemonic data syntax error, line format error.");
 		}
 
 		if (atMnemName) {
@@ -463,22 +471,31 @@ public class FileParser {
 			atMnemName = false;
 		}
 
+		// Exception (passed atMnemName but working flag not true)
+		else if (!working) {
+
+			abort = true;
+			throw new AssemblerException(
+					"Mnemonic data syntax error, line format error.");
+		}
+
 		else if (atGlobalOpcodes) {
 
 			analyseGlobalOpcodes(line);
 			atGlobalOpcodes = false;
 		}
 
-		else if (atMnemHeader) {
-			
+		else if (atMnemTypeHeader) {
+
 			analyseMnemHeader(line);
-			atMnemHeader = false;
+			atMnemTypeHeader = false;
 			atLocalInsLabels = true;
 		}
 
 		else if (atMnemType)
 			analyseMnemType(line);
 
+		// Exception
 		else {
 
 			abort = true;
@@ -498,13 +515,16 @@ public class FileParser {
 	 */
 	private void analyseMnemName(String line) throws AssemblerException {
 
+		// Reset boolean values for new mnemonic
 		resetBooleanValues();
 
 		String mnem = line.trim();
 
-		boolean legit = Pattern.matches("[^\\s]+", line);
+		// Legit mnemonic name expression:
+		// (!space)+
+		boolean legitMnemName = Pattern.matches("[^\\s]+", line);
 
-		if (!legit) {
+		if (!legitMnemName) {
 
 			abort = true;
 			throw new AssemblerException(
@@ -514,6 +534,7 @@ public class FileParser {
 		currentMnemonicData = new MnemonicData();
 		currentMnemonicData.setMnemonic(mnem);
 
+		// Put mnemonic data in mnemonic hash table
 		data.getMnemonicTable().put(mnem, currentMnemonicData);
 
 		working = true;
@@ -567,16 +588,20 @@ public class FileParser {
 
 			if (!line.equals("--")) {
 
-				boolean legitOpcodes = Pattern.matches(
+				// Legit local opcode expression:
+				// (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+ 
+				// (space* comma space* (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+)*
+				boolean legitLocalOpcodes = Pattern.matches(
 								"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*", line);
 
-				if (!legitOpcodes) {
+				if (!legitLocalOpcodes) {
 
 					abort = true;
 					throw new AssemblerException(
 							"Mnemonic data syntax error, codeLabel=codeValue(,codeLabel=codeValue)* expected.");
 				}
-
+				
+				// Legit local opcodes so omit unnecessary spaces
 				line = line.replaceAll("\\s+", "");
 
 				String[] tokens = line.split(",");
@@ -604,7 +629,8 @@ public class FileParser {
 			atLocalInsFormat = false;
 			emptyLine = false;
 		}
-
+		
+		// Exception
 		else {
 
 			abort = true;
@@ -615,7 +641,7 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Resets boolean values when about to work on new mnemonic. 
+	 * Resets boolean values when about to work on a new mnemonic. 
 	 * </pre>
 	 */
 	private void resetBooleanValues() {
@@ -648,16 +674,20 @@ public class FileParser {
 
 		opcodes = opcodes.trim();
 
-		boolean legitOpcodes = Pattern.matches(
+		// Legit global opcode expression:
+		// (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+ 
+		// (space* comma space* (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+)*
+		boolean legitGlobalOpcodes = Pattern.matches(
 						"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*", opcodes);
 
-		if (!legitOpcodes) {
+		if (!legitGlobalOpcodes) {
 
 			abort = true;
 			throw new AssemblerException(
 					"Mnemonic data syntax error, codeLabel=codeValue(,codeLabel=codeValue)* expected.");
 		}
 
+		// Legit global opcodes so omit unnecessary spaces
 		opcodes = opcodes.replaceAll("\\s+", "");
 
 		String[] tokens = opcodes.split(",");
@@ -685,10 +715,13 @@ public class FileParser {
 
 		line = line.trim();
 
-		boolean legit = Pattern.matches(
+		// Legit instruction format:
+		// (!(space|colon))+ space* colon space* (!(space|colon))+ openBracket 0-9+ closeBracket
+		// (space* (!(space|colon))+ openBracket 0-9+ closeBracket)*		
+		boolean legitInsFormat = Pattern.matches(
 						"[^\\s:]+\\s*:\\s*[^\\s:]+\\([0-9]+\\)(\\s*[^\\s:]+\\([0-9]+\\))*", line);
 
-		if (!legit) {
+		if (!legitInsFormat) {
 
 			abort = true;
 			throw new AssemblerException(
@@ -721,13 +754,13 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Returns true if string represents a binary number, else false.
+	 * Returns true if string represents a binary number (0's and 1's), else false.
 	 * </pre>
 	 * 
 	 * @param s
 	 * @return
 	 */
-	public boolean isBinary(String s) {
+	private boolean isBinary(String s) {
 
 		String pattern = "[0-1]*$";
 
