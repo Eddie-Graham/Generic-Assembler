@@ -17,6 +17,7 @@ public class DataSource {
 	private HashMap<String, InstructionFormatData> instructionFormat;	
 	private HashMap<String, String> registerHash;
 	private ADT adt;
+	private String endian;
 	
 	
 	public DataSource(){
@@ -28,6 +29,7 @@ public class DataSource {
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
 		adt = new ADT();
+		endian = "";
 	}
 
 	public ArrayList<String> getAssemblyCode() {
@@ -77,5 +79,13 @@ public class DataSource {
 
 	public void setAdt(ADT adt) {
 		this.adt = adt;
-	}	
+	}
+
+	public String getEndian() {
+		return endian;
+	}
+
+	public void setEndian(String endian) {
+		this.endian = endian;
+	}		
 }

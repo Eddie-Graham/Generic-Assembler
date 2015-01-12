@@ -94,8 +94,8 @@ public class Assembler {
 							populateInstruction(assemblyLine);
 						} catch (AssemblerException e) {
 							System.out.println("Exception at line " + lineCounter);
-							System.out.println(e.getMessage());
 							System.out.println("Line: " + assemblyLine.trim());
+							System.out.println(e.getMessage());							
 						}
 					}				
 				}
@@ -197,7 +197,7 @@ public class Assembler {
 		}		
 		System.out.println(binary);
 	}
-
+	
 	private MnemonicData getMnemData(String assemblyLine) throws AssemblerException {
 		
 		String[] assemblySplit = assemblyLine.split("\\s+");		//space 

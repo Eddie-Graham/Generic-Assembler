@@ -8,8 +8,8 @@
 public class Main {
 
 	/**
-	 * Usage: args[0] is assembly file name
-	 *        args[1] is architecture specification file name
+	 * Usage: args[0] is specification file name
+	 *        args[1] is assembly file name
 	 */
 	public static void main(String[] args) {
 	
