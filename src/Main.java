@@ -46,7 +46,7 @@ public class Main {
 //		String s = Assembler.binaryToHex(x);
 //		System.out.println(s);
 		
-//		String x = "0x8d480060";
+//		String x = "0x2";
 //		String s = Assembler.hexToBinary(x);
 //		System.out.println(s);
 				

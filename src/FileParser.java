@@ -29,7 +29,7 @@ public class FileParser {
 			adt, endian;
 	private boolean atMnemName, working, atGlobalOpcodes, first, emptyLine,
 			atMnemTypeHeader, atMnemType, abort;
-	private boolean atLocalInsLabels, atLocalOpCodes, atLocalInsFormat;
+	private boolean atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
 	private boolean firstAdtEntry;
 	private MnemonicData currentMnemonicData;
 	private MnemType currentMnemType;
@@ -40,8 +40,8 @@ public class FileParser {
 	 * ("scanAssemblyFile(assemblyFile)" and "scanSpecFile(specFile)").
 	 * </pre>
 	 * 
-	 * @param specFile
-	 * @param assemblyFile
+	 * @param specFile - Specification file to be scanned
+	 * @param assemblyFile - Assembly file to be scanned
 	 */
 	public FileParser(String specFile, String assemblyFile) {
 
@@ -63,7 +63,7 @@ public class FileParser {
 		atMnemType = false;
 		abort = false;		
 		atLocalInsLabels = false;
-		atLocalOpCodes = false;		
+		atLocalOpcodes = false;		
 		atLocalInsFormat = false;		
 
 		firstAdtEntry = true;
@@ -80,7 +80,7 @@ public class FileParser {
 	 * Scans assembly file (line by line) and stores raw data in data source.
 	 * </pre>
 	 * 
-	 * @param fileName
+	 * @param fileName - Assembly file to be scanned
 	 */
 	private void scanAssemblyFile(String fileName) {
 
@@ -107,7 +107,7 @@ public class FileParser {
 	 * Scans specification file (line by line) and stores parsed data in data source.
 	 * </pre>
 	 * 
-	 * @param fileName
+	 * @param fileName - Specification file to be scanned
 	 */
 	private void scanSpecFile(String fileName) {
 
@@ -153,7 +153,7 @@ public class FileParser {
 	 * it belongs to and diverts it to relevant method for further analysis.
 	 * </pre>
 	 * 
-	 * @param line
+	 * @param line - Line from specification file to be scanned
 	 * @throws AssemblerException
 	 */
 	private void scanLine(String line) throws AssemblerException {
@@ -203,8 +203,8 @@ public class FileParser {
 	 * Sets endian, "big" or "little" (not case sensitive).
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Endian line
+	 * @throws AssemblerException if endian does not equal "little" or "big"
 	 */
 	private void analyseEndian(String line) throws AssemblerException {
 
@@ -231,8 +231,8 @@ public class FileParser {
 	 * label : label label*
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Adt line
+	 * @throws AssemblerException if line syntax error
 	 */
 	private void analyseADT(String line) throws AssemblerException {
 
@@ -306,7 +306,7 @@ public class FileParser {
 	 * Sets architecture name.
 	 * </pre>
 	 * 
-	 * @param line
+	 * @param line - Architecture line
 	 */
 	private void analyseArchitecture(String line) {
 
@@ -318,12 +318,17 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Sets register name and value, expected format: 
-	 * regName regValue (regValue must end in "B", "H" or "D" to indicate data type).
+	 * Sets register name and value (value is converted to binary before it is stored
+	 * in data source), expected format: 
+	 * regName regValue 
+	 * RegValue must end in "B", "H" or "D" to indicate data type. 
+	 * "B" means value is binary.
+	 * "H" means value is hex.
+	 * "D" means value is decimal.
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Register line
+	 * @throws AssemblerException if line syntax error or register value not valid
 	 */
 	private void analyseRegisters(String line) throws AssemblerException {
 
@@ -348,6 +353,7 @@ public class FileParser {
 		char dataType = regValue.charAt(regValue.length() - 1);
 		regValue = regValue.substring(0, regValue.length() - 1);
 
+		// Binary
 		if (dataType == 'B') {
 
 			if (!isBinary(regValue))
@@ -357,6 +363,7 @@ public class FileParser {
 			data.getRegisterHash().put(regLabel, regValue);
 		}
 
+		// Hex
 		else if (dataType == 'H') {
 
 			try {
@@ -369,6 +376,7 @@ public class FileParser {
 			data.getRegisterHash().put(regLabel, regValue);
 		}
 
+		// Decimal
 		else if (dataType == 'D') {
 
 			try {
@@ -405,8 +413,8 @@ public class FileParser {
 	 * 	...
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Mnemonic data line
+	 * @throws AssemblerException if line format/syntax error
 	 */
 	private void analyseMnemonicData(String line) throws AssemblerException {
 
@@ -418,7 +426,7 @@ public class FileParser {
 			if (working)
 				emptyLine = true;
 
-			if (atMnemTypeHeader || atLocalInsLabels || atLocalOpCodes
+			if (atMnemTypeHeader || atLocalInsLabels || atLocalOpcodes
 					|| atLocalInsFormat) {
 
 				abort = true;
@@ -449,7 +457,7 @@ public class FileParser {
 		// Mnemonic type header (starts with tab and empty line passed)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && emptyLine) {
 
-			if (!(atLocalInsLabels || atLocalOpCodes || atLocalInsFormat))
+			if (!(atLocalInsLabels || atLocalOpcodes || atLocalInsFormat))
 				atMnemTypeHeader = true;
 		}
 
@@ -510,8 +518,8 @@ public class FileParser {
 	 * mnemName
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Mnemonic name line
+	 * @throws AssemblerException if syntax error
 	 */
 	private void analyseMnemName(String line) throws AssemblerException {
 
@@ -522,7 +530,7 @@ public class FileParser {
 
 		// Legit mnemonic name expression:
 		// (!space)+
-		boolean legitMnemName = Pattern.matches("[^\\s]+", line);
+		boolean legitMnemName = Pattern.matches("[^\\s]+", mnem);
 
 		if (!legitMnemName) {
 
@@ -545,7 +553,7 @@ public class FileParser {
 	 * Sets mnemonic header.
 	 * </pre>
 	 * 
-	 * @param line
+	 * @param line - Mnemonic header line
 	 */
 	private void analyseMnemHeader(String line) {
 
@@ -565,8 +573,8 @@ public class FileParser {
 	 * codeLabel=codeValue(,codeLabel=codeValue)*	 
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Mnemonic type line
+	 * @throws AssemblerException if syntax or indentation error
 	 */
 	private void analyseMnemType(String line) throws AssemblerException {
 
@@ -579,10 +587,10 @@ public class FileParser {
 			currentMnemType.setInsLabels(line);
 
 			atLocalInsLabels = false;
-			atLocalOpCodes = true;
+			atLocalOpcodes = true;
 		}
 
-		else if (atLocalOpCodes) {
+		else if (atLocalOpcodes) {
 
 			line = line.trim();
 
@@ -613,7 +621,7 @@ public class FileParser {
 				}
 			}
 
-			atLocalOpCodes = false;
+			atLocalOpcodes = false;
 			atLocalInsFormat = true;
 		}
 
@@ -655,7 +663,7 @@ public class FileParser {
 		emptyLine = false;
 		atMnemType = false;
 		atLocalInsLabels = false;
-		atLocalOpCodes = false;
+		atLocalOpcodes = false;
 		atLocalInsFormat = false;
 
 		currentMnemonicData = null;
@@ -667,8 +675,8 @@ public class FileParser {
 	 * codeLabel=codeValue(,codeLabel=codeValue)*	  
 	 * </pre>
 	 * 
-	 * @param opcodes
-	 * @throws AssemblerException
+	 * @param opcodes - Global opcodes line
+	 * @throws AssemblerException if syntax error
 	 */
 	private void analyseGlobalOpcodes(String opcodes) throws AssemblerException {
 
@@ -705,8 +713,8 @@ public class FileParser {
 	 * insName=opLabel(bitSize) (opLabel(bitSize))* 
 	 * </pre>
 	 * 
-	 * @param line
-	 * @throws AssemblerException
+	 * @param line - Instruction format line
+	 * @throws AssemblerException if syntax error
 	 */
 	private void analyseInstructionFormat(String line) throws AssemblerException {
 
@@ -757,8 +765,8 @@ public class FileParser {
 	 * Returns true if string represents a binary number (0's and 1's), else false.
 	 * </pre>
 	 * 
-	 * @param s
-	 * @return
+	 * @param s - String
+	 * @return true if binary, else false
 	 */
 	private boolean isBinary(String s) {
 
@@ -775,7 +783,7 @@ public class FileParser {
 	 * Get data source that this file parser created.
 	 * </pre>
 	 * 
-	 * @return
+	 * @return data
 	 */
 	public DataSource getData() {
 		return data;
