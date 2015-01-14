@@ -723,7 +723,7 @@ public class FileParser {
 		abort = false;
 
 		atMnemName = false;
-		atGlobalOpcodes = true;
+		atGlobalOpcodes = false;
 		first = true;
 		working = false;
 		emptyLine = false;
