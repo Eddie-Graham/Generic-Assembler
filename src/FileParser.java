@@ -27,6 +27,8 @@ public class FileParser {
 
 	private boolean architecture, registers, mnemonicData, instructionFormat,
 			adt, endian;
+	private boolean foundArchitecture, foundRegisters, foundMnemData,
+			foundInsFormat, foundAdt, foundEndian;
 	private boolean atMnemName, working, atGlobalOpcodes, first, emptyLine,
 			atMnemTypeHeader, atMnemType, abort;
 	private boolean atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
@@ -54,9 +56,16 @@ public class FileParser {
 		adt = false;
 		endian = false;
 		
+		foundArchitecture = false;
+		foundRegisters = false;
+		foundMnemData = false;
+		foundInsFormat = false;
+		foundAdt = false;
+		foundEndian = false;
+		
 		atMnemName = false;
 		working = false;
-		atGlobalOpcodes = true;
+		atGlobalOpcodes = false;
 		first = false;		
 		emptyLine = false;
 		atMnemTypeHeader = false;
@@ -143,6 +152,38 @@ public class FileParser {
 				System.out.println();
 			}
 		}
+		
+		if (!(foundArchitecture && foundRegisters && foundMnemData
+				&& foundInsFormat && foundAdt && foundEndian)) {
+			
+			String missingSections = "";
+			
+			if(!foundArchitecture)
+				missingSections += "\"architecture\" ";
+			
+			if(!foundRegisters)
+				missingSections += "\"registers\" ";			
+			
+			if(!foundMnemData)
+				missingSections += "\"mnemonicData\" ";			
+			
+			if(!foundInsFormat)
+				missingSections += "\"instructionFormat\" ";			
+			
+			if(!foundAdt)
+				missingSections += "\"adt\" ";			
+			
+			if(!foundEndian)
+				missingSections += "\"endian\" ";
+			
+			missingSections = missingSections.trim();
+			
+			try {
+				throw new AssemblerException("Section/s " + missingSections + " missing from specification file.");
+			} catch (AssemblerException e) {
+				System.out.println(e.getMessage());
+			}
+		}
 
 		inputFile.close();
 	}
@@ -167,7 +208,7 @@ public class FileParser {
 		else if (lowerCaseLine.startsWith("registers:"))
 			setBooleanValues(false, true, false, false, false, false);
 
-		else if (lowerCaseLine.startsWith("mnemonicformat:"))
+		else if (lowerCaseLine.startsWith("mnemonicdata:"))
 			setBooleanValues(false, false, true, false, false, false);
 
 		else if (lowerCaseLine.startsWith("instructionformat:"))
@@ -179,23 +220,44 @@ public class FileParser {
 		else if (lowerCaseLine.startsWith("endian:"))
 			setBooleanValues(false, false, false, false, false, true);
 
-		else if (architecture)
+		else if (architecture){
+			
 			analyseArchitecture(line);
+			foundArchitecture = true;
+		}
 
-		else if (registers)
+		else if (registers){
+			
 			analyseRegisters(line);
+			foundRegisters = true;
+		}
 
-		else if (mnemonicData)
+		else if (mnemonicData){
+			
 			analyseMnemonicData(line);
+			foundMnemData = true;
+		}
 
-		else if (instructionFormat)
+		else if (instructionFormat){
+			
 			analyseInstructionFormat(line);
+			foundInsFormat = true;
+		}
 
-		else if (adt)
+		else if (adt){
+			
 			analyseADT(line);
+			foundAdt = true;
+		}
 
-		else if (endian)
+		else if (endian){
+			
 			analyseEndian(line);
+			foundEndian = true;
+		}
+		
+		else if (!(line.trim().length() == 0))
+			throw new AssemblerException("Missing section header.");		
 	}
 
 	/**
@@ -223,6 +285,8 @@ public class FileParser {
 		else
 			throw new AssemblerException(
 					"Endian not recognised, \"big\" or \"little\" expected.");
+		
+		endian = false;
 	}
 
 	/**
@@ -314,6 +378,8 @@ public class FileParser {
 			return;
 
 		data.setArchitecture(line.trim());
+		
+		architecture = false;
 	}
 
 	/**
@@ -657,7 +723,7 @@ public class FileParser {
 		abort = false;
 
 		atMnemName = false;
-		atGlobalOpcodes = false;
+		atGlobalOpcodes = true;
 		first = true;
 		working = false;
 		emptyLine = false;

@@ -3,7 +3,7 @@
 architecture:
 68000
 
-mnemonicformat:		
+mnemonicdata:		
 		
 
 	
@@ -44,6 +44,10 @@ A4	4D
 A5	5D
 A6	6D
 A7	7D
+
+endian:
+
+big
 
 instructionformat:
 

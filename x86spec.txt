@@ -3,7 +3,7 @@
 architecture:
 x86
 
-mnemonicformat:		
+mnemonicdata:		
 		
 
 	
@@ -16,8 +16,8 @@ ADD
 		opcode mod-r/m
 
 	mnem reg8, reg8
-		mnem rm, reg
-		d=0, s=0, mod=11
+		mnem reg, rm
+		d=1, s=0, mod=11
 		opcode mod-r/m	
 		
 	mnem reg32, dirReg
@@ -200,6 +200,10 @@ mnem : "ADD"
 mnem : "DIV"
 
 label : "loop"
+
+endian:
+
+big
 
 
 

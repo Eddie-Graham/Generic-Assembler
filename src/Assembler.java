@@ -12,18 +12,25 @@ import java.util.HashMap;
 public class Assembler {
 
 	private DataSource data;
-	private ArrayList<String> objectCode;
+	
+	private String locationCounter;
+	private HashMap<String, String> symbolTable;
+	
 	private ArrayList<ArrayList<String>> legitPaths;
 	private HashMap<String, String> assemblyTypeHash;
 	
 	private boolean atBss, atData, atText;
 	private boolean first, second;
+	
 	private boolean debug = false;
 
 	public Assembler(DataSource data) {
 
 		this.data = data;
-		objectCode = new ArrayList<String>();
+		
+		locationCounter = "";
+		symbolTable = new HashMap<String, String>();
+
 		legitPaths = new ArrayList<ArrayList<String>>();
 		assemblyTypeHash = new HashMap<String, String>();
 		
@@ -38,6 +45,15 @@ public class Assembler {
 	}
 
 	private void assemble() {
+		
+//		firstPass();
+		
+		secondPass();
+		
+		
+	}
+
+	private void secondPass() {
 		
 		int lineCounter = 0;
 
@@ -100,7 +116,125 @@ public class Assembler {
 					}				
 				}
 			}
+		}		
+	}
+
+	private void firstPass() {
+		
+		int lineCounter = 0;
+
+		for (String assemblyLine : data.getAssemblyCode()) {
+			
+			lineCounter ++;
+			
+			String[] commentSplit = assemblyLine.split(";");
+			assemblyLine = commentSplit[0];
+			
+			if (assemblyLine.trim().length() > 0){	
+				
+				assemblyLine.replaceAll("\\s+$", "");	// remove end whitespace			
+			
+				if (assemblyLine.startsWith("section .data")) 
+					setBooleanValues(false, true, false);
+			
+				else if(assemblyLine.startsWith("section .bss"))
+					setBooleanValues(true, false, false);
+			
+				else if(assemblyLine.startsWith("section .text")){
+					setBooleanValues(false, false, true);
+					first = true;
+				}
+			
+				else if (atData){
+				
+				}
+				
+				else if (atBss){
+				
+				}
+				
+				else if (atText){
+				
+					if(first){
+					
+						if(assemblyLine.startsWith("\tglobal main")){
+						
+							first = false;
+							second = true;
+						}						
+					}
+				
+					else if(second){
+					
+						if(assemblyLine.startsWith("main:"))						
+							second = false;					
+					}
+				
+					else{
+					
+						try {
+							analyseInstruction(assemblyLine);
+						} catch (AssemblerException e) {
+							System.out.println("Exception at line " + lineCounter);
+							System.out.println("Line: " + assemblyLine.trim());
+							System.out.println(e.getMessage());							
+						}
+					}				
+				}
+			}
+		}		
+	}
+
+	private void analyseInstruction(String assemblyLine) throws AssemblerException {
+		
+		System.out.println("*****************************");
+		System.out.println(assemblyLine.trim());
+		
+		legitPaths = new ArrayList<ArrayList<String>>();
+		assemblyTypeHash = new HashMap<String,String>();	
+
+		analyseWithADT(assemblyLine);
+		
+		System.out.println(legitPaths);
+		
+		MnemonicData mnemData = getMnemData(assemblyLine);		
+		
+		ArrayList<String> mnemTypes = mnemData.getMnemTypes();		// get mnem types
+		String mnemType = "";
+		
+		for(String type: mnemTypes){
+			
+			if(typeMatch(type)){
+				
+				mnemType = type;	// find type
+				break;
+			}
 		}
+		
+		if(mnemType == "")
+			throw new AssemblerException("Mnem type mismatch.");
+		
+		MnemType type = mnemData.getMnemTypeHash().get(mnemType);		// get type data		
+		
+		ArrayList<String> instructionFormat = type.getInstructionFormat();	// gets instructions
+		
+		int insSize = 0;
+	
+		for(String ins: instructionFormat){
+			
+			InstructionFormatData insFormat = data.getInstructionFormat().get(ins);
+			
+			ArrayList<String> instructions = insFormat.getOperands();
+			
+			for(String insTerm: instructions){
+				
+				int bits = insFormat.getOperandBitHash().get(insTerm);
+				
+				insSize += bits;				
+			}
+		}
+		
+		System.out.println(insSize);
 	}
 
 	private void setBooleanValues(boolean atBss, boolean atData, boolean atText) {
@@ -150,7 +284,6 @@ public class Assembler {
 		
 		String binary = "";
 		
-//		System.out.println(legitPaths);
 		System.out.println("insHash: " + insHash);
 		System.out.println("assTypeHash: " + assemblyTypeHash);
 		
@@ -192,12 +325,58 @@ public class Assembler {
 				
 				binary += binaryFromBinaryFormatted(binaryTemp, bits);
 			}
-			
-			binary+= " "; //temp
 		}		
-		System.out.println(binary);
+		
+		ArrayList<String> byteArray = splitToBytes(binary);
+		
+		String hexObjCode = getHexObjCode(byteArray);		
+		
+		System.out.println(hexObjCode);		
 	}
 	
+	private String getHexObjCode(ArrayList<String> byteArray) {
+		
+		String hexObjCode = "";
+		
+		if(data.getEndian().equals("big")){
+			
+			for(String str: byteArray){ 
+				
+				String hex = binaryToHex(str);
+				hexObjCode += hex + " ";
+			}			
+		}
+		
+		else if(data.getEndian().equals("little")){
+			
+			int counter = byteArray.size()-1;
+			
+			for(; counter >= 0; counter--){
+				
+				String hex = binaryToHex(byteArray.get(counter));
+				hexObjCode += hex + " ";
+			}
+		}
+		
+		return hexObjCode;
+	}
+
+	private ArrayList<String> splitToBytes(String binary) {
+		
+		ArrayList<String> byteArray = new ArrayList<String>();
+		
+		int index = 0;
+		
+		while (index < binary.length()) {
+			
+		    byteArray.add(binary.substring(index, Math.min(index + 8,binary.length())));
+		    
+		    index += 8;
+		}
+		
+		return byteArray;
+	}
+
 	private MnemonicData getMnemData(String assemblyLine) throws AssemblerException {
 		
 		String[] assemblySplit = assemblyLine.split("\\s+");		//space 

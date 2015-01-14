@@ -4,7 +4,7 @@
 architecture:
 MIPS
 
-mnemonicformat:		
+mnemonicdata:		
 		
 ADD 
 	opcode=000000, func=100000, shamt=00000 
@@ -90,7 +90,7 @@ imm : DECIMAL
 
 reg : $name
 
-mem : 0xHEX 
+mem : 0xHEX ;fix
 mem : imm(reg)
 
 name : "t0"
@@ -114,7 +114,9 @@ mnem : "LB"
 label : "loop"
 
 
+endian:
 
+big
 
 
 
