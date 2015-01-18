@@ -13,7 +13,7 @@ public class Assembler {
 
 	private DataSource data;
 	
-	private String locationCounter;
+	private int locationCounter;
 	private HashMap<String, String> symbolTable;
 	
 	private ArrayList<ArrayList<String>> legitPaths;
@@ -28,7 +28,7 @@ public class Assembler {
 
 		this.data = data;
 		
-		locationCounter = "";
+		locationCounter = 0x0;
 		symbolTable = new HashMap<String, String>();
 
 		legitPaths = new ArrayList<ArrayList<String>>();
@@ -235,6 +235,20 @@ public class Assembler {
 		}
 		
 		System.out.println(insSize);
+		
+		int minAdrUnit = data.getMinAdrUnit();
+		
+		int noOfAdrUnits = insSize/minAdrUnit;
+		
+		locationCounter += noOfAdrUnits;
+		
+		//TODO fix labels, cannot have label strings in spec
+		
+		
+//		System.out.println(locationCounter);
+//		System.out.println(Integer.toHexString(locationCounter));
+		
+		
 	}
 
 	private void setBooleanValues(boolean atBss, boolean atData, boolean atText) {
@@ -315,8 +329,8 @@ public class Assembler {
 						
 						String numType = assemblyTypeHash.get(insHashTerm);
 						
-						if(numType.equals("DECIMAL"))
-							binaryTemp = decimalToBinary(insHashTerm);
+						if(numType.equals("INT"))
+							binaryTemp = intToBinary(insHashTerm);
 						
 						else if(numType.equals("HEX"))
 							binaryTemp = hexToBinary(insHashTerm);
@@ -327,9 +341,9 @@ public class Assembler {
 			}
 		}		
 		
-		ArrayList<String> byteArray = splitToBytes(binary);
+		ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
 		
-		String hexObjCode = getHexObjCode(byteArray);		
+		String hexObjCode = getHexObjCode(binaryArray);		
 		
 		System.out.println(hexObjCode);		
 	}
@@ -343,6 +357,10 @@ public class Assembler {
 			for(String str: byteArray){ 
 				
 				String hex = binaryToHex(str);
+				
+				if(hex.length() == 1)
+					hex = "0" + hex;
+				
 				hexObjCode += hex + " ";
 			}			
 		}
@@ -354,6 +372,10 @@ public class Assembler {
 			for(; counter >= 0; counter--){
 				
 				String hex = binaryToHex(byteArray.get(counter));
+				
+				if(hex.length() == 1)
+					hex = "0" + hex;
+				
 				hexObjCode += hex + " ";
 			}
 		}
@@ -361,17 +383,19 @@ public class Assembler {
 		return hexObjCode;
 	}
 
-	private ArrayList<String> splitToBytes(String binary) {
+	private ArrayList<String> splitToMinAdrUnits(String binary) {
 		
 		ArrayList<String> byteArray = new ArrayList<String>();
+		
+		int minAdrUnit = data.getMinAdrUnit();
 		
 		int index = 0;
 		
 		while (index < binary.length()) {
 			
-		    byteArray.add(binary.substring(index, Math.min(index + 8,binary.length())));
+		    byteArray.add(binary.substring(index, Math.min(index + minAdrUnit,binary.length())));
 		    
-		    index += 8;
+		    index += minAdrUnit;
 		}
 		
 		return byteArray;
@@ -586,7 +610,7 @@ public class Assembler {
 
 				if (termsListFromHash != null) { // not leaf
 					
-					if(!iterTermIsStar(termsIter)){
+					if(!(parent.charAt(parent.length()-1)=='*')){
 						
 						ArrayList<String> splitTermList = new ArrayList<String>();	
 						splitTermList.add(term);
@@ -833,16 +857,42 @@ public class Assembler {
 						return false;
 				}
 				
-				else if(data.getRegisterHash().get(splitAssemblyTerms[i]) != null)
+				else if (data.getRegisterHash().get(splitAssemblyTerms[i]) != null
+						|| data.getMnemonicTable().get(splitAssemblyTerms[i]) != null)
 					return false;
 				
-				else if((term.equals("HEX") | term.equals("DECIMAL"))){
+//				else if((term.equals("HEX") | term.equals("DECIMAL"))){
+//					
+//					if(!isAlphaNumeric(splitAssemblyTerms[i]))
+//						return false;
+//					
+//					assemblyTypeHash.put(splitAssemblyTerms[i], term);
+//				}	
+				
+				else if(term.equals("HEX")){
 					
 					if(!isAlphaNumeric(splitAssemblyTerms[i]))
 						return false;
 					
 					assemblyTypeHash.put(splitAssemblyTerms[i], term);
-				}										
+				}
+				
+				else if(term.equals("INT")){
+					
+					if(!isNumeric(splitAssemblyTerms[i]))
+						return false;
+					
+					assemblyTypeHash.put(splitAssemblyTerms[i], term);
+				}
+				
+				else if(term.equals("LABEL")){
+					
+					assemblyTypeHash.put(splitAssemblyTerms[i], term);					
+				}
+				
+				else{
+					//error
+				}
 			}				
 		
 			i++;			
@@ -964,9 +1014,9 @@ public class Assembler {
 		return newList;
 	}
 
-	public static String binaryFromDecimalFormatted(String decimal, int bits) {
+	public static String binaryFromIntFormatted(String intStr, int bits) {
 
-		String binary = decimalToBinary(decimal);
+		String binary = intToBinary(intStr);
 
 		int initialLength = binary.length();
 		int zerosNeeded = bits - initialLength;
@@ -1036,9 +1086,9 @@ public class Assembler {
 		return hex;
 	}
 
-	public static String decimalToBinary(String decimal) {
+	public static String intToBinary(String intStr) {
 
-		int decimalInt = Integer.parseInt(decimal);
+		int decimalInt = Integer.parseInt(intStr);
 		String binary = Integer.toBinaryString(decimalInt);
 
 		return binary;
@@ -1046,7 +1096,17 @@ public class Assembler {
 
 	private boolean isAlphaNumeric(String s) {
 		
-		String pattern = "^[a-zA-Z0-9]*$";
+		String pattern = "[a-zA-Z0-9]*";
+		
+		if (s.matches(pattern)) 
+			return true;
+		
+		return false;
+	}
+	
+	private boolean isNumeric(String s) {
+		
+		String pattern = "[0-9]*";
 		
 		if (s.matches(pattern)) 
 			return true;

@@ -18,6 +18,7 @@ public class DataSource {
 	private HashMap<String, String> registerHash;
 	private ADT adt;
 	private String endian;
+	private int minAdrUnit;
 	
 	
 	public DataSource(){
@@ -87,5 +88,13 @@ public class DataSource {
 
 	public void setEndian(String endian) {
 		this.endian = endian;
+	}
+
+	public int getMinAdrUnit() {
+		return minAdrUnit;
+	}
+
+	public void setMinAdrUnit(int minAdrUnit) {
+		this.minAdrUnit = minAdrUnit;
 	}		
 }

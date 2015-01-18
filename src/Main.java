@@ -64,6 +64,8 @@ public class Main {
 		
 //		System.out.println("ADT " + data.getAdt().getAdtHash());
 		
+//		System.out.println("minAdrUnit " + data.getMinAdrUnit());
+		
 		Assembler assembler = new Assembler(data);
 		
 	}

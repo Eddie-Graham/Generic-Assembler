@@ -26,9 +26,9 @@ public class FileParser {
 	private DataSource data;
 
 	private boolean architecture, registers, mnemonicData, instructionFormat,
-			adt, endian;
+			adt, endian, minAddressableUnit;
 	private boolean foundArchitecture, foundRegisters, foundMnemData,
-			foundInsFormat, foundAdt, foundEndian;
+			foundInsFormat, foundAdt, foundEndian, foundMinAdrUnit;
 	private boolean atMnemName, working, atGlobalOpcodes, first, emptyLine,
 			atMnemTypeHeader, atMnemType, abort;
 	private boolean atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
@@ -55,6 +55,7 @@ public class FileParser {
 		instructionFormat = false;
 		adt = false;
 		endian = false;
+		minAddressableUnit = false;
 		
 		foundArchitecture = false;
 		foundRegisters = false;
@@ -62,6 +63,7 @@ public class FileParser {
 		foundInsFormat = false;
 		foundAdt = false;
 		foundEndian = false;
+		foundMinAdrUnit = false;
 		
 		atMnemName = false;
 		working = false;
@@ -153,8 +155,9 @@ public class FileParser {
 			}
 		}
 		
+		// If missing sections in specification file
 		if (!(foundArchitecture && foundRegisters && foundMnemData
-				&& foundInsFormat && foundAdt && foundEndian)) {
+				&& foundInsFormat && foundAdt && foundEndian && foundMinAdrUnit)) {
 			
 			String missingSections = "";
 			
@@ -175,6 +178,9 @@ public class FileParser {
 			
 			if(!foundEndian)
 				missingSections += "\"endian\" ";
+			
+			if(!foundMinAdrUnit)
+				missingSections += "\"minAddressableUnit\" ";
 			
 			missingSections = missingSections.trim();
 			
@@ -203,61 +209,88 @@ public class FileParser {
 		String lowerCaseLine = line.toLowerCase();
 
 		if (lowerCaseLine.startsWith("architecture:"))
-			setBooleanValues(true, false, false, false, false, false);
+			setBooleanValues(true, false, false, false, false, false, false);
 
 		else if (lowerCaseLine.startsWith("registers:"))
-			setBooleanValues(false, true, false, false, false, false);
+			setBooleanValues(false, true, false, false, false, false, false);
 
 		else if (lowerCaseLine.startsWith("mnemonicdata:"))
-			setBooleanValues(false, false, true, false, false, false);
+			setBooleanValues(false, false, true, false, false, false, false);
 
 		else if (lowerCaseLine.startsWith("instructionformat:"))
-			setBooleanValues(false, false, false, true, false, false);
+			setBooleanValues(false, false, false, true, false, false, false);
 
 		else if (lowerCaseLine.startsWith("adt:"))
-			setBooleanValues(false, false, false, false, true, false);
+			setBooleanValues(false, false, false, false, true, false, false);
 
 		else if (lowerCaseLine.startsWith("endian:"))
-			setBooleanValues(false, false, false, false, false, true);
+			setBooleanValues(false, false, false, false, false, true, false);
+		
+		else if (lowerCaseLine.startsWith("minaddressableunit:"))
+			setBooleanValues(false, false, false, false, false, false, true);
 
 		else if (architecture){
 			
-			analyseArchitecture(line);
 			foundArchitecture = true;
+			analyseArchitecture(line);			
 		}
 
 		else if (registers){
 			
-			analyseRegisters(line);
 			foundRegisters = true;
+			analyseRegisters(line);			
 		}
 
 		else if (mnemonicData){
 			
-			analyseMnemonicData(line);
 			foundMnemData = true;
+			analyseMnemonicData(line);			
 		}
 
 		else if (instructionFormat){
 			
-			analyseInstructionFormat(line);
 			foundInsFormat = true;
+			analyseInstructionFormat(line);			
 		}
 
 		else if (adt){
 			
-			analyseADT(line);
 			foundAdt = true;
+			analyseADT(line);			
 		}
 
 		else if (endian){
 			
-			analyseEndian(line);
 			foundEndian = true;
+			analyseEndian(line);			
+		}
+		
+		else if (minAddressableUnit) {
+
+			foundMinAdrUnit = true;
+			analyseMinAdrUnit(line);
 		}
 		
 		else if (!(line.trim().length() == 0))
 			throw new AssemblerException("Missing section header.");		
+	}
+
+	private void analyseMinAdrUnit(String line) throws AssemblerException {
+		
+		if (line.trim().length() == 0)
+			return;
+		
+		line = line.trim();
+		
+		boolean legitMinAdrUnit = Pattern.matches("[0-9]+", line);
+
+		if (!legitMinAdrUnit)
+			throw new AssemblerException(
+					"Min addressable unit syntax error, integer expected.");		
+		
+		int minAdrUnit = Integer.parseInt(line);
+		
+		data.setMinAdrUnit(minAdrUnit);		
 	}
 
 	/**
@@ -355,7 +388,7 @@ public class FileParser {
 	 */
 	private void setBooleanValues(boolean architecture, boolean registers,
 			boolean mnemonicData, boolean instructionFormat, boolean adt,
-			boolean endian) {
+			boolean endian, boolean minAddressableUnit) {
 
 		this.architecture = architecture;
 		this.registers = registers;
@@ -363,6 +396,7 @@ public class FileParser {
 		this.instructionFormat = instructionFormat;
 		this.adt = adt;
 		this.endian = endian;
+		this.minAddressableUnit = minAddressableUnit;
 	}
 
 	/**
@@ -446,7 +480,7 @@ public class FileParser {
 		else if (dataType == 'D') {
 
 			try {
-				regValue = Assembler.decimalToBinary(regValue);
+				regValue = Assembler.intToBinary(regValue);
 			} catch (NumberFormatException e) {
 				throw new AssemblerException("Registers syntax error, \""
 						+ regValue + "\" is not a valid decimal number.");
@@ -659,7 +693,8 @@ public class FileParser {
 		else if (atLocalOpcodes) {
 
 			line = line.trim();
-
+			
+			// If line is "--" then there are no local opcodes
 			if (!line.equals("--")) {
 
 				// Legit local opcode expression:

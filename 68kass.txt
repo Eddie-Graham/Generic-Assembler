@@ -11,5 +11,5 @@ section .text
 	global main
 main:
 
-		LINK A6, #0
+		loop LINK A6, #100
 			

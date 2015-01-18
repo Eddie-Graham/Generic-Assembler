@@ -86,7 +86,7 @@ op : imm
 op : reg
 op : mem
 
-imm : DECIMAL
+imm : INT
 
 reg : $name
 
@@ -111,12 +111,16 @@ mnem : "ADDI"
 mnem : "AND"
 mnem : "LB"
 
-label : "loop"
+label : LABEL
 
 
 endian:
 
 big
+
+minaddressableunit:
+
+8
 
 
 

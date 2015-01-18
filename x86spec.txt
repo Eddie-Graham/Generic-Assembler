@@ -126,7 +126,7 @@ sib : ss(2) index(3) base(3)
 displacement : dis(32)
 
 
-adt:	; ? optional, + one or more, * zero or more
+adt:	; ? optional, + one or more, * zero or more 
 
 statement : label? mnem op*
 
@@ -172,7 +172,7 @@ reg32 : "ebp"
 reg32 : "esi"
 reg32 : "edi"
 
-imm : DECIMAL
+imm : INT
 
 dirMem : [HEX]
 
@@ -199,11 +199,15 @@ mnem : "DEL"
 mnem : "ADD"
 mnem : "DIV"
 
-label : "loop"
+label : LABEL
 
 endian:
 
 big
+
+minaddressableunit:
+
+8
 
 
 

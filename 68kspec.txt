@@ -51,7 +51,7 @@ big
 
 instructionformat:
 
-opcode: op(12) reg(3) 
+opcode: op(13) reg(3) 
 
 displacement: dis(16)
 
@@ -76,7 +76,7 @@ regIndirect : addrOffset
 
 absolute : $HEX
 
-imm : #DECIMAL
+imm : #INT
 
 dataReg : "D0"
 dataReg : "D1"
@@ -97,4 +97,10 @@ addrReg : "A6"
 addrReg : "A7"
 
 mnem : "LINK"
+
+label : LABEL
+
+minaddressableunit:
+
+8
 
