@@ -538,6 +538,8 @@ public class Assembler {
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
 		ArrayList<String> assemblyList = new ArrayList<String>();
+		ArrayList<String> fullTermsIter = new ArrayList<String>();
+		fullTermsIter.add(adtRoot);
 
 		for (String str : assemblySplit) {
 			
@@ -553,14 +555,14 @@ public class Assembler {
 			}
 		}
 			
-		analyseOperands(rootTermList, assemblyList, rootTermList, paths, currentPath, adtRoot);
+		analyseOperands(rootTermList, assemblyList, rootTermList, fullTermsIter, paths, currentPath, adtRoot);
 		
 		if(legitPaths.isEmpty())
 			throw new AssemblerException("Line not consistent with ADT");
 	}
 
 	private boolean analyseOperands(ArrayList<String> terms,
-			ArrayList<String> assemblyList, ArrayList<String> termsIter,
+			ArrayList<String> assemblyList, ArrayList<String> termsIter, ArrayList<String> fullTermsIter,
 			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath,
 			String parent) {
 
@@ -569,12 +571,11 @@ public class Assembler {
 		if(debug){		
 			System.out.println("--------------------");
 			System.out.println("terms: "+terms);
-			System.out.println("asslist: "+assemblyList);
-			System.out.println("termsIter: "+termsIter);
+			System.out.println("parent: "+parent);
 			System.out.println("paths: "+paths);
 			System.out.println("curpath: "+currentPath);
-			System.out.println("parent: "+parent);
-			System.out.println();
+			System.out.println("asslist: "+assemblyList);
+			System.out.println("termsIter: "+termsIter);
 		}
 
 		for (String term : terms) {
@@ -592,36 +593,53 @@ public class Assembler {
 					splitTermList.add(str);				
 				
 				ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, parent);
-
-				done = analyseOperands(splitTermList, assemblyList, newTermsIter, paths, currentPath, parent);
+				ArrayList<String> newFullTermsIter = updateTermsIter(splitTermList, fullTermsIter, parent);
+				
+				done = analyseOperands(splitTermList, assemblyList, newTermsIter, newFullTermsIter, paths, currentPath, parent);
 
 				if (done)
 					return true;
 			} 
 			
-			else { // one term
+			else { // one term				
 
-				String tempTerm = term.replaceAll("\\?|\\*", "");
+				String tempTerm = term.replaceAll("\\?|\\*|\\+", "");
+				
+				if(term.charAt(term.length()-1)=='+'){
+					
+					ArrayList<String> splitTermList = new ArrayList<String>();	
+					String oneOrMore = tempTerm + " " + tempTerm + "*";
+					splitTermList.add(oneOrMore);
+					
+					ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, term);
+					ArrayList<String> newFullTermsIter = updateTermsIter(splitTermList, fullTermsIter, term);
+					
+					done = analyseOperands(splitTermList, assemblyList, newTermsIter, newFullTermsIter, paths, currentPath, parent);
+					
+					if(done)
+						return true;
+				}
 				
 				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(tempTerm);
 				
 				ArrayList<String> newCurrentPath = clone(currentPath);					
 				newCurrentPath.add(term);
 
-				if (termsListFromHash != null) { // not leaf
+				if (termsListFromHash != null) { // not leaf					
 					
-					if(!(parent.charAt(parent.length()-1)=='*')){
+				    if(!(parent.charAt(parent.length()-1)=='*')){
 						
 						ArrayList<String> splitTermList = new ArrayList<String>();	
 						splitTermList.add(term);
 					
 						ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, parent);
+						ArrayList<String> newFullTermsIter = updateTermsIter(splitTermList, fullTermsIter, parent);
 					
-						done = analyseOperands(termsListFromHash, assemblyList, newTermsIter, paths, newCurrentPath, term);
-					}
+						done = analyseOperands(termsListFromHash, assemblyList, newTermsIter, newFullTermsIter, paths, newCurrentPath, term);
+					}					
 					
 					else
-						done = analyseOperands(termsListFromHash, assemblyList, termsIter, paths, newCurrentPath, term);
+						done = analyseOperands(termsListFromHash, assemblyList, termsIter, fullTermsIter, paths, newCurrentPath, parent);
 						
 					if (done)
 						return true;
@@ -654,7 +672,7 @@ public class Assembler {
 							
 							else if(!termsIter.isEmpty() && assemblyList.isEmpty()){
 								
-								if(!zeroOrMore(termsIter))
+								if(!legitWithFullTermsIter(fullTermsIter, newPaths))
 									return false;
 							}			
 								
@@ -663,7 +681,7 @@ public class Assembler {
 							return true;							
 						}
 						
-						done = analyseOperands(termsIter, assemblyList, termsIter, newPaths, newCurrentPath, data.getAdt().getRootTerm());
+						done = analyseOperands(termsIter, assemblyList, termsIter, fullTermsIter, newPaths, newCurrentPath, data.getAdt().getRootTerm());
 
 						if (done)
 							return true;
@@ -678,55 +696,73 @@ public class Assembler {
 		
 		return done;
 	}
-
-	private boolean iterTermIsStar(ArrayList<String> termsIter) {
 	
-		String iterStr = termsIter.get(0);
-			
-		String[] split = iterStr.split("\\s+");
+	private boolean legitWithFullTermsIter(ArrayList<String> fullTermsIter, ArrayList<ArrayList<String>> paths) {
 		
-		for(String str: split){
-			
-			if(str.charAt(str.length()-1) == '*')
-				return true;
-			
-			else 
-				return false;
-		}			
+		String str = fullTermsIter.get(0);
+		String[] splitTermsIter = str.split("\\s+");
 		
-		return false;
-	}
-
-	private boolean notInTermsIter(String term, ArrayList<String> termsIter) {
+		boolean pathsFinished = false;
+		int pathCounter = 0;
+		ArrayList<String> path = null;
 		
-		String st = termsIter.get(0);
-		String[] split = st.split("\\s+");
-		
-		for(String str: split){			
+		for(String iterTerm: splitTermsIter){
 			
-			if(term.equals(str))
-				return false;
+			if(pathsFinished){
 				
-			else
-				return true;
+				if(!(iterTerm.charAt(iterTerm.length()-1)=='?' || iterTerm.charAt(iterTerm.length()-1)=='*'))
+					return false;				
+			}
 			
+			else{			
+								
+				path = paths.get(pathCounter);	
+			
+				if(iterTerm.charAt(iterTerm.length()-1)=='*'){
+				
+					while(legitPath(path, iterTerm)){
+						
+						pathCounter++;
+					
+						if(pathCounter > paths.size()-1){
+							
+							pathsFinished = true;
+							break;
+						}
+					
+						else					
+							path = paths.get(pathCounter);
+					}
+				}			
+			
+				else if(!legitPath(path, iterTerm)){
+				
+					if(!(iterTerm.charAt(iterTerm.length()-1)=='?' || iterTerm.charAt(iterTerm.length()-1)=='*'))
+						return false;
+				}
+			
+				else{
+					
+					pathCounter++;
+						
+					if(pathCounter > paths.size()-1)
+						pathsFinished = true;	
+				}			
+			}
 		}
 		
-		return false;		
+		return true;
 	}
 
-	private boolean zeroOrMore(ArrayList<String> termsIter) {
-		
-		String st = termsIter.get(0);
-		String[] splitTermsIter = st.split("\\s+");
-		
-		for(String str: splitTermsIter){
+	private boolean legitPath(ArrayList<String> path, String iterTerm) {
+	
+		for(String pathTerm: path){
 			
-			if(!(str.charAt(str.length()-1) == '?') && !(str.charAt(str.length()-1) == '*'))
-				return false;
-		}		
+			if(iterTerm.equals(pathTerm))
+				return true;
+		}
 		
-		return true;
+		return false;
 	}
 
 	private boolean legitIter(ArrayList<String> termsIter,
@@ -860,14 +896,7 @@ public class Assembler {
 				else if (data.getRegisterHash().get(splitAssemblyTerms[i]) != null
 						|| data.getMnemonicTable().get(splitAssemblyTerms[i]) != null)
 					return false;
-				
-//				else if((term.equals("HEX") | term.equals("DECIMAL"))){
-//					
-//					if(!isAlphaNumeric(splitAssemblyTerms[i]))
-//						return false;
-//					
-//					assemblyTypeHash.put(splitAssemblyTerms[i], term);
-//				}	
+					
 				
 				else if(term.equals("HEX")){
 					
@@ -886,6 +915,9 @@ public class Assembler {
 				}
 				
 				else if(term.equals("LABEL")){
+					
+					if(!isAlpha(splitAssemblyTerms[i]))
+						return false;
 					
 					assemblyTypeHash.put(splitAssemblyTerms[i], term);					
 				}
@@ -1107,6 +1139,16 @@ public class Assembler {
 	private boolean isNumeric(String s) {
 		
 		String pattern = "[0-9]*";
+		
+		if (s.matches(pattern)) 
+			return true;
+		
+		return false;
+	}
+	
+	private boolean isAlpha(String s) {
+		
+		String pattern = "[a-zA-Z]*";
 		
 		if (s.matches(pattern)) 
 			return true;
