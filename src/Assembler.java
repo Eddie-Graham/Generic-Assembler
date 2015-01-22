@@ -873,6 +873,10 @@ public class Assembler {
 					return false;
 			}
 			
+			else if(term.equals(splitAssemblyTerms[i])){
+				
+			}
+			
 			else{
 				
 				boolean legit = false;
@@ -923,7 +927,7 @@ public class Assembler {
 				}
 				
 				else{
-					//error
+					return false;
 				}
 			}				
 		

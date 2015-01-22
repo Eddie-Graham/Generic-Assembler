@@ -423,8 +423,8 @@ public class FileParser {
 	 * regName regValue 
 	 * RegValue must end in "B", "H" or "D" to indicate data type. 
 	 * "B" means value is binary.
-	 * "H" means value is hex.
-	 * "D" means value is decimal.
+	 * "H" means value is hexadecimal.
+	 * "I" means value is an integer.
 	 * </pre>
 	 * 
 	 * @param line - Register line
@@ -476,8 +476,8 @@ public class FileParser {
 			data.getRegisterHash().put(regLabel, regValue);
 		}
 
-		// Decimal
-		else if (dataType == 'D') {
+		// Integer
+		else if (dataType == 'I') {
 
 			try {
 				regValue = Assembler.intToBinary(regValue);
