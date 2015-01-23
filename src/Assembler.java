@@ -14,7 +14,7 @@ public class Assembler {
 	private DataSource data;
 	
 	private int locationCounter;
-	private HashMap<String, String> symbolTable;
+	private HashMap<String, Integer> symbolTable;
 	
 	private ArrayList<ArrayList<String>> legitPaths;
 	private HashMap<String, String> assemblyTypeHash;
@@ -28,8 +28,8 @@ public class Assembler {
 
 		this.data = data;
 		
-		locationCounter = 0x0;
-		symbolTable = new HashMap<String, String>();
+		locationCounter = 0;
+		symbolTable = new HashMap<String, Integer>();
 
 		legitPaths = new ArrayList<ArrayList<String>>();
 		assemblyTypeHash = new HashMap<String, String>();
@@ -46,9 +46,11 @@ public class Assembler {
 
 	private void assemble() {
 		
-//		firstPass();
+		firstPass();
 		
 		secondPass();
+		
+		System.out.println(symbolTable);
 		
 		
 	}
@@ -173,7 +175,7 @@ public class Assembler {
 					else{
 					
 						try {
-							analyseInstruction(assemblyLine);
+							analyseInstructionForLabels(assemblyLine);
 						} catch (AssemblerException e) {
 							System.out.println("Exception at line " + lineCounter);
 							System.out.println("Line: " + assemblyLine.trim());
@@ -185,17 +187,12 @@ public class Assembler {
 		}		
 	}
 
-	private void analyseInstruction(String assemblyLine) throws AssemblerException {
-		
-		System.out.println("*****************************");
-		System.out.println(assemblyLine.trim());
+	private void analyseInstructionForLabels(String assemblyLine) throws AssemblerException {
 		
 		legitPaths = new ArrayList<ArrayList<String>>();
 		assemblyTypeHash = new HashMap<String,String>();	
 
 		analyseWithADT(assemblyLine);
-		
-		System.out.println(legitPaths);
 		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
@@ -234,21 +231,54 @@ public class Assembler {
 			}
 		}
 		
-		System.out.println(insSize);
-		
 		int minAdrUnit = data.getMinAdrUnit();
 		
 		int noOfAdrUnits = insSize/minAdrUnit;
 		
-		locationCounter += noOfAdrUnits;
+		if(labelExists()){
+			
+			String label = getLabelString();
+			symbolTable.put(label, locationCounter);
+		}
+	
+		locationCounter += noOfAdrUnits;		
+	}
+
+	private String getLabelString() {
 		
-		//TODO fix labels, cannot have label strings in spec
+		String label = "";
+		boolean foundLabel = false;
 		
+		for(ArrayList<String> path: legitPaths){
+			
+			for(String term: path){
+				
+				if(term.equals("LABEL"))
+					foundLabel = true;
+				
+				if(foundLabel)
+					label = term;					
+			}
+			
+			if(foundLabel)
+				break;
+		}
 		
-//		System.out.println(locationCounter);
-//		System.out.println(Integer.toHexString(locationCounter));
+		return label;
+	}
+
+	private boolean labelExists() {
 		
+		for(ArrayList<String> path: legitPaths){
+			
+			for(String term: path){
+				
+				if(term.equals("LABEL"))
+					return true;
+			}
+		}		
 		
+		return false;
 	}
 
 	private void setBooleanValues(boolean atBss, boolean atData, boolean atText) {
