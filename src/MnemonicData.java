@@ -12,15 +12,15 @@ public class MnemonicData {
 	
 	private String mnemonic;
 	private HashMap<String,String> globalOpCodes;
-	private HashMap<String,MnemType> mnemTypeHash;
-	private ArrayList<String> mnemTypes;
+	private HashMap<String,MnemFormat> mnemFormatHash;
+	private ArrayList<String> mnemFormats;
 	
 	public MnemonicData(){
 		
 		mnemonic = "";
 		globalOpCodes = new HashMap<String, String>();
-		mnemTypeHash = new HashMap<String, MnemType>();
-		mnemTypes = new ArrayList<String>();
+		mnemFormatHash = new HashMap<String, MnemFormat>();
+		mnemFormats = new ArrayList<String>();
 	}
 
 	public String getMnemonic() {
@@ -39,19 +39,19 @@ public class MnemonicData {
 		this.globalOpCodes = globalOpCodes;
 	}
 
-	public HashMap<String, MnemType> getMnemTypeHash() {
-		return mnemTypeHash;
+	public HashMap<String, MnemFormat> getMnemFormatHash() {
+		return mnemFormatHash;
 	}
 
-	public void setMnemTypeHash(HashMap<String, MnemType> mnemTypeHash) {
-		this.mnemTypeHash = mnemTypeHash;
+	public void setMnemFormatHash(HashMap<String, MnemFormat> mnemFormatHash) {
+		this.mnemFormatHash = mnemFormatHash;
 	}
 
-	public ArrayList<String> getMnemTypes() {
-		return mnemTypes;
+	public ArrayList<String> getMnemFormats() {
+		return mnemFormats;
 	}
 
-	public void setMnemTypes(ArrayList<String> mnemTypes) {
-		this.mnemTypes = mnemTypes;
-	}
+	public void setMnemFormats(ArrayList<String> mnemFormats) {
+		this.mnemFormats = mnemFormats;
+	}	
 }

@@ -8,27 +8,27 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class MnemType {
+public class MnemFormat {
 	
-	private String mnemType;
+	private String mnemFormat;
 	private String insLabels;
 	private HashMap<String,String> opCodes;
 	private ArrayList<String> instructionFormat;
 	
-	public MnemType(){
+	public MnemFormat(){
 		
-		mnemType = "";
+		mnemFormat = "";
 		insLabels = "";
 		opCodes = new HashMap<String, String>();
 		instructionFormat = new ArrayList<String>();		
 	}
 
-	public String getMnemType() {
-		return mnemType;
+	public String getMnemFormat() {
+		return mnemFormat;
 	}
 
-	public void setMnemType(String mnemType) {
-		this.mnemType = mnemType;
+	public void setMnemFormat(String mnemFormat) {
+		this.mnemFormat = mnemFormat;
 	}
 
 	public String getInsLabels() {

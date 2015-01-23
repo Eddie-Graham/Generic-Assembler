@@ -196,24 +196,24 @@ public class Assembler {
 		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
-		ArrayList<String> mnemTypes = mnemData.getMnemTypes();		// get mnem types
-		String mnemType = "";
+		ArrayList<String> mnemFormats = mnemData.getMnemFormats();		// get mnem types
+		String mnemFormat = "";
 		
-		for(String type: mnemTypes){
+		for(String format: mnemFormats){
 			
-			if(typeMatch(type)){
+			if(typeMatch(format)){
 				
-				mnemType = type;	// find type
+				mnemFormat = format;	// find type
 				break;
 			}
 		}
 		
-		if(mnemType == "")
-			throw new AssemblerException("Mnem type mismatch.");
+		if(mnemFormat == "")
+			throw new AssemblerException("Mnem format mismatch.");
 		
-		MnemType type = mnemData.getMnemTypeHash().get(mnemType);		// get type data		
+		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data		
 		
-		ArrayList<String> instructionFormat = type.getInstructionFormat();	// gets instructions
+		ArrayList<String> instructionFormat = format.getInstructionFormat();	// gets instructions
 		
 		int insSize = 0;
 	
@@ -302,29 +302,29 @@ public class Assembler {
 		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
-		ArrayList<String> mnemTypes = mnemData.getMnemTypes();		// get mnem types
-		String mnemType = "";
+		ArrayList<String> mnemFormats = mnemData.getMnemFormats();		// get mnem types
+		String mnemFormat = "";
 		String operandsForWork = "";
 		
-		for(String type: mnemTypes){
+		for(String format: mnemFormats){
 			
-			if(typeMatch(type)){
+			if(typeMatch(format)){
 				
-				mnemType = type;	// find type
-				operandsForWork = getOperandsForWork(type);
+				mnemFormat = format;	// find type
+				operandsForWork = getOperandsForWork(format);
 				break;
 			}
 		}
 		
-		if(mnemType == "")
+		if(mnemFormat == "")
 			throw new AssemblerException("Mnem type mismatch.");
 		
-		MnemType type = mnemData.getMnemTypeHash().get(mnemType);		// get type data		
-		String insLabels = type.getInsLabels();
+		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data		
+		String insLabels = format.getInsLabels();
 		
 		HashMap<String, String> insHash = createInsHash(operandsForWork, insLabels);	
 		
-		ArrayList<String> instructionFormat = type.getInstructionFormat();	// gets instructions
+		ArrayList<String> instructionFormat = format.getInstructionFormat();	// gets instructions
 		
 		String binary = "";
 		
@@ -346,8 +346,8 @@ public class Assembler {
 				if(mnemData.getGlobalOpCodes().get(insTerm)!= null)	//global
 					binaryTemp = mnemData.getGlobalOpCodes().get(insTerm);				
 				
-				else if(type.getOpCodes().get(insTerm) != null)	//local
-					binaryTemp = type.getOpCodes().get(insTerm);
+				else if(format.getOpCodes().get(insTerm) != null)	//local
+					binaryTemp = format.getOpCodes().get(insTerm);
 				
 				else{
 					String insHashTerm = insHash.get(insTerm);

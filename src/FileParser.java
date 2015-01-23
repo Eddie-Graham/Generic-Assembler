@@ -30,11 +30,11 @@ public class FileParser {
 	private boolean foundArchitecture, foundRegisters, foundMnemData,
 			foundInsFormat, foundAdt, foundEndian, foundMinAdrUnit;
 	private boolean atMnemName, working, atGlobalOpcodes, first, emptyLine,
-			atMnemTypeHeader, atMnemType, abort;
+			atMnemFormatHeader, atMnemFormat, abort;
 	private boolean atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
 	private boolean firstAdtEntry;
 	private MnemonicData currentMnemonicData;
-	private MnemType currentMnemType;
+	private MnemFormat currentMnemFormat;
 
 	/**
 	 * <pre>
@@ -70,8 +70,8 @@ public class FileParser {
 		atGlobalOpcodes = false;
 		first = false;		
 		emptyLine = false;
-		atMnemTypeHeader = false;
-		atMnemType = false;
+		atMnemFormatHeader = false;
+		atMnemFormat = false;
 		abort = false;		
 		atLocalInsLabels = false;
 		atLocalOpcodes = false;		
@@ -80,7 +80,7 @@ public class FileParser {
 		firstAdtEntry = true;
 
 		currentMnemonicData = null;
-		currentMnemType = null;
+		currentMnemFormat = null;
 
 		scanAssemblyFile(assemblyFile);
 		scanSpecFile(specFile);
@@ -501,12 +501,12 @@ public class FileParser {
 	 * mnemName
 	 * 	globalOpcodes
 	 * 
-	 * 	mnemType
+	 * 	mnemFormat
 	 * 		insLabels
 	 * 		localOpcodes
 	 * 		insFormat
 	 * 
-	 * 	mnemType
+	 * 	mnemFormat
 	 * 		...
 	 * 
 	 * mnemName
@@ -526,7 +526,7 @@ public class FileParser {
 			if (working)
 				emptyLine = true;
 
-			if (atMnemTypeHeader || atLocalInsLabels || atLocalOpcodes
+			if (atMnemFormatHeader || atLocalInsLabels || atLocalOpcodes
 					|| atLocalInsFormat) {
 
 				abort = true;
@@ -554,16 +554,16 @@ public class FileParser {
 			}
 		}
 
-		// Mnemonic type header (starts with tab and empty line passed)
+		// Mnemonic format header (starts with tab and empty line passed)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && emptyLine) {
 
 			if (!(atLocalInsLabels || atLocalOpcodes || atLocalInsFormat))
-				atMnemTypeHeader = true;
+				atMnemFormatHeader = true;
 		}
 
-		// Mnemonic type data (starts with double tab and empty line passed)
+		// Mnemonic format data (starts with double tab and empty line passed)
 		else if (Pattern.matches("\t\t[^\t\\s].*", line) && emptyLine)
-			atMnemType = true;
+			atMnemFormat = true;
 
 		// Exception (indentation not recognised)
 		else {
@@ -593,15 +593,15 @@ public class FileParser {
 			atGlobalOpcodes = false;
 		}
 
-		else if (atMnemTypeHeader) {
+		else if (atMnemFormatHeader) {
 
-			analyseMnemHeader(line);
-			atMnemTypeHeader = false;
+			analyseMnemFormatHeader(line);
+			atMnemFormatHeader = false;
 			atLocalInsLabels = true;
 		}
 
-		else if (atMnemType)
-			analyseMnemType(line);
+		else if (atMnemFormat)
+			analyseMnemFormat(line);
 
 		// Exception
 		else {
@@ -655,36 +655,36 @@ public class FileParser {
 	 * 
 	 * @param line - Mnemonic header line
 	 */
-	private void analyseMnemHeader(String line) {
+	private void analyseMnemFormatHeader(String line) {
 
 		line = line.trim();
 
-		currentMnemType = new MnemType();
-		currentMnemType.setMnemType(line);
+		currentMnemFormat = new MnemFormat();
+		currentMnemFormat.setMnemFormat(line);
 
-		currentMnemonicData.getMnemTypes().add(line);
-		currentMnemonicData.getMnemTypeHash().put(line, currentMnemType);
+		currentMnemonicData.getMnemFormats().add(line);
+		currentMnemonicData.getMnemFormatHash().put(line, currentMnemFormat);
 	}
 	
 	/**
 	 * <pre>
-	 * Analyses mnemonic type data (instruction labels, local opcodes and instruction format).
+	 * Analyses mnemonic format data (instruction labels, local opcodes and instruction format).
 	 * Expected format of local opcodes:
 	 * codeLabel=codeValue(,codeLabel=codeValue)*	 
 	 * </pre>
 	 * 
-	 * @param line - Mnemonic type line
+	 * @param line - Mnemonic format line
 	 * @throws AssemblerException if syntax or indentation error
 	 */
-	private void analyseMnemType(String line) throws AssemblerException {
+	private void analyseMnemFormat(String line) throws AssemblerException {
 
-		atMnemType = false;
+		atMnemFormat = false;
 		
 		if (atLocalInsLabels) {
 
 			line = line.trim();
 
-			currentMnemType.setInsLabels(line);
+			currentMnemFormat.setInsLabels(line);
 
 			atLocalInsLabels = false;
 			atLocalOpcodes = true;
@@ -718,7 +718,7 @@ public class FileParser {
 				for (String token : tokens) {
 
 					String[] elements = token.split("=");
-					currentMnemType.getOpCodes().put(elements[0], elements[1]);
+					currentMnemFormat.getOpCodes().put(elements[0], elements[1]);
 				}
 			}
 
@@ -733,7 +733,7 @@ public class FileParser {
 			String[] tokens = line.split("\\s+");
 
 			for (String str : tokens)
-				currentMnemType.getInstructionFormat().add(str);
+				currentMnemFormat.getInstructionFormat().add(str);
 
 			atLocalInsFormat = false;
 			emptyLine = false;
@@ -762,7 +762,7 @@ public class FileParser {
 		first = true;
 		working = false;
 		emptyLine = false;
-		atMnemType = false;
+		atMnemFormat = false;
 		atLocalInsLabels = false;
 		atLocalOpcodes = false;
 		atLocalInsFormat = false;
