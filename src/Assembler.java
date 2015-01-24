@@ -8,6 +8,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 public class Assembler {
 
@@ -191,6 +192,8 @@ public class Assembler {
 		
 		legitPaths = new ArrayList<ArrayList<String>>();
 		assemblyTypeHash = new HashMap<String,String>();	
+		
+		assemblyLine = assemblyLine.trim();
 
 		analyseWithADT(assemblyLine);
 		
@@ -201,7 +204,7 @@ public class Assembler {
 		
 		for(String format: mnemFormats){
 			
-			if(typeMatch(format)){
+			if(formatMatch(format)){
 				
 				mnemFormat = format;	// find type
 				break;
@@ -210,6 +213,9 @@ public class Assembler {
 		
 		if(mnemFormat == "")
 			throw new AssemblerException("Mnem format mismatch.");
+		
+		if(!correctSyntax(mnemFormat, assemblyLine))
+			throw new AssemblerException("Assembly line syntax error.");
 		
 		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data		
 		
@@ -293,6 +299,8 @@ public class Assembler {
 		System.out.println("*****************************");
 		System.out.println(assemblyLine.trim());
 		
+		assemblyLine = assemblyLine.trim();
+		
 		legitPaths = new ArrayList<ArrayList<String>>();
 		assemblyTypeHash = new HashMap<String,String>();	
 
@@ -308,16 +316,25 @@ public class Assembler {
 		
 		for(String format: mnemFormats){
 			
-			if(typeMatch(format)){
+			if(formatMatch(format)){
 				
 				mnemFormat = format;	// find type
+				
+								
+				
 				operandsForWork = getOperandsForWork(format);
 				break;
 			}
 		}
 		
 		if(mnemFormat == "")
-			throw new AssemblerException("Mnem type mismatch.");
+			throw new AssemblerException("Mnem format mismatch.");
+		
+		
+		if(!correctSyntax(mnemFormat, assemblyLine))
+			throw new AssemblerException("Assembly line syntax error.");
+		
+		
 		
 		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data		
 		String insLabels = format.getInsLabels();
@@ -378,6 +395,44 @@ public class Assembler {
 		System.out.println(hexObjCode);		
 	}
 	
+	private boolean correctSyntax(String mnemFormat, String assemblyLine) {
+		
+		
+		String[] tokens = mnemFormat.split("(?=[,\\s]+)|(?<=[,\\s]+)");
+		
+		String regex = ".*";
+		
+		boolean inSpaces = false;
+		
+		for(String token: tokens){
+
+			if(token.matches("\\s+")){
+				
+				if(!inSpaces){
+					regex += "\\s+";
+					inSpaces = true;
+				}
+			}
+			
+			else{
+				
+				inSpaces = false;
+				
+				if(token.equals(","))
+						regex += ",";
+				
+				else
+					regex += "[^\\s,]+";				
+			}				
+		}
+		
+		regex += ".*";
+		
+		boolean legitSyntax = Pattern.matches(regex,assemblyLine);	
+		
+		return legitSyntax;	
+	}
+
 	private String getHexObjCode(ArrayList<String> byteArray) {
 		
 		String hexObjCode = "";
@@ -436,18 +491,12 @@ public class Assembler {
 		String[] assemblySplit = assemblyLine.split("\\s+");		//space 
 		ArrayList<String> assemblyList = new ArrayList<String>();
 
-		for (String str : assemblySplit) {
-			
-			if (!str.isEmpty()){
+		for (String str : assemblySplit) {		
 				
-				if(str.startsWith(","))
-					str = str.substring(1);
-			
-				if(str.endsWith(","))
-					str = str.substring(0, str.length()-1);
+			str = str.replaceAll("^,+", "");
+			str = str.replaceAll(",+$", "");
 				
-				assemblyList.add(str);
-			}
+			assemblyList.add(str);			
 		}
 		
 		MnemonicData mnemData = null;
@@ -489,12 +538,14 @@ public class Assembler {
 		return insHash;
 	}
 
-	private boolean typeMatch(String type) {
+	private boolean formatMatch(String format) {
 		
-		String[] tokens = type.replaceAll("^[,\\s]+", "").split("[,\\s]+");
+		String[] tokens = format.split("[,\\s]+");
 		
 		int i = 0;
 		boolean legit = false;
+		
+		//TODO
 		
 		for(ArrayList<String> path: legitPaths){
 			
@@ -523,10 +574,10 @@ public class Assembler {
 		return true;
 	}
 	
-	private String getOperandsForWork(String type) {
+	private String getOperandsForWork(String format) {
 		
 		String operands = "";
-		String[] tokens = type.replaceAll("^[,\\s]+", "").split("[,\\s]+");
+		String[] tokens = format.split("[,\\s]+");
 		
 		int i = 0;
 		
@@ -573,13 +624,10 @@ public class Assembler {
 
 		for (String str : assemblySplit) {
 			
-			if (!str.isEmpty()){
+			if (!str.matches(",+")){
 				
-				if(str.startsWith(","))
-					str = str.substring(1);
-			
-				if(str.endsWith(","))
-					str = str.substring(0, str.length()-1);
+				str = str.replaceAll("^,+", "");
+				str = str.replaceAll(",+$", "");
 				
 				assemblyList.add(str);
 			}
