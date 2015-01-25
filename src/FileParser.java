@@ -291,6 +291,8 @@ public class FileParser {
 		int minAdrUnit = Integer.parseInt(line);
 		
 		data.setMinAdrUnit(minAdrUnit);		
+		
+		minAddressableUnit = false;
 	}
 
 	/**

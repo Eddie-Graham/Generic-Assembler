@@ -15,6 +15,8 @@ public class Assembler {
 	private DataSource data;
 	
 	private int locationCounter;
+	private int insNumber;
+	private HashMap<Integer, Integer> insAdrTable;
 	private HashMap<String, Integer> symbolTable;
 	
 	private ArrayList<ArrayList<String>> legitPaths;
@@ -30,6 +32,8 @@ public class Assembler {
 		this.data = data;
 		
 		locationCounter = 0;
+		insNumber = 0;
+		insAdrTable = new HashMap<Integer, Integer>();
 		symbolTable = new HashMap<String, Integer>();
 
 		legitPaths = new ArrayList<ArrayList<String>>();
@@ -49,11 +53,12 @@ public class Assembler {
 		
 		firstPass();
 		
-		secondPass();
+		insNumber ++;
+		insAdrTable.put(insNumber, locationCounter);	// to account for last line
+
+		insNumber = 0;
 		
-		System.out.println(symbolTable);
-		
-		
+		secondPass();		
 	}
 
 	private void firstPass() {
@@ -248,11 +253,15 @@ public class Assembler {
 		
 		int noOfAdrUnits = insSize/minAdrUnit;
 		
-		if(labelExists()){
+//		System.out.println(Integer.toHexString(locationCounter) + ":   " + assemblyLine + "    ("+noOfAdrUnits+")");
+		
+		insNumber ++;
+		insAdrTable.put(insNumber, locationCounter);
 			
-			String label = getLabelString();
-			symbolTable.put(label, locationCounter);
-		}
+		String label = getLabelString();
+		
+		if(label != "")
+			symbolTable.put(label, locationCounter);		
 	
 		locationCounter += noOfAdrUnits;		
 	}
@@ -842,20 +851,6 @@ public class Assembler {
 		return legitSyntax;	
 	}
 
-	private boolean labelExists() {
-		
-		for(ArrayList<String> path: legitPaths){
-			
-			for(String term: path){
-				
-				if(term.equals("LABEL"))
-					return true;
-			}
-		}		
-		
-		return false;
-	}
-
 	private String getLabelString() {
 		
 		String label = "";
@@ -872,22 +867,21 @@ public class Assembler {
 					label = term;					
 			}
 			
-			if(foundLabel)
-				break;
+			break;
 		}
 		
 		return label;
 	}
 
-	private void populateInstruction(String assemblyLine) throws AssemblerException {
-		
-		System.out.println("*****************************");
-		System.out.println(assemblyLine.trim());
+	private void populateInstruction(String assemblyLine) throws AssemblerException {		
 		
 		assemblyLine = assemblyLine.trim();
 		
+		System.out.println("*****************************");
+		System.out.println(assemblyLine);
+		
 		legitPaths = new ArrayList<ArrayList<String>>();
-		assemblyTypeHash = new HashMap<String,String>();	
+		assemblyTypeHash = new HashMap<String,String>();
 	
 		analyseWithADT(assemblyLine);
 		
@@ -910,8 +904,8 @@ public class Assembler {
 		if(mnemFormat == "")
 			throw new AssemblerException("Mnem format mismatch.");		
 		
-		if(!correctSyntax(mnemFormat, assemblyLine))
-			throw new AssemblerException("Assembly line syntax error.");		
+//		if(!correctSyntax(mnemFormat, assemblyLine))
+//			throw new AssemblerException("Assembly line syntax error.");		
 		
 		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data
 		
@@ -922,6 +916,7 @@ public class Assembler {
 		ArrayList<String> instructionFormat = format.getInstructionFormat();	// gets instructions
 		
 		String binary = "";
+		insNumber ++;
 		
 		System.out.println("insHash: " + insHash);
 		System.out.println("assTypeHash: " + assemblyTypeHash);
@@ -960,6 +955,10 @@ public class Assembler {
 						
 						else if(numType.equals("HEX"))
 							binaryTemp = hexToBinary(insHashTerm);
+						
+						else if(numType.equals("LABEL")){
+							binaryTemp = relativeJumpInBinary(insHashTerm, bits);
+						}
 					}
 				}
 				
@@ -972,6 +971,21 @@ public class Assembler {
 		String hexObjCode = getHexObjCode(binaryArray);		
 		
 		System.out.println(hexObjCode);		
+	}
+
+	private String relativeJumpInBinary(String insHashTerm, int bits) {
+		
+		int locationCounter = insAdrTable.get(insNumber+1);
+		int destination = symbolTable.get(insHashTerm);		
+
+		int jump = destination-locationCounter;
+		
+		String binary = Integer.toBinaryString(jump);
+		
+		if(binary.length() > bits)
+			binary = binary.substring(binary.length()-bits);
+		
+		return binary;
 	}
 
 	private String getOperandsForWork(String format) {
