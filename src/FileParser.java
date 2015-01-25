@@ -339,9 +339,9 @@ public class FileParser {
 		line = line.trim();
 		
 		// Legit adt expression: 
-		// (!(space|colon))+ space* colon space* (!(space|colon))+ (space* (!(space|colon))+)*
+		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space* (!(space|colon))+)*
 		boolean legitAdtExp = Pattern.matches(
-				"[^\\s:]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
+				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
 
 		if (!legitAdtExp)
 			throw new AssemblerException(
@@ -825,10 +825,10 @@ public class FileParser {
 		line = line.trim();
 
 		// Legit instruction format:
-		// (!(space|colon))+ space* colon space* (!(space|colon))+ openBracket 0-9+ closeBracket
-		// (space* (!(space|colon))+ openBracket 0-9+ closeBracket)*		
+		// (!(space|colon))+ space* colon space* (letters|numbers)+ openBracket 0-9+ closeBracket
+		// (space* (letter|numbers)+ openBracket 0-9+ closeBracket)*		
 		boolean legitInsFormat = Pattern.matches(
-						"[^\\s:]+\\s*:\\s*[^\\s:]+\\([0-9]+\\)(\\s*[^\\s:]+\\([0-9]+\\))*", line);
+						"[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*", line);
 
 		if (!legitInsFormat) {
 

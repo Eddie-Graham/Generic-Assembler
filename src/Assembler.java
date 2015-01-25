@@ -122,6 +122,72 @@ public class Assembler {
 		}		
 	}
 
+	private void secondPass() {
+		
+		int lineCounter = 0;
+	
+		for (String assemblyLine : data.getAssemblyCode()) {
+			
+			lineCounter ++;
+			
+			String[] commentSplit = assemblyLine.split(";");
+			assemblyLine = commentSplit[0];
+			
+			if (assemblyLine.trim().length() > 0){	
+				
+				assemblyLine.replaceAll("\\s+$", "");	// remove end whitespace			
+			
+				if (assemblyLine.startsWith("section .data")) 
+					setBooleanValues(false, true, false);
+			
+				else if(assemblyLine.startsWith("section .bss"))
+					setBooleanValues(true, false, false);
+			
+				else if(assemblyLine.startsWith("section .text")){
+					setBooleanValues(false, false, true);
+					first = true;
+				}
+			
+				else if (atData){
+				
+				}
+				
+				else if (atBss){
+				
+				}
+				
+				else if (atText){
+				
+					if(first){
+					
+						if(assemblyLine.startsWith("\tglobal main")){
+						
+							first = false;
+							second = true;
+						}						
+					}
+				
+					else if(second){
+					
+						if(assemblyLine.startsWith("main:"))						
+							second = false;					
+					}
+				
+					else{
+					
+						try {
+							populateInstruction(assemblyLine);
+						} catch (AssemblerException e) {
+							System.out.println("Exception at line " + lineCounter);
+							System.out.println("Line: " + assemblyLine.trim());
+							System.out.println(e.getMessage());							
+						}
+					}				
+				}
+			}
+		}		
+	}
+
 	private void setBooleanValues(boolean atBss, boolean atData, boolean atText) {
 		
 		this.atBss = atBss;
@@ -709,7 +775,7 @@ public class Assembler {
 		int i = 0;
 		boolean legit = false;
 		
-		//TODO
+		//TODO what if optional one in format defined?
 		
 		for(ArrayList<String> path: legitPaths){
 			
@@ -811,72 +877,6 @@ public class Assembler {
 		}
 		
 		return label;
-	}
-
-	private void secondPass() {
-		
-		int lineCounter = 0;
-
-		for (String assemblyLine : data.getAssemblyCode()) {
-			
-			lineCounter ++;
-			
-			String[] commentSplit = assemblyLine.split(";");
-			assemblyLine = commentSplit[0];
-			
-			if (assemblyLine.trim().length() > 0){	
-				
-				assemblyLine.replaceAll("\\s+$", "");	// remove end whitespace			
-			
-				if (assemblyLine.startsWith("section .data")) 
-					setBooleanValues(false, true, false);
-			
-				else if(assemblyLine.startsWith("section .bss"))
-					setBooleanValues(true, false, false);
-			
-				else if(assemblyLine.startsWith("section .text")){
-					setBooleanValues(false, false, true);
-					first = true;
-				}
-			
-				else if (atData){
-				
-				}
-				
-				else if (atBss){
-				
-				}
-				
-				else if (atText){
-				
-					if(first){
-					
-						if(assemblyLine.startsWith("\tglobal main")){
-						
-							first = false;
-							second = true;
-						}						
-					}
-				
-					else if(second){
-					
-						if(assemblyLine.startsWith("main:"))						
-							second = false;					
-					}
-				
-					else{
-					
-						try {
-							populateInstruction(assemblyLine);
-						} catch (AssemblerException e) {
-							System.out.println("Exception at line " + lineCounter);
-							System.out.println("Line: " + assemblyLine.trim());
-							System.out.println(e.getMessage());							
-						}
-					}				
-				}
-			}
-		}		
 	}
 
 	private void populateInstruction(String assemblyLine) throws AssemblerException {
@@ -1011,16 +1011,15 @@ public class Assembler {
 		
 		HashMap<String,String> insHash = new HashMap<String,String>();
 		
-		String assemblyLineTrim = assemblyLine.trim();
-		String[] splitAssemblyTerms = assemblyLineTrim.split("[^a-zA-Z0-9]+");
+		String[] splitAssemblyTerms = assemblyLine.split("[^a-zA-Z0-9]+");
 		String[] splitInsTerms = insLabels.split("[^a-zA-Z0-9]+");
 			
 		int i = 0;
 		
-		for(String term: splitAssemblyTerms){		
+		for(String insTerm: splitInsTerms){		
 				
-			String insTerm = splitInsTerms[i];
-			insHash.put(insTerm, term);			
+			String assemblyTerm = splitAssemblyTerms[i];
+			insHash.put(insTerm, assemblyTerm);			
 			
 			i++;
 		}	
