@@ -11,14 +11,14 @@ import java.util.HashMap;
 public class MnemFormat {
 	
 	private String mnemFormat;
-	private String insLabels;
+	private String insFieldLabels;
 	private HashMap<String,String> opCodes;
 	private ArrayList<String> instructionFormat;
 	
 	public MnemFormat(){
 		
 		mnemFormat = "";
-		insLabels = "";
+		insFieldLabels = "";
 		opCodes = new HashMap<String, String>();
 		instructionFormat = new ArrayList<String>();		
 	}
@@ -31,12 +31,12 @@ public class MnemFormat {
 		this.mnemFormat = mnemFormat;
 	}
 
-	public String getInsLabels() {
-		return insLabels;
+	public String getInsFieldLabels() {
+		return insFieldLabels;
 	}
 
-	public void setInsLabels(String insLabels) {
-		this.insLabels = insLabels;
+	public void setInsFieldLabels(String insFieldLabels) {
+		this.insFieldLabels = insFieldLabels;
 	}
 
 	public HashMap<String, String> getOpCodes() {
@@ -53,5 +53,5 @@ public class MnemFormat {
 
 	public void setInstructionFormat(ArrayList<String> instructionFormat) {
 		this.instructionFormat = instructionFormat;
-	}	
+	}
 }

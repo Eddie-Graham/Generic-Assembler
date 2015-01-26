@@ -686,7 +686,7 @@ public class FileParser {
 
 			line = line.trim();
 
-			currentMnemFormat.setInsLabels(line);
+			currentMnemFormat.setInsFieldLabels(line);
 
 			atLocalInsLabels = false;
 			atLocalOpcodes = true;

@@ -19,10 +19,10 @@ public class Assembler {
 	private HashMap<Integer, Integer> insAdrTable;
 	private HashMap<String, Integer> symbolTable;
 	
-	private ArrayList<ArrayList<String>> legitPaths;
-	private HashMap<String, String> assemblyTypeHash;
+	private ArrayList<ArrayList<String>> legitAdtPaths;
+	private HashMap<String, String> assemblyTermTypeHash;
 	
-	private boolean atBss, atData, atText;
+	private boolean atData, atText;
 	private boolean first, second;
 	
 	private boolean debug = false;
@@ -36,10 +36,9 @@ public class Assembler {
 		insAdrTable = new HashMap<Integer, Integer>();
 		symbolTable = new HashMap<String, Integer>();
 
-		legitPaths = new ArrayList<ArrayList<String>>();
-		assemblyTypeHash = new HashMap<String, String>();
+		legitAdtPaths = new ArrayList<ArrayList<String>>();
+		assemblyTermTypeHash = new HashMap<String, String>();
 		
-		atBss = false;
 		atData = false;
 		atText = false;
 		
@@ -77,21 +76,14 @@ public class Assembler {
 				assemblyLine.replaceAll("\\s+$", "");	// remove end whitespace			
 			
 				if (assemblyLine.startsWith("section .data")) 
-					setBooleanValues(false, true, false);
-			
-				else if(assemblyLine.startsWith("section .bss"))
-					setBooleanValues(true, false, false);
+					setBooleanValues(true, false);
 			
 				else if(assemblyLine.startsWith("section .text")){
-					setBooleanValues(false, false, true);
+					setBooleanValues(false, true);
 					first = true;
 				}
 			
 				else if (atData){
-				
-				}
-				
-				else if (atBss){
 				
 				}
 				
@@ -143,21 +135,14 @@ public class Assembler {
 				assemblyLine.replaceAll("\\s+$", "");	// remove end whitespace			
 			
 				if (assemblyLine.startsWith("section .data")) 
-					setBooleanValues(false, true, false);
-			
-				else if(assemblyLine.startsWith("section .bss"))
-					setBooleanValues(true, false, false);
+					setBooleanValues(true, false);
 			
 				else if(assemblyLine.startsWith("section .text")){
-					setBooleanValues(false, false, true);
+					setBooleanValues(false, true);
 					first = true;
 				}
 			
 				else if (atData){
-				
-				}
-				
-				else if (atBss){
 				
 				}
 				
@@ -193,17 +178,16 @@ public class Assembler {
 		}		
 	}
 
-	private void setBooleanValues(boolean atBss, boolean atData, boolean atText) {
+	private void setBooleanValues(boolean atData, boolean atText) {
 		
-		this.atBss = atBss;
 		this.atData = atData;
 		this.atText = atText;
 	}
 
 	private void analyseInstructionForLabels(String assemblyLine) throws AssemblerException {
 		
-		legitPaths = new ArrayList<ArrayList<String>>();
-		assemblyTypeHash = new HashMap<String,String>();	
+		legitAdtPaths = new ArrayList<ArrayList<String>>();
+		assemblyTermTypeHash = new HashMap<String,String>();	
 		
 		assemblyLine = assemblyLine.trim();
 	
@@ -235,15 +219,15 @@ public class Assembler {
 		
 		int insSize = 0;
 	
-		for(String ins: instructionFormat){
+		for(String instruction: instructionFormat){
 			
-			InstructionFormatData insFormat = data.getInstructionFormat().get(ins);
+			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
 			
 			ArrayList<String> instructions = insFormat.getOperands();
 			
-			for(String insField: instructions){
+			for(String field: instructions){
 				
-				int bits = insFormat.getOperandBitHash().get(insField);
+				int bits = insFormat.getOperandBitHash().get(field);
 				
 				insSize += bits;				
 			}
@@ -271,16 +255,18 @@ public class Assembler {
 		ADT adt = data.getAdt();
 		String adtRoot = adt.getRootTerm();
 		
-		ArrayList<String> rootTermList = new ArrayList<String>();
-		rootTermList.add(adtRoot);
-	
-		String[] assemblySplit = assemblyLine.split("\\s+");		//space 
-		
+		ArrayList<String> rootTerm = new ArrayList<String>();
+		rootTerm.add(adtRoot);
+			
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
-		ArrayList<String> assemblyList = new ArrayList<String>();
+		
 		ArrayList<String> fullTermsIter = new ArrayList<String>();
 		fullTermsIter.add(adtRoot);
+		
+		ArrayList<String> assemblyList = new ArrayList<String>();
+		
+		String[] assemblySplit = assemblyLine.split("\\s+");		//space 
 	
 		for (String str : assemblySplit) {
 			
@@ -293,14 +279,14 @@ public class Assembler {
 			}
 		}
 			
-		analyseOperands(rootTermList, assemblyList, rootTermList, fullTermsIter, paths, currentPath, adtRoot);
+		analyseOperands(rootTerm, assemblyList, rootTerm, fullTermsIter, paths, currentPath, adtRoot);
 		
-		if(legitPaths.isEmpty())
+		if(legitAdtPaths.isEmpty())
 			throw new AssemblerException("Line not consistent with ADT");
 	}
 
-	private boolean analyseOperands(ArrayList<String> terms,
-			ArrayList<String> assemblyList, ArrayList<String> termsIter, ArrayList<String> fullTermsIter,
+	private boolean analyseOperands(ArrayList<String> parseTerms,
+			ArrayList<String> assemblyListIter, ArrayList<String> parseTermsIter, ArrayList<String> fullParseTermsIter,
 			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath,
 			String parent) {
 	
@@ -308,32 +294,32 @@ public class Assembler {
 		
 		if(debug){		
 			System.out.println("--------------------");
-			System.out.println("terms: "+terms);
+			System.out.println("terms: "+parseTerms);
 			System.out.println("parent: "+parent);
 			System.out.println("paths: "+paths);
 			System.out.println("curpath: "+currentPath);
-			System.out.println("asslist: "+assemblyList);
-			System.out.println("termsIter: "+termsIter);
+			System.out.println("asslist: "+assemblyListIter);
+			System.out.println("termsIter: "+parseTermsIter);
 		}
 	
-		for (String term : terms) {
+		for (String parseTerm : parseTerms) {
 			
 			if(debug)
-				System.out.println(term);
+				System.out.println(parseTerm);
 	
-			String[] splitTerm = term.split("\\s+");			
+			String[] splitParseTerm = parseTerm.split("\\s+");			
 	
-			if (splitTerm.length > 1) { // more than one term, update iter
+			if (splitParseTerm.length > 1) { // more than one term, update iter
 	
-				ArrayList<String> splitTermList = new ArrayList<String>();
+				ArrayList<String> splitParseTermList = new ArrayList<String>();
 	
-				for (String str : splitTerm) 
-					splitTermList.add(str);				
+				for (String str : splitParseTerm) 
+					splitParseTermList.add(str);				
 				
-				ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, parent);
-				ArrayList<String> newFullTermsIter = updateTermsIter(splitTermList, fullTermsIter, parent);
+				ArrayList<String> newParseTermsIter = updateTermsIter(splitParseTermList, parseTermsIter, parent);
+				ArrayList<String> newFullParseTermsIter = updateTermsIter(splitParseTermList, fullParseTermsIter, parent);
 				
-				done = analyseOperands(splitTermList, assemblyList, newTermsIter, newFullTermsIter, paths, currentPath, parent);
+				done = analyseOperands(splitParseTermList, assemblyListIter, newParseTermsIter, newFullParseTermsIter, paths, currentPath, parent);
 	
 				if (done)
 					return true;
@@ -341,43 +327,43 @@ public class Assembler {
 			
 			else { // one term				
 	
-				String tempTerm = term.replaceAll("\\?|\\*|\\+", "");
+				String tempParseTerm = parseTerm.replaceAll("\\?|\\*|\\+", "");
 				
-				if(term.charAt(term.length()-1)=='+'){
+				if(parseTerm.charAt(parseTerm.length()-1)=='+'){
 					
-					ArrayList<String> splitTermList = new ArrayList<String>();	
-					String oneOrMore = tempTerm + " " + tempTerm + "*";
-					splitTermList.add(oneOrMore);
+					ArrayList<String> oneOrMoreParseTerm = new ArrayList<String>();	
+					String oneOrMore = tempParseTerm + " " + tempParseTerm + "*";
+					oneOrMoreParseTerm.add(oneOrMore);
 					
-					ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, term);
-					ArrayList<String> newFullTermsIter = updateTermsIter(splitTermList, fullTermsIter, term);
+					ArrayList<String> newParseTermsIter = updateTermsIter(oneOrMoreParseTerm, parseTermsIter, parseTerm);
+					ArrayList<String> newFullParseTermsIter = updateTermsIter(oneOrMoreParseTerm, fullParseTermsIter, parseTerm);
 					
-					done = analyseOperands(splitTermList, assemblyList, newTermsIter, newFullTermsIter, paths, currentPath, parent);
+					done = analyseOperands(oneOrMoreParseTerm, assemblyListIter, newParseTermsIter, newFullParseTermsIter, paths, currentPath, parent);
 					
 					if(done)
 						return true;
 				}
 				
-				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(tempTerm);
+				ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(tempParseTerm);
 				
 				ArrayList<String> newCurrentPath = clone(currentPath);					
-				newCurrentPath.add(term);
+				newCurrentPath.add(parseTerm);
 	
-				if (termsListFromHash != null) { // not leaf					
+				if (adtTerms != null) { // not leaf					
 					
 				    if(!(parent.charAt(parent.length()-1)=='*')){
 						
-						ArrayList<String> splitTermList = new ArrayList<String>();	
-						splitTermList.add(term);
+						ArrayList<String> parseTerm1 = new ArrayList<String>();	
+						parseTerm1.add(parseTerm);
 					
-						ArrayList<String> newTermsIter = updateTermsIter(splitTermList, termsIter, parent);
-						ArrayList<String> newFullTermsIter = updateTermsIter(splitTermList, fullTermsIter, parent);
+						ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
+						ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
 					
-						done = analyseOperands(termsListFromHash, assemblyList, newTermsIter, newFullTermsIter, paths, newCurrentPath, term);
+						done = analyseOperands(adtTerms, assemblyListIter, newParseTermsIter, newFullParseTermsIter, paths, newCurrentPath, parseTerm);
 					}					
 					
 					else
-						done = analyseOperands(termsListFromHash, assemblyList, termsIter, fullTermsIter, paths, newCurrentPath, parent);
+						done = analyseOperands(adtTerms, assemblyListIter, parseTermsIter, fullParseTermsIter, paths, newCurrentPath, parent);
 						
 					if (done)
 						return true;
@@ -385,41 +371,41 @@ public class Assembler {
 				
 				else { // leaf
 					
-					String assemblyTerm = assemblyList.get(0);
+					String assemblyTerm = assemblyListIter.get(0);
 	
-					if (match(term, assemblyTerm, newCurrentPath)) {
+					if (match(parseTerm, assemblyTerm, newCurrentPath)) {
 						
 						if(debug)						
-							System.out.println("found: " + term);
+							System.out.println("found: " + parseTerm);
 						
-						if(!legitIter(termsIter, newCurrentPath))
+						if(!legitIter(parseTermsIter, newCurrentPath))
 							return false;
 						
 						ArrayList<ArrayList<String>> newPaths = clone2(paths);
 						newPaths.add(newCurrentPath);
 						
-						termsIter = updateTermsIter(termsIter, newCurrentPath);
-						assemblyList = removeFirstElement(assemblyList);
+						parseTermsIter = updateTermsIter(parseTermsIter, newCurrentPath);
+						assemblyListIter = removeFirstElement(assemblyListIter);
 						
 						newCurrentPath = new ArrayList<String>();						
 	
-						if (termsIter.isEmpty() || assemblyList.isEmpty()) {
+						if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
 							
-							if(termsIter.isEmpty() && !assemblyList.isEmpty())
+							if(parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
 								return false;
 							
-							else if(!termsIter.isEmpty() && assemblyList.isEmpty()){
+							else if(!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()){
 								
-								if(!legitWithFullTermsIter(fullTermsIter, newPaths))
+								if(!legitWithFullTermsIter(fullParseTermsIter, newPaths))
 									return false;
 							}			
 								
-							legitPaths = newPaths;		//legit							
+							legitAdtPaths = newPaths;		//legit							
 							
 							return true;							
 						}
 						
-						done = analyseOperands(termsIter, assemblyList, termsIter, fullTermsIter, newPaths, newCurrentPath, data.getAdt().getRootTerm());
+						done = analyseOperands(parseTermsIter, assemblyListIter, parseTermsIter, fullParseTermsIter, newPaths, newCurrentPath, data.getAdt().getRootTerm());
 	
 						if (done)
 							return true;
@@ -435,32 +421,32 @@ public class Assembler {
 		return done;
 	}
 
-	private ArrayList<String> updateTermsIter(ArrayList<String> termsIter, ArrayList<String> currentPath) {
+	private ArrayList<String> updateTermsIter(ArrayList<String> parseTermsIter, ArrayList<String> currentPath) {
 	
-		ArrayList<String> newList = new ArrayList<String>();
-		String newStr = "";
+		ArrayList<String> newTermsIter = new ArrayList<String>();
+		String newIterStr = "";
 	
-		String st = termsIter.get(0);
-	
-		String[] split = st.split("\\s+");
+		String termsIter = parseTermsIter.get(0);	
+		String[] splitTermsIter = termsIter.split("\\s+");
 		
 		boolean found = false;
 		int index = 0;
 		
-		for(String str: split){
+		for(String iterTerm: splitTermsIter){
 			
-			for(String str2: currentPath){
+			for(String pathTerm: currentPath){
 				
-				if(str.equals(str2)){
+				if(iterTerm.equals(pathTerm)){
 					found = true;
 					break;
 				}			
 			}			
 			
-			if(found && str.charAt(str.length()-1) == '*')
-				return termsIter;
+			if(found && iterTerm.charAt(iterTerm.length()-1) == '*')
+				return parseTermsIter;
 			
 			if(found){
+				
 				index++;
 				break;
 			}
@@ -468,67 +454,67 @@ public class Assembler {
 			index++;
 		}
 		
-		for(String str: split){
+		for(String iterTerm: splitTermsIter){
 			
 			if(index <= 0)
-				newStr += str + " ";
+				newIterStr += iterTerm + " ";
 			
 			index--;			
 		}
 	
-		newStr = newStr.trim();
+		newIterStr = newIterStr.trim();
 	
-		if (newStr != "")
-			newList.add(newStr);
+		if (newIterStr != "")
+			newTermsIter.add(newIterStr);
 	
-		return newList;
+		return newTermsIter;
 	}
 
-	private ArrayList<String> updateTermsIter(ArrayList<String> splitTermList,
-			ArrayList<String> termsIter, String parent) {
+	private ArrayList<String> updateTermsIter(ArrayList<String> splitParseTermList,
+			ArrayList<String> parseTermsIter, String parent) {
 		
 		ArrayList<String> newTermsIter = new ArrayList<String>();
 		
-		String newStr = "";
+		String newIterStr = "";
 		
-		String st = termsIter.get(0);
-		String[] split = st.split("\\s+");
+		String termsIter = parseTermsIter.get(0);
+		String[] splitTermsIter = termsIter.split("\\s+");
 		
 		boolean done = false;
 		
-		for (String str : split) {
+		for (String iterTerm : splitTermsIter) {
 	
-			if(str.equals(parent) && !done){
+			if(iterTerm.equals(parent) && !done){
 				
-				for(String str2: splitTermList){
-					newStr += str2 + " ";	
+				for(String str: splitParseTermList){
+					newIterStr += str + " ";	
 					done = true;
 				}				
 			}
 			
 			else
-				newStr += str + " ";
+				newIterStr += iterTerm + " ";
 		}
 		
-		newStr = newStr.trim();
-		newTermsIter.add(newStr);
+		newIterStr = newIterStr.trim();
+		newTermsIter.add(newIterStr);
 		
 		return newTermsIter;
 	}
 
-	private boolean legitIter(ArrayList<String> termsIter,
-			ArrayList<String> currentPath) {
+	private boolean legitIter(ArrayList<String> parseTermsIter,
+			ArrayList<String> newCurrentPath) {
 		
 		boolean legit = false;
 		
-		String st = termsIter.get(0);
-		String[] splitTermsIter = st.split("\\s+");
+		String termsIter = parseTermsIter.get(0);
+		String[] splitTermsIter = termsIter.split("\\s+");
 		
-		for(String str: splitTermsIter){
+		for(String iterTerm: splitTermsIter){
 			
-			for(String str2: currentPath){
+			for(String pathTerm: newCurrentPath){
 				
-				if(str.equals(str2)){
+				if(iterTerm.equals(pathTerm)){
 					legit = true;
 					break;
 				}
@@ -537,7 +523,7 @@ public class Assembler {
 			if(legit)
 				return true;
 			
-			else if(!(str.charAt(str.length()-1) == '?') && !(str.charAt(str.length()-1) == '*'))
+			else if(!(iterTerm.charAt(iterTerm.length()-1) == '?') && !(iterTerm.charAt(iterTerm.length()-1) == '*'))
 				return false;	
 		}
 		
@@ -549,28 +535,28 @@ public class Assembler {
 		boolean first = true;
 		ArrayList<String> newList = new ArrayList<String>();
 	
-		for (String st : list) {
+		for (String str : list) {
 			
 			if (first) 
 				first = false;
 			
 			else 
-				newList.add(st);			
+				newList.add(str);			
 		}
 		
 		return newList;
 	}
 
-	private boolean legitWithFullTermsIter(ArrayList<String> fullTermsIter, ArrayList<ArrayList<String>> paths) {
+	private boolean legitWithFullTermsIter(ArrayList<String> fullParseTermsIter, ArrayList<ArrayList<String>> newPaths) {
 		
-		String str = fullTermsIter.get(0);
-		String[] splitTermsIter = str.split("\\s+");
+		String str = fullParseTermsIter.get(0);
+		String[] splitFullTermsIter = str.split("\\s+");
 		
 		boolean pathsFinished = false;
 		int pathCounter = 0;
 		ArrayList<String> path = null;
 		
-		for(String iterTerm: splitTermsIter){
+		for(String iterTerm: splitFullTermsIter){
 			
 			if(pathsFinished){
 				
@@ -580,7 +566,7 @@ public class Assembler {
 			
 			else{			
 								
-				path = paths.get(pathCounter);	
+				path = newPaths.get(pathCounter);	
 			
 				if(iterTerm.charAt(iterTerm.length()-1)=='*'){
 				
@@ -588,14 +574,14 @@ public class Assembler {
 						
 						pathCounter++;
 					
-						if(pathCounter > paths.size()-1){
+						if(pathCounter > newPaths.size()-1){
 							
 							pathsFinished = true;
 							break;
 						}
 					
 						else					
-							path = paths.get(pathCounter);
+							path = newPaths.get(pathCounter);
 					}
 				}			
 			
@@ -609,7 +595,7 @@ public class Assembler {
 					
 					pathCounter++;
 						
-					if(pathCounter > paths.size()-1)
+					if(pathCounter > newPaths.size()-1)
 						pathsFinished = true;	
 				}			
 			}
@@ -660,7 +646,7 @@ public class Assembler {
 			splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 		
 		else
-			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
+			splitAssemblyTerms = assemblyTerm.split("(?=["+prefixes+"])|(?<=["+prefixes+"])");
 		
 		if(splitAdtTerms.length != splitAssemblyTerms.length)
 			return false;
@@ -688,11 +674,11 @@ public class Assembler {
 			else{
 				
 				boolean legit = false;
-				ArrayList<String> termsListFromHash = data.getAdt().getAdtHash().get(term);
+				ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(term);
 				
-				if(termsListFromHash != null){						
+				if(adtTerms != null){						
 					
-					for(String termFromHash: termsListFromHash){
+					for(String termFromHash: adtTerms){
 						
 						if(match(termFromHash, splitAssemblyTerms[i], currentPath)){
 							
@@ -715,7 +701,7 @@ public class Assembler {
 					if(!isAlphaNumeric(splitAssemblyTerms[i]))
 						return false;
 					
-					assemblyTypeHash.put(splitAssemblyTerms[i], term);
+					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);
 				}
 				
 				else if(term.equals("INT")){
@@ -723,7 +709,7 @@ public class Assembler {
 					if(!isNumeric(splitAssemblyTerms[i]))
 						return false;
 					
-					assemblyTypeHash.put(splitAssemblyTerms[i], term);
+					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);
 				}
 				
 				else if(term.equals("LABEL")){
@@ -731,7 +717,7 @@ public class Assembler {
 					if(!isAlpha(splitAssemblyTerms[i]))
 						return false;
 					
-					assemblyTypeHash.put(splitAssemblyTerms[i], term);					
+					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);					
 				}
 				
 				else{
@@ -749,24 +735,24 @@ public class Assembler {
 
 	private MnemonicData getMnemData(String assemblyLine) throws AssemblerException {
 		
-		String[] assemblySplit = assemblyLine.split("\\s+");		//space 
-		ArrayList<String> assemblyList = new ArrayList<String>();
+		String[] assemblyLineSplit = assemblyLine.split("\\s+");		//space 
+		ArrayList<String> assemblyTermList = new ArrayList<String>();
 	
-		for (String str : assemblySplit) {		
+		for (String assemblyTerm : assemblyLineSplit) {		
 				
-			str = str.replaceAll("^,+", "");
-			str = str.replaceAll(",+$", "");
+			assemblyTerm = assemblyTerm.replaceAll("^,+", "");
+			assemblyTerm = assemblyTerm.replaceAll(",+$", "");
 				
-			assemblyList.add(str);			
+			assemblyTermList.add(assemblyTerm);			
 		}
 		
 		MnemonicData mnemData = null;
 		
-		for(String term: assemblyList){
+		for(String assemblyTerm: assemblyTermList){
 			
-			if(data.getMnemonicTable().get(term) != null){
+			if(data.getMnemonicTable().get(assemblyTerm) != null){
 				
-				mnemData = data.getMnemonicTable().get(term);
+				mnemData = data.getMnemonicTable().get(assemblyTerm);
 				break;
 			}
 		}
@@ -777,27 +763,27 @@ public class Assembler {
 		return mnemData;
 	}
 
-	private boolean formatMatch(String format) {
+	private boolean formatMatch(String mnemFormat) {
 		
-		String[] tokens = format.split("[,\\s]+");
+		String[] splitFormat = mnemFormat.split("[,\\s]+");
 		
 		int i = 0;
 		boolean legit = false;
 		
 		//TODO what if optional one in format defined?
 		
-		for(ArrayList<String> path: legitPaths){
+		for(ArrayList<String> path: legitAdtPaths){
 			
-			for(String term: path){
+			for(String pathTerm: path){
 				
-				if(term.equals(tokens[i])){
+				if(pathTerm.equals(splitFormat[i])){
 					
 					legit = true;
 					i++;
 					break;
 				}	
 				
-				else if((term.charAt(term.length()-1) == '?')){
+				else if((pathTerm.charAt(pathTerm.length()-1) == '?')){
 					
 					legit = true;
 					break;					
@@ -813,18 +799,17 @@ public class Assembler {
 		return true;
 	}
 
-	private boolean correctSyntax(String mnemFormat, String assemblyLine) {
+	private boolean correctSyntax(String format, String assemblyLine) {
 		
-		
-		String[] tokens = mnemFormat.split("(?=[,\\s]+)|(?<=[,\\s]+)");
+		String[] formatSplit = format.split("(?=[,\\s]+)|(?<=[,\\s]+)");
 		
 		String regex = ".*";
 		
 		boolean inSpaces = false;
 		
-		for(String token: tokens){
+		for(String str: formatSplit){
 	
-			if(token.matches("\\s+")){
+			if(str.matches("\\s+")){
 				
 				if(!inSpaces){
 					regex += "\\s+";
@@ -836,7 +821,7 @@ public class Assembler {
 				
 				inSpaces = false;
 				
-				if(token.equals(","))
+				if(str.equals(","))
 						regex += ",";
 				
 				else
@@ -851,12 +836,12 @@ public class Assembler {
 		return legitSyntax;	
 	}
 
-	private String getLabelString() {
+	private String getLabelString() {	//assumes label in first path
 		
 		String label = "";
 		boolean foundLabel = false;
 		
-		for(ArrayList<String> path: legitPaths){
+		for(ArrayList<String> path: legitAdtPaths){
 			
 			for(String term: path){
 				
@@ -880,12 +865,12 @@ public class Assembler {
 		System.out.println("*****************************");
 		System.out.println(assemblyLine);
 		
-		legitPaths = new ArrayList<ArrayList<String>>();
-		assemblyTypeHash = new HashMap<String,String>();
+		legitAdtPaths = new ArrayList<ArrayList<String>>();
+		assemblyTermTypeHash = new HashMap<String,String>();
 	
 		analyseWithADT(assemblyLine);
 		
-		System.out.println(legitPaths);
+		System.out.println(legitAdtPaths);
 		
 		MnemonicData mnemData = getMnemData(assemblyLine);		
 		
@@ -909,55 +894,55 @@ public class Assembler {
 		
 		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data
 		
-		String insLabels = format.getInsLabels();		
-		String operandsForWork = getOperandsForWork(mnemFormat);
-		HashMap<String, String> insHash = createInsHash(operandsForWork, insLabels);	
+		String insFieldLabels = format.getInsFieldLabels();		
+		String relevantOperands = getRelevantOperands(mnemFormat);
+		HashMap<String, String> insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);	
 		
 		ArrayList<String> instructionFormat = format.getInstructionFormat();	// gets instructions
 		
 		String binary = "";
 		insNumber ++;
 		
-		System.out.println("insHash: " + insHash);
-		System.out.println("assTypeHash: " + assemblyTypeHash);
+		System.out.println("insFieldHash: " + insFieldHash);
+		System.out.println("assTypeHash: " + assemblyTermTypeHash);
 		
-		for(String ins: instructionFormat){
+		for(String instruction: instructionFormat){
 			
-			InstructionFormatData insFormat = data.getInstructionFormat().get(ins);
+			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
 			
 			ArrayList<String> instructions = insFormat.getOperands();
 			
-			for(String insField: instructions){
+			for(String field: instructions){
 				
 				String binaryTemp = "";
 				
-				int bits = insFormat.getOperandBitHash().get(insField);
+				int bits = insFormat.getOperandBitHash().get(field);
 				
-				if(mnemData.getGlobalOpCodes().get(insField)!= null)	//global
-					binaryTemp = mnemData.getGlobalOpCodes().get(insField);				
+				if(mnemData.getGlobalOpCodes().get(field)!= null)	//global
+					binaryTemp = mnemData.getGlobalOpCodes().get(field);				
 				
-				else if(format.getOpCodes().get(insField) != null)	//local
-					binaryTemp = format.getOpCodes().get(insField);
+				else if(format.getOpCodes().get(field) != null)	//local
+					binaryTemp = format.getOpCodes().get(field);
 				
 				else{
 					
-					String insHashTerm = insHash.get(insField);
+					String assemblyTerm = insFieldHash.get(field);
 					
-					if(data.getRegisterHash().get(insHashTerm) != null)	// reg
-						binaryTemp = data.getRegisterHash().get(insHashTerm);
+					if(data.getRegisterHash().get(assemblyTerm) != null)	// reg
+						binaryTemp = data.getRegisterHash().get(assemblyTerm);
 					
 					else{	// imm etc
 						
-						String numType = assemblyTypeHash.get(insHashTerm);
+						String type = assemblyTermTypeHash.get(assemblyTerm);
 						
-						if(numType.equals("INT"))
-							binaryTemp = intToBinary(insHashTerm);
+						if(type.equals("INT"))
+							binaryTemp = intToBinary(assemblyTerm);
 						
-						else if(numType.equals("HEX"))
-							binaryTemp = hexToBinary(insHashTerm);
+						else if(type.equals("HEX"))
+							binaryTemp = hexToBinary(assemblyTerm);
 						
-						else if(numType.equals("LABEL")){
-							binaryTemp = relativeJumpInBinary(insHashTerm, bits);
+						else if(type.equals("LABEL")){
+							binaryTemp = relativeJumpInBinary(assemblyTerm, bits);
 						}
 					}
 				}
@@ -988,18 +973,18 @@ public class Assembler {
 		return binary;
 	}
 
-	private String getOperandsForWork(String format) {
+	private String getRelevantOperands(String format) {
 		
 		String operands = "";
-		String[] tokens = format.split("[,\\s]+");
+		String[] formatSplit = format.split("[,\\s]+");
 		
 		int i = 0;
 		
-		for(ArrayList<String> path: legitPaths){
+		for(ArrayList<String> path: legitAdtPaths){
 			
-			for(String term: path){
+			for(String pathTerm: path){
 				
-				if(term.equals(tokens[i])){
+				if(pathTerm.equals(formatSplit[i])){
 					
 					operands += getAssemblyOperand(path) + " ";
 					i++;
@@ -1020,7 +1005,7 @@ public class Assembler {
 		return operand;
 	}
 
-	private HashMap<String, String> createInsHash(String assemblyLine,
+	private HashMap<String, String> mapInsFieldLabels(String assemblyLine,
 			String insLabels) {
 		
 		HashMap<String,String> insHash = new HashMap<String,String>();
@@ -1043,7 +1028,7 @@ public class Assembler {
 
 	private ArrayList<String> splitToMinAdrUnits(String binary) {
 		
-		ArrayList<String> byteArray = new ArrayList<String>();
+		ArrayList<String> binaryArray = new ArrayList<String>();
 		
 		int minAdrUnit = data.getMinAdrUnit();
 		
@@ -1051,25 +1036,29 @@ public class Assembler {
 		
 		while (index < binary.length()) {
 			
-		    byteArray.add(binary.substring(index, Math.min(index + minAdrUnit,binary.length())));
+		    binaryArray.add(binary.substring(index, Math.min(index + minAdrUnit,binary.length())));
 		    
 		    index += minAdrUnit;
 		}
 		
-		return byteArray;
+		return binaryArray;
 	}
 
-	private String getHexObjCode(ArrayList<String> byteArray) {
+	private String getHexObjCode(ArrayList<String> binaryArray) {
 		
 		String hexObjCode = "";
 		
+		int minAdrUnit = data.getMinAdrUnit();
+		
+		int noOfHexCharacters = (minAdrUnit/8)*2;
+		
 		if(data.getEndian().equals("big")){
 			
-			for(String str: byteArray){ 
+			for(String str: binaryArray){ 
 				
 				String hex = binaryToHex(str);
 				
-				if(hex.length() == 1)
+				while(hex.length() < noOfHexCharacters)
 					hex = "0" + hex;
 				
 				hexObjCode += hex + " ";
@@ -1078,13 +1067,13 @@ public class Assembler {
 		
 		else if(data.getEndian().equals("little")){
 			
-			int counter = byteArray.size()-1;
+			int counter = binaryArray.size()-1;
 			
 			for(; counter >= 0; counter--){
 				
-				String hex = binaryToHex(byteArray.get(counter));
+				String hex = binaryToHex(binaryArray.get(counter));
 				
-				if(hex.length() == 1)
+				while(hex.length() < noOfHexCharacters)
 					hex = "0" + hex;
 				
 				hexObjCode += hex + " ";
