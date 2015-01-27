@@ -152,6 +152,7 @@ public class FileParser {
 				System.out.println("Line: \"" + assemblyLine + "\"");
 				System.out.println(e.getMessage());
 				System.out.println();
+				System.exit(0);
 			}
 		}
 		
@@ -188,6 +189,7 @@ public class FileParser {
 				throw new AssemblerException("Section/s " + missingSections + " missing from specification file.");
 			} catch (AssemblerException e) {
 				System.out.println(e.getMessage());
+				System.exit(0);
 			}
 		}
 
@@ -229,47 +231,26 @@ public class FileParser {
 		else if (lowerCaseLine.startsWith("minaddressableunit:"))
 			setBooleanValues(false, false, false, false, false, false, true);
 
-		else if (architecture){
-			
-			foundArchitecture = true;
+		else if (architecture)			
 			analyseArchitecture(line);			
-		}
 
-		else if (registers){
-			
-			foundRegisters = true;
+		else if (registers)			
 			analyseRegisters(line);			
-		}
 
-		else if (mnemonicData){
-			
-			foundMnemData = true;
+		else if (mnemonicData)			
 			analyseMnemonicData(line);			
-		}
 
-		else if (instructionFormat){
-			
-			foundInsFormat = true;
+		else if (instructionFormat)			
 			analyseInstructionFormat(line);			
-		}
 
-		else if (adt){
-			
-			foundAdt = true;
+		else if (adt)			
 			analyseADT(line);			
-		}
 
-		else if (endian){
-			
-			foundEndian = true;
+		else if (endian)			
 			analyseEndian(line);			
-		}
 		
-		else if (minAddressableUnit) {
-
-			foundMinAdrUnit = true;
+		else if (minAddressableUnit)			
 			analyseMinAdrUnit(line);
-		}
 		
 		else if (!(line.trim().length() == 0))
 			throw new AssemblerException("Missing section header.");		
@@ -279,6 +260,8 @@ public class FileParser {
 		
 		if (line.trim().length() == 0)
 			return;
+		
+		foundMinAdrUnit = true;
 		
 		line = line.trim();
 		
@@ -307,6 +290,8 @@ public class FileParser {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		foundEndian = true;
 
 		line = line.trim();
 		line = line.toLowerCase();
@@ -337,6 +322,8 @@ public class FileParser {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		foundAdt = true;
 		
 		line = line.trim();
 		
@@ -412,6 +399,8 @@ public class FileParser {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		foundArchitecture = true;
 
 		data.setArchitecture(line.trim());
 		
@@ -436,6 +425,8 @@ public class FileParser {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		foundRegisters = true;
 
 		line = line.trim();
 
@@ -538,6 +529,8 @@ public class FileParser {
 
 			return;
 		}
+		
+		foundMnemData = true;
 
 		// New mnemonic (no whitespace at beginning)
 		if (!line.startsWith(" ") && !line.startsWith("\t"))
@@ -736,6 +729,8 @@ public class FileParser {
 
 			for (String str : tokens)
 				currentMnemFormat.getInstructionFormat().add(str);
+			
+			checkForConsistency();
 
 			atLocalInsFormat = false;
 			emptyLine = false;
@@ -748,6 +743,45 @@ public class FileParser {
 			throw new AssemblerException(
 					"Mnemonic data syntax error, indentation error.");
 		}
+	}
+
+	private void checkForConsistency() throws AssemblerException {
+		
+		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();	
+		
+		for(String instruction: instructionFormat){
+			
+			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
+			
+			ArrayList<String> instructions = insFormat.getOperands();
+			
+			for(String field: instructions){
+				
+				if(currentMnemonicData.getGlobalOpCodes().get(field)!= null){}//global
+						
+				else if(currentMnemFormat.getOpCodes().get(field) != null){}
+				
+				else if(existsInInsFieldLabels(currentMnemFormat.getInsFieldLabels(), field));
+				
+				else
+					throw new AssemblerException("Field \"" + field
+							+ "\" in instruction \"" + instruction
+							+ "\" not defined in mnemonicData");
+			}					
+		}
+	}		
+		
+	private boolean existsInInsFieldLabels(String insFieldLabels, String field) {
+		
+		String[] insFieldLabelTokens = insFieldLabels.split("[^a-zA-Z0-9]+");
+		
+		for(String insFieldLabel: insFieldLabelTokens){
+			
+			if(insFieldLabel.equals(field))
+				return true;
+		}
+		
+		return false;
 	}
 
 	/**
@@ -823,6 +857,8 @@ public class FileParser {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		foundInsFormat = true;
 
 		line = line.trim();
 

@@ -10,6 +10,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
+/**
+ * <pre>
+ * This class assembles each instruction using the data source.
+ * </pre>
+ * 
+ * @author eddieindahouse
+ *
+ */
 public class Assembler {
 
 	private DataSource data;
@@ -27,6 +35,13 @@ public class Assembler {
 	
 	private boolean debug = false;
 
+	/**
+	 * <pre>
+     * Constructor for class, initialises variables and calls assemble() method.
+ 	 * </pre>
+	 * 
+	 * @param data - Data for assembler to work on.
+	 */
 	public Assembler(DataSource data) {
 
 		this.data = data;
@@ -111,7 +126,8 @@ public class Assembler {
 						} catch (AssemblerException e) {
 							System.out.println("Exception at line " + lineCounter);
 							System.out.println("Line: " + assemblyLine.trim());
-							System.out.println(e.getMessage());							
+							System.out.println(e.getMessage());		
+							System.exit(0);
 						}
 					}				
 				}
@@ -170,7 +186,8 @@ public class Assembler {
 						} catch (AssemblerException e) {
 							System.out.println("Exception at line " + lineCounter);
 							System.out.println("Line: " + assemblyLine.trim());
-							System.out.println(e.getMessage());							
+							System.out.println(e.getMessage());	
+							System.exit(0);
 						}
 					}				
 				}
@@ -758,7 +775,7 @@ public class Assembler {
 		}
 		
 		if(mnemData == null)
-			throw new AssemblerException("Unable to find mnemonic data.");		
+			throw new AssemblerException("Unable to find mnemonic in mnemonicData.");		
 		
 		return mnemData;
 	}
@@ -775,6 +792,9 @@ public class Assembler {
 		for(ArrayList<String> path: legitAdtPaths){
 			
 			for(String pathTerm: path){
+				
+				if(i >= splitFormat.length)
+					return false;
 				
 				if(pathTerm.equals(splitFormat[i])){
 					
