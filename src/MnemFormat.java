@@ -14,13 +14,15 @@ public class MnemFormat {
 	private String insFieldLabels;
 	private HashMap<String,String> opCodes;
 	private ArrayList<String> instructionFormat;
+	private String rawLinesString;
 	
 	public MnemFormat(){
 		
 		mnemFormat = "";
 		insFieldLabels = "";
 		opCodes = new HashMap<String, String>();
-		instructionFormat = new ArrayList<String>();		
+		instructionFormat = new ArrayList<String>();	
+		rawLinesString = "";
 	}
 
 	public String getMnemFormat() {
@@ -53,5 +55,18 @@ public class MnemFormat {
 
 	public void setInstructionFormat(ArrayList<String> instructionFormat) {
 		this.instructionFormat = instructionFormat;
+	}
+	
+	public String getRawLinesString() {
+		return rawLinesString;
+	}
+
+	public void setRawLinesString(String rawLinesString) {
+		this.rawLinesString = rawLinesString;
+	}
+
+	public void addToRawLineString(String str){
+		
+		rawLinesString += str + "\n";
 	}
 }

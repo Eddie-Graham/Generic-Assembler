@@ -267,6 +267,106 @@ public class Assembler {
 		locationCounter += noOfAdrUnits;		
 	}
 
+	private void populateInstruction(String assemblyLine) throws AssemblerException {		
+			
+			assemblyLine = assemblyLine.trim();
+			
+			System.out.println("*****************************");
+			System.out.println(assemblyLine);
+			
+			legitAdtPaths = new ArrayList<ArrayList<String>>();
+			assemblyTermTypeHash = new HashMap<String,String>();
+		
+			analyseWithADT(assemblyLine);
+			
+			System.out.println(legitAdtPaths);
+			
+			MnemonicData mnemData = getMnemData(assemblyLine);		
+			
+			ArrayList<String> mnemFormats = mnemData.getMnemFormats();		// get mnem types
+			String mnemFormat = "";
+			
+			for(String format: mnemFormats){
+				
+				if(formatMatch(format)){
+					
+					mnemFormat = format;	// find type				
+					break;
+				}
+			}
+			
+			if(mnemFormat == "")
+				throw new AssemblerException("Mnem format mismatch.");		
+			
+	//		if(!correctSyntax(mnemFormat, assemblyLine))
+	//			throw new AssemblerException("Assembly line syntax error.");		
+			
+			MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data
+			
+			String insFieldLabels = format.getInsFieldLabels();		
+			String relevantOperands = getRelevantOperands(mnemFormat);
+			HashMap<String, String> insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);	
+			
+			ArrayList<String> instructionFormat = format.getInstructionFormat();	// gets instructions
+			
+			String binary = "";
+			insNumber ++;
+			
+			System.out.println("insFieldHash: " + insFieldHash);
+			System.out.println("assTypeHash: " + assemblyTermTypeHash);
+			
+			for(String instruction: instructionFormat){
+				
+				InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
+				
+				ArrayList<String> instructions = insFormat.getOperands();
+				
+				for(String field: instructions){
+					
+					String binaryTemp = "";
+					
+					int bits = insFormat.getOperandBitHash().get(field);
+					
+					if(mnemData.getGlobalOpCodes().get(field)!= null)	//global
+						binaryTemp = mnemData.getGlobalOpCodes().get(field);				
+					
+					else if(format.getOpCodes().get(field) != null)	//local
+						binaryTemp = format.getOpCodes().get(field);
+					
+					else{
+						
+						String assemblyTerm = insFieldHash.get(field);
+						
+						if(data.getRegisterHash().get(assemblyTerm) != null)	// reg
+							binaryTemp = data.getRegisterHash().get(assemblyTerm);
+						
+						else{	// imm etc
+							
+							String type = assemblyTermTypeHash.get(assemblyTerm);
+							
+							if(type.equals("INT"))
+								binaryTemp = intToBinary(assemblyTerm);
+							
+							else if(type.equals("HEX"))
+								binaryTemp = hexToBinary(assemblyTerm);
+							
+							else if(type.equals("LABEL")){
+								binaryTemp = relativeJumpInBinary(assemblyTerm, bits);
+							}
+						}
+					}
+					
+					binary += binaryFromBinaryFormatted(binaryTemp, bits);
+				}
+			}		
+			
+			ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
+			
+			String hexObjCode = getHexObjCode(binaryArray);		
+			
+			System.out.println(hexObjCode);		
+		}
+
 	private void analyseWithADT(String assemblyLine) throws AssemblerException {
 	
 		ADT adt = data.getAdt();
@@ -876,106 +976,6 @@ public class Assembler {
 		}
 		
 		return label;
-	}
-
-	private void populateInstruction(String assemblyLine) throws AssemblerException {		
-		
-		assemblyLine = assemblyLine.trim();
-		
-		System.out.println("*****************************");
-		System.out.println(assemblyLine);
-		
-		legitAdtPaths = new ArrayList<ArrayList<String>>();
-		assemblyTermTypeHash = new HashMap<String,String>();
-	
-		analyseWithADT(assemblyLine);
-		
-		System.out.println(legitAdtPaths);
-		
-		MnemonicData mnemData = getMnemData(assemblyLine);		
-		
-		ArrayList<String> mnemFormats = mnemData.getMnemFormats();		// get mnem types
-		String mnemFormat = "";
-		
-		for(String format: mnemFormats){
-			
-			if(formatMatch(format)){
-				
-				mnemFormat = format;	// find type				
-				break;
-			}
-		}
-		
-		if(mnemFormat == "")
-			throw new AssemblerException("Mnem format mismatch.");		
-		
-//		if(!correctSyntax(mnemFormat, assemblyLine))
-//			throw new AssemblerException("Assembly line syntax error.");		
-		
-		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);		// get type data
-		
-		String insFieldLabels = format.getInsFieldLabels();		
-		String relevantOperands = getRelevantOperands(mnemFormat);
-		HashMap<String, String> insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);	
-		
-		ArrayList<String> instructionFormat = format.getInstructionFormat();	// gets instructions
-		
-		String binary = "";
-		insNumber ++;
-		
-		System.out.println("insFieldHash: " + insFieldHash);
-		System.out.println("assTypeHash: " + assemblyTermTypeHash);
-		
-		for(String instruction: instructionFormat){
-			
-			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
-			
-			ArrayList<String> instructions = insFormat.getOperands();
-			
-			for(String field: instructions){
-				
-				String binaryTemp = "";
-				
-				int bits = insFormat.getOperandBitHash().get(field);
-				
-				if(mnemData.getGlobalOpCodes().get(field)!= null)	//global
-					binaryTemp = mnemData.getGlobalOpCodes().get(field);				
-				
-				else if(format.getOpCodes().get(field) != null)	//local
-					binaryTemp = format.getOpCodes().get(field);
-				
-				else{
-					
-					String assemblyTerm = insFieldHash.get(field);
-					
-					if(data.getRegisterHash().get(assemblyTerm) != null)	// reg
-						binaryTemp = data.getRegisterHash().get(assemblyTerm);
-					
-					else{	// imm etc
-						
-						String type = assemblyTermTypeHash.get(assemblyTerm);
-						
-						if(type.equals("INT"))
-							binaryTemp = intToBinary(assemblyTerm);
-						
-						else if(type.equals("HEX"))
-							binaryTemp = hexToBinary(assemblyTerm);
-						
-						else if(type.equals("LABEL")){
-							binaryTemp = relativeJumpInBinary(assemblyTerm, bits);
-						}
-					}
-				}
-				
-				binary += binaryFromBinaryFormatted(binaryTemp, bits);
-			}
-		}		
-		
-		ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
-		
-		String hexObjCode = getHexObjCode(binaryArray);		
-		
-		System.out.println(hexObjCode);		
 	}
 
 	private String relativeJumpInBinary(String insHashTerm, int bits) {

@@ -42,8 +42,10 @@ public class FileParser {
 	 * ("scanAssemblyFile(assemblyFile)" and "scanSpecFile(specFile)").
 	 * </pre>
 	 * 
-	 * @param specFile - Specification file to be scanned
-	 * @param assemblyFile - Assembly file to be scanned
+	 * @param specFile
+	 *            - Specification file to be scanned
+	 * @param assemblyFile
+	 *            - Assembly file to be scanned
 	 */
 	public FileParser(String specFile, String assemblyFile) {
 
@@ -56,7 +58,7 @@ public class FileParser {
 		adt = false;
 		endian = false;
 		minAddressableUnit = false;
-		
+
 		foundArchitecture = false;
 		foundRegisters = false;
 		foundMnemData = false;
@@ -64,18 +66,18 @@ public class FileParser {
 		foundAdt = false;
 		foundEndian = false;
 		foundMinAdrUnit = false;
-		
+
 		atMnemName = false;
 		working = false;
 		atGlobalOpcodes = false;
-		first = false;		
+		first = false;
 		emptyLine = false;
 		atMnemFormatHeader = false;
 		atMnemFormat = false;
-		abort = false;		
+		abort = false;
 		atLocalInsLabels = false;
-		atLocalOpcodes = false;		
-		atLocalInsFormat = false;		
+		atLocalOpcodes = false;
+		atLocalInsFormat = false;
 
 		firstAdtEntry = true;
 
@@ -91,7 +93,8 @@ public class FileParser {
 	 * Scans assembly file (line by line) and stores raw data in data source.
 	 * </pre>
 	 * 
-	 * @param fileName - Assembly file to be scanned
+	 * @param fileName
+	 *            - Assembly file to be scanned
 	 */
 	private void scanAssemblyFile(String fileName) {
 
@@ -118,7 +121,8 @@ public class FileParser {
 	 * Scans specification file (line by line) and stores parsed data in data source.
 	 * </pre>
 	 * 
-	 * @param fileName - Specification file to be scanned
+	 * @param fileName
+	 *            - Specification file to be scanned
 	 */
 	private void scanSpecFile(String fileName) {
 
@@ -141,52 +145,53 @@ public class FileParser {
 			// Comments (;...) omitted
 			String[] commentSplit = assemblyLine.split(";");
 			assemblyLine = commentSplit[0];
-			
+
 			// Remove end whitespace
-			assemblyLine = assemblyLine.replaceAll("\\s+$", ""); 
+			assemblyLine = assemblyLine.replaceAll("\\s+$", "");
 
 			try {
 				scanLine(assemblyLine);
 			} catch (AssemblerException e) {
-				System.out.println("Exception at line " + lineCounter);
-				System.out.println("Line: \"" + assemblyLine + "\"");
+				System.out.println("Exception at line " + lineCounter + ": " + assemblyLine.trim());
+				System.out.println();
 				System.out.println(e.getMessage());
 				System.out.println();
 				System.exit(0);
 			}
 		}
-		
+
 		// If missing sections in specification file
 		if (!(foundArchitecture && foundRegisters && foundMnemData
 				&& foundInsFormat && foundAdt && foundEndian && foundMinAdrUnit)) {
-			
+
 			String missingSections = "";
-			
-			if(!foundArchitecture)
+
+			if (!foundArchitecture)
 				missingSections += "\"architecture\" ";
-			
-			if(!foundRegisters)
-				missingSections += "\"registers\" ";			
-			
-			if(!foundMnemData)
-				missingSections += "\"mnemonicData\" ";			
-			
-			if(!foundInsFormat)
-				missingSections += "\"instructionFormat\" ";			
-			
-			if(!foundAdt)
-				missingSections += "\"adt\" ";			
-			
-			if(!foundEndian)
+
+			if (!foundRegisters)
+				missingSections += "\"registers\" ";
+
+			if (!foundMnemData)
+				missingSections += "\"mnemonicData\" ";
+
+			if (!foundInsFormat)
+				missingSections += "\"instructionFormat\" ";
+
+			if (!foundAdt)
+				missingSections += "\"adt\" ";
+
+			if (!foundEndian)
 				missingSections += "\"endian\" ";
-			
-			if(!foundMinAdrUnit)
+
+			if (!foundMinAdrUnit)
 				missingSections += "\"minAddressableUnit\" ";
-			
+
 			missingSections = missingSections.trim();
-			
+
 			try {
-				throw new AssemblerException("Section/s " + missingSections + " missing from specification file.");
+				throw new AssemblerException("Section/s " + missingSections
+						+ " missing from specification file.");
 			} catch (AssemblerException e) {
 				System.out.println(e.getMessage());
 				System.exit(0);
@@ -202,7 +207,8 @@ public class FileParser {
 	 * it belongs to and diverts it to relevant method for further analysis.
 	 * </pre>
 	 * 
-	 * @param line - Line from specification file to be scanned
+	 * @param line
+	 *            - Line from specification file to be scanned
 	 * @throws AssemblerException
 	 */
 	private void scanLine(String line) throws AssemblerException {
@@ -227,54 +233,54 @@ public class FileParser {
 
 		else if (lowerCaseLine.startsWith("endian:"))
 			setBooleanValues(false, false, false, false, false, true, false);
-		
+
 		else if (lowerCaseLine.startsWith("minaddressableunit:"))
 			setBooleanValues(false, false, false, false, false, false, true);
 
-		else if (architecture)			
-			analyseArchitecture(line);			
+		else if (architecture)
+			analyseArchitecture(line);
 
-		else if (registers)			
-			analyseRegisters(line);			
+		else if (registers)
+			analyseRegisters(line);
 
-		else if (mnemonicData)			
-			analyseMnemonicData(line);			
+		else if (mnemonicData)
+			analyseMnemonicData(line);
 
-		else if (instructionFormat)			
-			analyseInstructionFormat(line);			
+		else if (instructionFormat)
+			analyseInstructionFormat(line);
 
-		else if (adt)			
-			analyseADT(line);			
+		else if (adt)
+			analyseADT(line);
 
-		else if (endian)			
-			analyseEndian(line);			
-		
-		else if (minAddressableUnit)			
+		else if (endian)
+			analyseEndian(line);
+
+		else if (minAddressableUnit)
 			analyseMinAdrUnit(line);
-		
+
 		else if (!(line.trim().length() == 0))
-			throw new AssemblerException("Missing section header.");		
+			throw new AssemblerException("Missing section header.");
 	}
 
 	private void analyseMinAdrUnit(String line) throws AssemblerException {
-		
+
 		if (line.trim().length() == 0)
 			return;
-		
+
 		foundMinAdrUnit = true;
-		
+
 		line = line.trim();
-		
+
 		boolean legitMinAdrUnit = Pattern.matches("[0-9]+", line);
 
 		if (!legitMinAdrUnit)
 			throw new AssemblerException(
-					"Min addressable unit syntax error, integer expected.");		
-		
+					"Min addressable unit syntax error, integer expected.");
+
 		int minAdrUnit = Integer.parseInt(line);
-		
-		data.setMinAdrUnit(minAdrUnit);		
-		
+
+		data.setMinAdrUnit(minAdrUnit);
+
 		minAddressableUnit = false;
 	}
 
@@ -283,14 +289,16 @@ public class FileParser {
 	 * Sets endian, "big" or "little" (not case sensitive).
 	 * </pre>
 	 * 
-	 * @param line - Endian line
-	 * @throws AssemblerException if endian does not equal "little" or "big"
+	 * @param line
+	 *            - Endian line
+	 * @throws AssemblerException
+	 *             if endian does not equal "little" or "big"
 	 */
 	private void analyseEndian(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
-		
+
 		foundEndian = true;
 
 		line = line.trim();
@@ -305,7 +313,7 @@ public class FileParser {
 		else
 			throw new AssemblerException(
 					"Endian not recognised, \"big\" or \"little\" expected.");
-		
+
 		endian = false;
 	}
 
@@ -315,20 +323,23 @@ public class FileParser {
 	 * label : label label*
 	 * </pre>
 	 * 
-	 * @param line - Adt line
-	 * @throws AssemblerException if line syntax error
+	 * @param line
+	 *            - Adt line
+	 * @throws AssemblerException
+	 *             if line syntax error
 	 */
 	private void analyseADT(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
-		
+
 		foundAdt = true;
-		
+
 		line = line.trim();
-		
-		// Legit adt expression: 
-		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space* (!(space|colon))+)*
+
+		// Legit adt expression:
+		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
+		// (!(space|colon))+)*
 		boolean legitAdtExp = Pattern.matches(
 				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
 
@@ -354,7 +365,8 @@ public class FileParser {
 		ArrayList<String> termsList = new ArrayList<String>();
 		termsList.add(terms);
 
-		// If label already exists in hash, then add to existing list, else put label in hash
+		// If label already exists in hash, then add to existing list, else put
+		// label in hash
 		ArrayList<String> list = adt.getAdtHash().get(label);
 
 		if (list != null)
@@ -364,7 +376,8 @@ public class FileParser {
 			adt.getAdtHash().put(label, termsList);
 	}
 
-	/**<pre>
+	/**
+	 * <pre>
 	 * Sets boolean values for which section of specification file is being analysed.
 	 * </pre>
 	 * 
@@ -393,17 +406,18 @@ public class FileParser {
 	 * Sets architecture name.
 	 * </pre>
 	 * 
-	 * @param line - Architecture line
+	 * @param line
+	 *            - Architecture line
 	 */
 	private void analyseArchitecture(String line) {
 
 		if (line.trim().length() == 0)
 			return;
-		
+
 		foundArchitecture = true;
 
 		data.setArchitecture(line.trim());
-		
+
 		architecture = false;
 	}
 
@@ -418,14 +432,16 @@ public class FileParser {
 	 * "I" means value is an integer.
 	 * </pre>
 	 * 
-	 * @param line - Register line
-	 * @throws AssemblerException if line syntax error or register value not valid
+	 * @param line
+	 *            - Register line
+	 * @throws AssemblerException
+	 *             if line syntax error or register value not valid
 	 */
 	private void analyseRegisters(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
-		
+
 		foundRegisters = true;
 
 		line = line.trim();
@@ -506,8 +522,10 @@ public class FileParser {
 	 * 	...
 	 * </pre>
 	 * 
-	 * @param line - Mnemonic data line
-	 * @throws AssemblerException if line format/syntax error
+	 * @param line
+	 *            - Mnemonic data line
+	 * @throws AssemblerException
+	 *             if line format/syntax error
 	 */
 	private void analyseMnemonicData(String line) throws AssemblerException {
 
@@ -529,7 +547,7 @@ public class FileParser {
 
 			return;
 		}
-		
+
 		foundMnemData = true;
 
 		// New mnemonic (no whitespace at beginning)
@@ -593,10 +611,16 @@ public class FileParser {
 			analyseMnemFormatHeader(line);
 			atMnemFormatHeader = false;
 			atLocalInsLabels = true;
+
+			currentMnemFormat.addToRawLineString(line);
 		}
 
-		else if (atMnemFormat)
+		else if (atMnemFormat) {
+
+			currentMnemFormat.addToRawLineString(line);
+
 			analyseMnemFormat(line);
+		}
 
 		// Exception
 		else {
@@ -613,8 +637,10 @@ public class FileParser {
 	 * mnemName
 	 * </pre>
 	 * 
-	 * @param line - Mnemonic name line
-	 * @throws AssemblerException if syntax error
+	 * @param line
+	 *            - Mnemonic name line
+	 * @throws AssemblerException
+	 *             if syntax error
 	 */
 	private void analyseMnemName(String line) throws AssemblerException {
 
@@ -642,13 +668,14 @@ public class FileParser {
 
 		working = true;
 	}
-	
+
 	/**
 	 * <pre>
 	 * Sets mnemonic header.
 	 * </pre>
 	 * 
-	 * @param line - Mnemonic header line
+	 * @param line
+	 *            - Mnemonic header line
 	 */
 	private void analyseMnemFormatHeader(String line) {
 
@@ -660,21 +687,23 @@ public class FileParser {
 		currentMnemonicData.getMnemFormats().add(line);
 		currentMnemonicData.getMnemFormatHash().put(line, currentMnemFormat);
 	}
-	
+
 	/**
 	 * <pre>
 	 * Analyses mnemonic format data (instruction labels, local opcodes and instruction format).
 	 * Expected format of local opcodes:
-	 * codeLabel=codeValue(,codeLabel=codeValue)*	 
+	 * codeLabel=codeValue(,codeLabel=codeValue)*
 	 * </pre>
 	 * 
-	 * @param line - Mnemonic format line
-	 * @throws AssemblerException if syntax or indentation error
+	 * @param line
+	 *            - Mnemonic format line
+	 * @throws AssemblerException
+	 *             if syntax or indentation error
 	 */
 	private void analyseMnemFormat(String line) throws AssemblerException {
 
 		atMnemFormat = false;
-		
+
 		if (atLocalInsLabels) {
 
 			line = line.trim();
@@ -688,15 +717,19 @@ public class FileParser {
 		else if (atLocalOpcodes) {
 
 			line = line.trim();
-			
+
 			// If line is "--" then there are no local opcodes
 			if (!line.equals("--")) {
 
 				// Legit local opcode expression:
-				// (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+ 
-				// (space* comma space* (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+)*
-				boolean legitLocalOpcodes = Pattern.matches(
-								"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*", line);
+				// (!(space|equals|comma))+ space* equals space*
+				// (!(space|equals|comma))+
+				// (space* comma space* (!(space|equals|comma))+ space* equals
+				// space* (!(space|equals|comma))+)*
+				boolean legitLocalOpcodes = Pattern
+						.matches(
+								"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
+								line);
 
 				if (!legitLocalOpcodes) {
 
@@ -704,7 +737,7 @@ public class FileParser {
 					throw new AssemblerException(
 							"Mnemonic data syntax error, codeLabel=codeValue(,codeLabel=codeValue)* expected.");
 				}
-				
+
 				// Legit local opcodes so omit unnecessary spaces
 				line = line.replaceAll("\\s+", "");
 
@@ -713,7 +746,8 @@ public class FileParser {
 				for (String token : tokens) {
 
 					String[] elements = token.split("=");
-					currentMnemFormat.getOpCodes().put(elements[0], elements[1]);
+					currentMnemFormat.getOpCodes()
+							.put(elements[0], elements[1]);
 				}
 			}
 
@@ -729,13 +763,13 @@ public class FileParser {
 
 			for (String str : tokens)
 				currentMnemFormat.getInstructionFormat().add(str);
-			
-			checkForConsistency();
+
+			errorCheck();
 
 			atLocalInsFormat = false;
 			emptyLine = false;
 		}
-		
+
 		// Exception
 		else {
 
@@ -745,48 +779,71 @@ public class FileParser {
 		}
 	}
 
-	private void checkForConsistency() throws AssemblerException {
-		
-		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();	
-		
-		for(String instruction: instructionFormat){
-			
-			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
-			
+	private void errorCheck() throws AssemblerException {
+
+		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();
+
+		for (String instruction : instructionFormat) {
+
+			InstructionFormatData insFormat = data.getInstructionFormat().get(
+					instruction);
+
+			if (insFormat == null) {
+
+				throw new AssemblerException(
+						currentMnemFormat.getRawLinesString()
+								+ "\nInstruction \"" + instruction
+								+ "\" does not exist in instructionFormat.");
+			}
+
 			ArrayList<String> instructions = insFormat.getOperands();
-			
-			for(String field: instructions){
-				
-				if(currentMnemonicData.getGlobalOpCodes().get(field)!= null){}//global
-						
-				else if(currentMnemFormat.getOpCodes().get(field) != null){}
-				
-				else if(existsInInsFieldLabels(currentMnemFormat.getInsFieldLabels(), field));
-				
-				else
-					throw new AssemblerException("Field \"" + field
-							+ "\" in instruction \"" + instruction
-							+ "\" not defined in mnemonicData");
-			}					
+
+			for (String field : instructions) {
+
+				if (currentMnemonicData.getGlobalOpCodes().get(field) != null);
+
+				else if (currentMnemFormat.getOpCodes().get(field) != null);
+
+				else if (existsInInsFieldLabels(currentMnemFormat.getInsFieldLabels(), field));
+
+				else {
+
+					throw new AssemblerException(
+							currentMnemFormat.getRawLinesString()
+									+ "\nField \""
+									+ field
+									+ "\" in instruction format \""
+									+ instruction
+									+ "\" ("
+									+ insFormat.getRawLineString()
+									+ ")\nnot defined within "
+									+ currentMnemonicData.getMnemonic()
+									+ " format \""
+									+ currentMnemFormat.getMnemFormat()
+									+ "\"\nor in global mnemonic opcodes \""
+									+ currentMnemonicData.getRawGlobalOpcodesString()
+									+ "\".");
+				}
+			}
 		}
-	}		
-		
+	}
+
 	private boolean existsInInsFieldLabels(String insFieldLabels, String field) {
-		
+
 		String[] insFieldLabelTokens = insFieldLabels.split("[^a-zA-Z0-9]+");
-		
-		for(String insFieldLabel: insFieldLabelTokens){
-			
-			if(insFieldLabel.equals(field))
+
+		for (String insFieldLabel : insFieldLabelTokens) {
+
+			if (insFieldLabel.equals(field))
 				return true;
 		}
-		
+
 		return false;
 	}
 
 	/**
 	 * <pre>
-	 * Resets boolean values when about to work on a new mnemonic. 
+	 * Resets boolean values when about to work on a new mnemonic.
 	 * </pre>
 	 */
 	private void resetBooleanValues() {
@@ -809,21 +866,27 @@ public class FileParser {
 	/**
 	 * <pre>
 	 * Sets global opcodes, expected format:
-	 * codeLabel=codeValue(,codeLabel=codeValue)*	  
+	 * codeLabel=codeValue(,codeLabel=codeValue)*
 	 * </pre>
 	 * 
-	 * @param opcodes - Global opcodes line
-	 * @throws AssemblerException if syntax error
+	 * @param line
+	 *            - Global opcodes line
+	 * @throws AssemblerException
+	 *             if syntax error
 	 */
-	private void analyseGlobalOpcodes(String opcodes) throws AssemblerException {
+	private void analyseGlobalOpcodes(String line) throws AssemblerException {
 
-		opcodes = opcodes.trim();
+		line = line.trim();
 
 		// Legit global opcode expression:
-		// (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+ 
-		// (space* comma space* (!(space|equals|comma))+ space* equals space* (!(space|equals|comma))+)*
-		boolean legitGlobalOpcodes = Pattern.matches(
-						"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*", opcodes);
+		// (!(space|equals|comma))+ space* equals space*
+		// (!(space|equals|comma))+
+		// (space* comma space* (!(space|equals|comma))+ space* equals space*
+		// (!(space|equals|comma))+)*
+		boolean legitGlobalOpcodes = Pattern
+				.matches(
+						"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
+						line);
 
 		if (!legitGlobalOpcodes) {
 
@@ -833,40 +896,49 @@ public class FileParser {
 		}
 
 		// Legit global opcodes so omit unnecessary spaces
-		opcodes = opcodes.replaceAll("\\s+", "");
+		line = line.replaceAll("\\s+", "");
 
-		String[] tokens = opcodes.split(",");
+		String[] tokens = line.split(",");
 
 		for (String token : tokens) {
 
 			String[] elements = token.split("=");
-			currentMnemonicData.getGlobalOpCodes().put(elements[0], elements[1]);
+			currentMnemonicData.getGlobalOpCodes()
+					.put(elements[0], elements[1]);
 		}
+
+		currentMnemonicData.setRawGlobalOpcodesString(line);
 	}
 
 	/**
 	 * <pre>
 	 * Sets instruction formats, expected format:
-	 * insName=opLabel(bitSize) (opLabel(bitSize))* 
+	 * insName=opLabel(bitSize) (opLabel(bitSize))*
 	 * </pre>
 	 * 
-	 * @param line - Instruction format line
-	 * @throws AssemblerException if syntax error
+	 * @param line
+	 *            - Instruction format line
+	 * @throws AssemblerException
+	 *             if syntax error
 	 */
-	private void analyseInstructionFormat(String line) throws AssemblerException {
+	private void analyseInstructionFormat(String line)
+			throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
-		
+
 		foundInsFormat = true;
 
 		line = line.trim();
 
 		// Legit instruction format:
-		// (!(space|colon))+ space* colon space* (letters|numbers)+ openBracket 0-9+ closeBracket
-		// (space* (letter|numbers)+ openBracket 0-9+ closeBracket)*		
-		boolean legitInsFormat = Pattern.matches(
-						"[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*", line);
+		// (!(space|colon))+ space* colon space* (letters|numbers)+ openBracket
+		// 0-9+ closeBracket
+		// (space* (letter|numbers)+ openBracket 0-9+ closeBracket)*
+		boolean legitInsFormat = Pattern
+				.matches(
+						"[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*",
+						line);
 
 		if (!legitInsFormat) {
 
@@ -896,6 +968,7 @@ public class FileParser {
 		}
 
 		insF.setInstructionName(insName);
+		insF.setRawLineString(line.trim());
 		data.getInstructionFormat().put(insName, insF);
 	}
 
@@ -904,7 +977,8 @@ public class FileParser {
 	 * Returns true if string represents a binary number (0's and 1's), else false.
 	 * </pre>
 	 * 
-	 * @param s - String
+	 * @param s
+	 *            - String
 	 * @return true if binary, else false
 	 */
 	private boolean isBinary(String s) {

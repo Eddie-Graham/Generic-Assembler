@@ -14,6 +14,7 @@ public class MnemonicData {
 	private HashMap<String,String> globalOpCodes;
 	private HashMap<String,MnemFormat> mnemFormatHash;
 	private ArrayList<String> mnemFormats;
+	private String rawGlobalOpcodesString;
 	
 	public MnemonicData(){
 		
@@ -21,6 +22,7 @@ public class MnemonicData {
 		globalOpCodes = new HashMap<String, String>();
 		mnemFormatHash = new HashMap<String, MnemFormat>();
 		mnemFormats = new ArrayList<String>();
+		rawGlobalOpcodesString = "";
 	}
 
 	public String getMnemonic() {
@@ -53,5 +55,13 @@ public class MnemonicData {
 
 	public void setMnemFormats(ArrayList<String> mnemFormats) {
 		this.mnemFormats = mnemFormats;
-	}	
+	}
+
+	public String getRawGlobalOpcodesString() {
+		return rawGlobalOpcodesString;
+	}
+
+	public void setRawGlobalOpcodesString(String rawGlobalOpcodesString) {
+		this.rawGlobalOpcodesString = rawGlobalOpcodesString;
+	}		
 }

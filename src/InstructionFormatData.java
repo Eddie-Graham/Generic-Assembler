@@ -14,12 +14,14 @@ public class InstructionFormatData {
 	private String instructionName;
 	private HashMap<String, Integer> operandBitHash;
 	private ArrayList<String> operands;
+	private String rawLineString;
 	
 	public InstructionFormatData(){
 		
 		instructionName = "";
 		operandBitHash = new HashMap<String, Integer>();
-		operands = new ArrayList<String>();		
+		operands = new ArrayList<String>();	
+		rawLineString = "";
 	}
 
 	public String getInstructionName() {
@@ -44,5 +46,13 @@ public class InstructionFormatData {
 
 	public void setOperands(ArrayList<String> operands) {
 		this.operands = operands;
-	}	
+	}
+
+	public String getRawLineString() {
+		return rawLineString;
+	}
+
+	public void setRawLineString(String rawLineString) {
+		this.rawLineString = rawLineString;
+	}		
 }
