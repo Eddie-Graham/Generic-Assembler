@@ -42,10 +42,8 @@ public class FileParser {
 	 * ("scanAssemblyFile(assemblyFile)" and "scanSpecFile(specFile)").
 	 * </pre>
 	 * 
-	 * @param specFile
-	 *            - Specification file to be scanned
-	 * @param assemblyFile
-	 *            - Assembly file to be scanned
+	 * @param specFile - Specification file to be scanned
+	 * @param assemblyFile - Assembly file to be scanned
 	 */
 	public FileParser(String specFile, String assemblyFile) {
 
@@ -93,8 +91,7 @@ public class FileParser {
 	 * Scans assembly file (line by line) and stores raw data in data source.
 	 * </pre>
 	 * 
-	 * @param fileName
-	 *            - Assembly file to be scanned
+	 * @param fileName - Assembly file to be scanned
 	 */
 	private void scanAssemblyFile(String fileName) {
 
@@ -121,8 +118,7 @@ public class FileParser {
 	 * Scans specification file (line by line) and stores parsed data in data source.
 	 * </pre>
 	 * 
-	 * @param fileName
-	 *            - Specification file to be scanned
+	 * @param fileName - Specification file to be scanned
 	 */
 	private void scanSpecFile(String fileName) {
 
@@ -207,8 +203,7 @@ public class FileParser {
 	 * it belongs to and diverts it to relevant method for further analysis.
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Line from specification file to be scanned
+	 * @param line - Line from specification file to be scanned
 	 * @throws AssemblerException
 	 */
 	private void scanLine(String line) throws AssemblerException {
@@ -289,10 +284,8 @@ public class FileParser {
 	 * Sets endian, "big" or "little" (not case sensitive).
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Endian line
-	 * @throws AssemblerException
-	 *             if endian does not equal "little" or "big"
+	 * @param line - Endian line
+	 * @throws AssemblerException if endian does not equal "little" or "big"
 	 */
 	private void analyseEndian(String line) throws AssemblerException {
 
@@ -323,10 +316,8 @@ public class FileParser {
 	 * label : label label*
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Adt line
-	 * @throws AssemblerException
-	 *             if line syntax error
+	 * @param line - Adt line
+	 * @throws AssemblerException if line syntax error
 	 */
 	private void analyseADT(String line) throws AssemblerException {
 
@@ -345,9 +336,14 @@ public class FileParser {
 
 		if (!legitAdtExp)
 			throw new AssemblerException(
-					"ADT syntax error, label : label label* expected.");
+					"ADT syntax error, label : label label* expected.");			
 
 		ADT adt = data.getAdt();
+		
+		String[] adtTokens = line.split("[^A-Za-z0-9]+");
+		
+		for(String adtToken: adtTokens)
+			adt.getAdtTokens().add(adtToken);
 
 		String[] colonSplit = line.split("(?=[:])|(?<=[:])");
 
@@ -406,8 +402,7 @@ public class FileParser {
 	 * Sets architecture name.
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Architecture line
+	 * @param line - Architecture line
 	 */
 	private void analyseArchitecture(String line) {
 
@@ -432,10 +427,8 @@ public class FileParser {
 	 * "I" means value is an integer.
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Register line
-	 * @throws AssemblerException
-	 *             if line syntax error or register value not valid
+	 * @param line - Register line
+	 * @throws AssemblerException if line syntax error or register value not valid
 	 */
 	private void analyseRegisters(String line) throws AssemblerException {
 
@@ -522,10 +515,8 @@ public class FileParser {
 	 * 	...
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Mnemonic data line
-	 * @throws AssemblerException
-	 *             if line format/syntax error
+	 * @param line - Mnemonic data line
+	 * @throws AssemblerException if line format/syntax error
 	 */
 	private void analyseMnemonicData(String line) throws AssemblerException {
 
@@ -637,10 +628,8 @@ public class FileParser {
 	 * mnemName
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Mnemonic name line
-	 * @throws AssemblerException
-	 *             if syntax error
+	 * @param line - Mnemonic name line
+	 * @throws AssemblerException if syntax error
 	 */
 	private void analyseMnemName(String line) throws AssemblerException {
 
@@ -674,16 +663,25 @@ public class FileParser {
 	 * Sets mnemonic header.
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Mnemonic header line
+	 * @param line - Mnemonic header line
+	 * @throws AssemblerException 
 	 */
-	private void analyseMnemFormatHeader(String line) {
+	private void analyseMnemFormatHeader(String line) throws AssemblerException {
 
 		line = line.trim();
+		
+		String[] formatTokens = line.split("[^A-Za-z0-9]+");
+		
+		ArrayList<String> adtTokens = data.getAdt().getAdtTokens();
+		
+		for(String formatToken: formatTokens){
+			
+			if(!adtTokens.contains(formatToken))
+				throw new AssemblerException(formatToken + " not found in ADT");
+		}		
 
 		currentMnemFormat = new MnemFormat();
 		currentMnemFormat.setMnemFormat(line);
-
 		currentMnemonicData.getMnemFormats().add(line);
 		currentMnemonicData.getMnemFormatHash().put(line, currentMnemFormat);
 	}
@@ -695,10 +693,8 @@ public class FileParser {
 	 * codeLabel=codeValue(,codeLabel=codeValue)*
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Mnemonic format line
-	 * @throws AssemblerException
-	 *             if syntax or indentation error
+	 * @param line - Mnemonic format line
+	 * @throws AssemblerException if syntax or indentation error
 	 */
 	private void analyseMnemFormat(String line) throws AssemblerException {
 
@@ -726,8 +722,7 @@ public class FileParser {
 				// (!(space|equals|comma))+
 				// (space* comma space* (!(space|equals|comma))+ space* equals
 				// space* (!(space|equals|comma))+)*
-				boolean legitLocalOpcodes = Pattern
-						.matches(
+				boolean legitLocalOpcodes = Pattern.matches(
 								"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
 								line);
 
@@ -869,10 +864,8 @@ public class FileParser {
 	 * codeLabel=codeValue(,codeLabel=codeValue)*
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Global opcodes line
-	 * @throws AssemblerException
-	 *             if syntax error
+	 * @param line - Global opcodes line
+	 * @throws AssemblerException if syntax error
 	 */
 	private void analyseGlobalOpcodes(String line) throws AssemblerException {
 
@@ -883,8 +876,7 @@ public class FileParser {
 		// (!(space|equals|comma))+
 		// (space* comma space* (!(space|equals|comma))+ space* equals space*
 		// (!(space|equals|comma))+)*
-		boolean legitGlobalOpcodes = Pattern
-				.matches(
+		boolean legitGlobalOpcodes = Pattern.matches(
 						"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
 						line);
 
@@ -916,10 +908,8 @@ public class FileParser {
 	 * insName=opLabel(bitSize) (opLabel(bitSize))*
 	 * </pre>
 	 * 
-	 * @param line
-	 *            - Instruction format line
-	 * @throws AssemblerException
-	 *             if syntax error
+	 * @param line - Instruction format line
+	 * @throws AssemblerException if syntax error
 	 */
 	private void analyseInstructionFormat(String line)
 			throws AssemblerException {
@@ -935,8 +925,7 @@ public class FileParser {
 		// (!(space|colon))+ space* colon space* (letters|numbers)+ openBracket
 		// 0-9+ closeBracket
 		// (space* (letter|numbers)+ openBracket 0-9+ closeBracket)*
-		boolean legitInsFormat = Pattern
-				.matches(
+		boolean legitInsFormat = Pattern.matches(
 						"[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*",
 						line);
 
@@ -977,8 +966,7 @@ public class FileParser {
 	 * Returns true if string represents a binary number (0's and 1's), else false.
 	 * </pre>
 	 * 
-	 * @param s
-	 *            - String
+	 * @param s - String
 	 * @return true if binary, else false
 	 */
 	private boolean isBinary(String s) {

@@ -12,11 +12,13 @@ public class ADT {
 	
 	String rootTerm;
 	private HashMap<String, ArrayList<String>> adtHash;
+	private ArrayList<String> adtTokens;
 	
 	public ADT(){
 		
 		rootTerm= "";
 		adtHash = new HashMap<String, ArrayList<String>>();
+		adtTokens = new ArrayList<String>();
 	}
 
 	public String getRootTerm() {
@@ -33,5 +35,13 @@ public class ADT {
 
 	public void setAdtHash(HashMap<String, ArrayList<String>> adtHash) {
 		this.adtHash = adtHash;
-	}	
+	}
+
+	public ArrayList<String> getAdtTokens() {
+		return adtTokens;
+	}
+
+	public void setAdtTokens(ArrayList<String> adtTokens) {
+		this.adtTokens = adtTokens;
+	}		
 }
