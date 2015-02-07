@@ -8,7 +8,6 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -336,13 +335,13 @@ public class FileParser {
 
 		if (!legitAdtExp)
 			throw new AssemblerException(
-					"ADT syntax error, label : label label* expected.");			
+					"ADT syntax error, label : label label* expected.");
 
 		ADT adt = data.getAdt();
-		
+
 		String[] adtTokens = line.split("[^A-Za-z0-9]+");
-		
-		for(String adtToken: adtTokens)
+
+		for (String adtToken : adtTokens)
 			adt.getAdtTokens().add(adtToken);
 
 		String[] colonSplit = line.split("(?=[:])|(?<=[:])");
@@ -664,21 +663,21 @@ public class FileParser {
 	 * </pre>
 	 * 
 	 * @param line - Mnemonic header line
-	 * @throws AssemblerException 
+	 * @throws AssemblerException if format token does not exist in ADT
 	 */
 	private void analyseMnemFormatHeader(String line) throws AssemblerException {
 
 		line = line.trim();
-		
+
 		String[] formatTokens = line.split("[^A-Za-z0-9]+");
-		
+
 		ArrayList<String> adtTokens = data.getAdt().getAdtTokens();
-		
-		for(String formatToken: formatTokens){
-			
-			if(!adtTokens.contains(formatToken))
+
+		for (String formatToken : formatTokens) {
+
+			if (!adtTokens.contains(formatToken))
 				throw new AssemblerException(formatToken + " not found in ADT");
-		}		
+		}
 
 		currentMnemFormat = new MnemFormat();
 		currentMnemFormat.setMnemFormat(line);
@@ -741,8 +740,7 @@ public class FileParser {
 				for (String token : tokens) {
 
 					String[] elements = token.split("=");
-					currentMnemFormat.getOpCodes()
-							.put(elements[0], elements[1]);
+					currentMnemFormat.getOpCodes().put(elements[0], elements[1]);
 				}
 			}
 
@@ -774,14 +772,20 @@ public class FileParser {
 		}
 	}
 
+	/**
+	 * <pre>
+	 * Error checking of mnemonic data
+	 * </pre>
+	 * 
+	 * @throws AssemblerException
+	 */
 	private void errorCheck() throws AssemblerException {
 
 		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormatData insFormat = data.getInstructionFormat().get(
-					instruction);
+			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
 
 			if (insFormat == null) {
 
@@ -795,9 +799,43 @@ public class FileParser {
 
 			for (String field : instructions) {
 
-				if (currentMnemonicData.getGlobalOpCodes().get(field) != null);
+				int bits = insFormat.getOperandBitHash().get(field);
 
-				else if (currentMnemFormat.getOpCodes().get(field) != null);
+				if (currentMnemonicData.getGlobalOpCodes().get(field) != null) {
+
+					String opcode = currentMnemonicData.getGlobalOpCodes().get(field);
+					int noOfBits = opcode.length();
+
+					if (noOfBits > bits)
+						throw new AssemblerException(
+								currentMnemFormat.getRawLinesString()
+										+ "\nField \""
+										+ field
+										+ "\" in global opcodes ("
+										+ currentMnemonicData
+												.getRawGlobalOpcodesString()
+										+ ") exceeds expected " + bits
+										+ " bits\nin instruction format \""
+										+ instruction + "\" ("
+										+ insFormat.getRawLineString() + ").");
+				}
+
+				else if (currentMnemFormat.getOpCodes().get(field) != null) {
+
+					String opcode = currentMnemFormat.getOpCodes().get(field);
+					int noOfBits = opcode.length();
+
+					if (noOfBits > bits)
+						throw new AssemblerException(
+								currentMnemFormat.getRawLinesString()
+										+ "\nField \""
+										+ field
+										+ "\" in local opcodes exceeds expected "
+										+ bits
+										+ " bits\nin instruction format \""
+										+ instruction + "\" ("
+										+ insFormat.getRawLineString() + ").");
+				}
 
 				else if (existsInInsFieldLabels(currentMnemFormat.getInsFieldLabels(), field));
 
@@ -815,7 +853,9 @@ public class FileParser {
 									+ currentMnemonicData.getMnemonic()
 									+ " format \""
 									+ currentMnemFormat.getMnemFormat()
-									+ "\"\nor in global mnemonic opcodes \""
+									+ "\"\nor in global "
+									+ currentMnemonicData.getMnemonic()
+									+ " opcodes \""
 									+ currentMnemonicData.getRawGlobalOpcodesString()
 									+ "\".");
 				}
@@ -876,8 +916,8 @@ public class FileParser {
 		// (!(space|equals|comma))+
 		// (space* comma space* (!(space|equals|comma))+ space* equals space*
 		// (!(space|equals|comma))+)*
-		boolean legitGlobalOpcodes = Pattern.matches(
-						"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
+		boolean legitGlobalOpcodes = Pattern
+				.matches("[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
 						line);
 
 		if (!legitGlobalOpcodes) {
@@ -895,8 +935,7 @@ public class FileParser {
 		for (String token : tokens) {
 
 			String[] elements = token.split("=");
-			currentMnemonicData.getGlobalOpCodes()
-					.put(elements[0], elements[1]);
+			currentMnemonicData.getGlobalOpCodes().put(elements[0], elements[1]);
 		}
 
 		currentMnemonicData.setRawGlobalOpcodesString(line);
@@ -925,8 +964,8 @@ public class FileParser {
 		// (!(space|colon))+ space* colon space* (letters|numbers)+ openBracket
 		// 0-9+ closeBracket
 		// (space* (letter|numbers)+ openBracket 0-9+ closeBracket)*
-		boolean legitInsFormat = Pattern.matches(
-						"[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*",
+		boolean legitInsFormat = Pattern
+				.matches("[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*",
 						line);
 
 		if (!legitInsFormat) {
