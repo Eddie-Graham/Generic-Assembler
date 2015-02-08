@@ -1,15 +1,13 @@
-; assembly
-
-
 section .data
 
-
-section .bss
 
 
 section .text
 	global main
 main:
 
-		loop LINK A6, #100
+		loop    LINK A6, #200
+   				LINK A6, #100
+   				LINK A6, #100
+    			BRA loop
 			

@@ -1,59 +1,35 @@
-;*******************************68k*******************************
-
 architecture:
 68000
 
-mnemonicdata:		
-		
+registers:	
 
-	
-ADD 
-	op=000000, rs=00000
-	
-	mnem reg32, reg32
-		mnem rm, reg		; doesnt need to be punctuated
-		d=0, s=1, mod=11
-		opcode mod-r/m
-		
-LINK
-	op=0100111001010
-	
-	mnem regDirect, imm
-		mnem reg, #dis
-		--
-		opcode displacement
+D0	0I
+D1	1I
+D2	2I
+D3	3I
+D4	4I	
+D5	5I
+D6	6I
+D7	7I
 
+A0	0I
+A1	1I
+A2	2I
+A3	3I
+A4	4I
+A5	5I
+A6	6I
+A7	7I
 
-	
-registers:	;B for binary, H for hex, D for decimal
-
-D0	0D
-D1	1D
-D2	2D
-D3	3D
-D4	4D	
-D5	5D
-D6	6D
-D7	7D
-
-A0	0D
-A1	1D
-A2	2D
-A3	3D
-A4	4D
-A5	5D
-A6	6D
-A7	7D
-
-endian:
-
-big
 
 instructionformat:
 
 opcode: op(13) reg(3) 
 
+jump : op(8) adr(8)
+
 displacement: dis(16)
+
 
 adt:	; ? optional, + one or more, * zero or more
 
@@ -61,6 +37,7 @@ statement : label? mnem op*
 
 op : adrMode
 
+adrMode : label
 adrMode : regDirect
 adrMode : regIndirect
 adrMode : absolute
@@ -97,10 +74,38 @@ addrReg : "A6"
 addrReg : "A7"
 
 mnem : "LINK"
+mnem : "BRA"
 
 label : LABEL
+
+
+mnemonicdata:			
+
+	
+		
+LINK
+	op=0100111001010	
+	
+	mnem regDirect, imm 
+		mnem reg #dis
+		--
+		opcode displacement
+		
+BRA 
+	op=01100000
+	
+	mnem label
+		mnem adr
+		--
+		jump
+
+
 
 minaddressableunit:
 
 8
+
+endian:
+
+big
 

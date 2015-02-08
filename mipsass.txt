@@ -1,10 +1,6 @@
-; assembly
-
-
 section .data
 
 
-section .bss
 
 
 section .text
@@ -12,7 +8,7 @@ section .text
 main:
 
 			ADD $t1, $t1, $t1	
-			ADDI $t1, $t1, 1
+			ADDI $t1, $t1, 3
 			AND $t1, $t2, $t3
 			LB $t0, 0($t1)
 

@@ -1,45 +1,7 @@
-;*******************************MIPS*******************************
-; comments 
-
 architecture:
 MIPS
 
-mnemonicdata:		
-		
-ADD 
-	opcode=000000, func=100000, shamt=00000 
-	
-	mnem reg, reg, reg		
-		mnem $rd, $rs, $rt
-		--
-		R-type
-		
-ADDI
-	opcode=001000
-	
-	mnem reg, reg, imm
-		mnem $rt, $rs, immediate 
-		--
-		I-type
-		
-AND
-	opcode=001100, shamt=00000, func=100100
-	
-	mnem reg, reg, reg
-		mnem $rd, $rs, $rt
-		--
-		R-type
-		
-LB
-	opcode=100000
-	
-	mnem reg, mem
-		mnem $rt, immediate($rs)
-		--
-		I-type
-
-	
-registers:				;B for binary, H for hex, D for decimal
+registers:				
 
 v0	2H
 v1	3H
@@ -49,14 +11,14 @@ a1	5H
 a2	6H
 a3	7H
 
-t0	8H
-t1	9H
-t2	10H			
-t3	11H
-t4	12H
-t5	13H
-t6	14H
-t7	15H
+$t0	8H
+$t1	9H
+$t2	10H			
+$t3	11H
+$t4	12H
+$t5	13H
+$t6	14H
+$t7	15H
 
 s0	16H
 s1	17H
@@ -78,7 +40,8 @@ I-type: opcode(6) rs(5) rt(5) immediate(16)
 
 J-type: opcode(6) address(26)
 
-adt:	; ? optional, + one or more, * zero or more
+
+adt:	
 
 statement : label? mnem op*
 
@@ -88,19 +51,19 @@ op : mem
 
 imm : INT
 
-reg : $name
+reg : name
 
 mem : 0xHEX ;fix
 mem : imm(reg)
 
-name : "t0"
-name : "t1"
-name : "t2"
-name : "t3"
-name : "t4"
-name : "t5" 
-name : "t6"
-name : "t7"
+name : "$t0"
+name : "$t1"
+name : "$t2"
+name : "$t3"
+name : "$t4"
+name : "$t5" 
+name : "$t6"
+name : "$t7"
 
 mnem : "ADD"
 mnem : "SB"
@@ -112,6 +75,44 @@ mnem : "AND"
 mnem : "LB"
 
 label : LABEL
+
+
+
+mnemonicdata:		
+		
+ADD 
+	opcode=000000, func=100000, shamt=00000 
+	
+	mnem reg, reg, reg		
+		mnem rd rs rt
+		--
+		R-type
+		
+ADDI
+	opcode=001000
+	
+	mnem reg, reg, imm
+		mnem rt rs immediate 
+		--
+		I-type
+		
+AND
+	opcode=000000, shamt=00000, func=100100
+	
+	mnem reg, reg, reg
+		mnem rd rs rt
+		--
+		R-type
+		
+LB
+	opcode=100000
+	
+	mnem reg, mem
+		mnem rt immediate(rs)
+		--
+		I-type
+		
+
 
 
 endian:

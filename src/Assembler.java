@@ -205,8 +205,7 @@ public class Assembler {
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormatData insFormat = data.getInstructionFormat().get(
-					instruction);
+			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
 
 			ArrayList<String> instructions = insFormat.getOperands();
 
@@ -558,8 +557,7 @@ public class Assembler {
 				if (parseTerm.charAt(parseTerm.length() - 1) == '+') {
 
 					ArrayList<String> oneOrMoreParseTerm = new ArrayList<String>();
-					String oneOrMore = tempParseTerm + " " + tempParseTerm
-							+ "*";
+					String oneOrMore = tempParseTerm + " " + tempParseTerm + "*";
 					oneOrMoreParseTerm.add(oneOrMore);
 
 					ArrayList<String> newParseTermsIter = updateTermsIter(oneOrMoreParseTerm, parseTermsIter, parseTerm);
@@ -572,83 +570,91 @@ public class Assembler {
 					if (done)
 						return true;
 				}
+				
+				else{
 
-				ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(tempParseTerm);
+					ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(tempParseTerm);
 
-				ArrayList<String> newCurrentPath = clone(currentPath);
-				newCurrentPath.add(parseTerm);
+					ArrayList<String> newCurrentPath = clone(currentPath);
+//					newCurrentPath.add(parseTerm);
+				
+					if(parseTerm.charAt(parseTerm.length()-1) == '?')
+						newCurrentPath.add(parseTerm);
+				
+					newCurrentPath.add(tempParseTerm);
 
-				if (adtTerms != null) { // not leaf
+					if (adtTerms != null) { // not leaf
 
-					if (!(parent.charAt(parent.length() - 1) == '*')) {
+						if (!(parent.charAt(parent.length() - 1) == '*')) {
 
-						ArrayList<String> parseTerm1 = new ArrayList<String>();
-						parseTerm1.add(parseTerm);
+							ArrayList<String> parseTerm1 = new ArrayList<String>();
+							parseTerm1.add(parseTerm);
 
-						ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
-						ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
+							ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
+							ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
 
-						done = analyseOperands(adtTerms, assemblyListIter,
-								newParseTermsIter, newFullParseTermsIter,
-								paths, newCurrentPath, parseTerm);
-					}
-
-					else
-						done = analyseOperands(adtTerms, assemblyListIter,
-								parseTermsIter, fullParseTermsIter, paths,
-								newCurrentPath, parent);
-
-					if (done)
-						return true;
-				}
-
-				else { // leaf
-
-					String assemblyTerm = assemblyListIter.get(0);
-
-					if (match(parseTerm, assemblyTerm, newCurrentPath)) {
-
-						if (debug)
-							System.out.println("found: " + parseTerm);
-
-						if (!legitIter(parseTermsIter, newCurrentPath))
-							return false;
-
-						ArrayList<ArrayList<String>> newPaths = clone2(paths);
-						newPaths.add(newCurrentPath);
-
-						parseTermsIter = updateTermsIter(parseTermsIter,newCurrentPath);
-						assemblyListIter = removeFirstElement(assemblyListIter);
-
-						newCurrentPath = new ArrayList<String>();
-
-						if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
-
-							if (parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
-								return false;
-
-							else if (!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()) {
-
-								if (!legitWithFullTermsIter(fullParseTermsIter,	newPaths))
-									return false;
-							}
-
-							legitAdtPaths = newPaths; // legit
-
-							return true;
+							done = analyseOperands(adtTerms, assemblyListIter,
+									newParseTermsIter, newFullParseTermsIter,
+									paths, newCurrentPath, parseTerm);
 						}
 
-						done = analyseOperands(parseTermsIter,
-								assemblyListIter, parseTermsIter,
-								fullParseTermsIter, newPaths, newCurrentPath,
-								data.getAdt().getRootTerm());
+						else
+							done = analyseOperands(adtTerms, assemblyListIter,
+									parseTermsIter, fullParseTermsIter, paths,
+									newCurrentPath, parent);
 
 						if (done)
 							return true;
 					}
 
-					else { // not found
+					else { // leaf
 
+						String assemblyTerm = assemblyListIter.get(0);
+
+						if (match(parseTerm, assemblyTerm, newCurrentPath)) {
+
+							if (debug)
+								System.out.println("found: " + parseTerm);
+
+							if (!legitIter(parseTermsIter, newCurrentPath))
+								return false;
+
+							ArrayList<ArrayList<String>> newPaths = clone2(paths);
+							newPaths.add(newCurrentPath);
+
+							parseTermsIter = updateTermsIter(parseTermsIter,newCurrentPath);
+							assemblyListIter = removeFirstElement(assemblyListIter);
+
+							newCurrentPath = new ArrayList<String>();
+
+							if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
+
+								if (parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
+									return false;
+
+								else if (!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()) {
+
+									if (!legitWithFullTermsIter(fullParseTermsIter,	newPaths))
+										return false;
+								}
+
+								legitAdtPaths = newPaths; // legit
+
+								return true;
+							}
+
+							done = analyseOperands(parseTermsIter,
+									assemblyListIter, parseTermsIter,
+									fullParseTermsIter, newPaths, newCurrentPath,
+									data.getAdt().getRootTerm());
+
+							if (done)
+								return true;
+						}
+
+						else { // not found
+
+						}
 					}
 				}
 			}
@@ -669,10 +675,12 @@ public class Assembler {
 		int index = 0;
 
 		for (String iterTerm : splitTermsIter) {
-
+			
+			String tempIterTerm = iterTerm.replaceAll("\\?|\\*", "");
+			
 			for (String pathTerm : currentPath) {
 
-				if (iterTerm.equals(pathTerm)) {
+				if (tempIterTerm.equals(pathTerm)) {
 					found = true;
 					break;
 				}
@@ -743,12 +751,14 @@ public class Assembler {
 
 		String termsIter = parseTermsIter.get(0);
 		String[] splitTermsIter = termsIter.split("\\s+");
-
+		
 		for (String iterTerm : splitTermsIter) {
+			
+			String rawIterTerm = iterTerm.replaceAll("\\?|\\*", "");
 
 			for (String pathTerm : newCurrentPath) {
 
-				if (iterTerm.equals(pathTerm)) {
+				if (rawIterTerm.equals(pathTerm)) {
 					legit = true;
 					break;
 				}
@@ -801,10 +811,11 @@ public class Assembler {
 			else {
 
 				path = newPaths.get(pathCounter);
+				String tempIterTerm = iterTerm.replaceAll("\\?|\\*", "");
 
 				if (iterTerm.charAt(iterTerm.length() - 1) == '*') {
 
-					while (legitPath(path, iterTerm)) {
+					while (legitPath(path, tempIterTerm)) {
 
 						pathCounter++;
 
@@ -819,7 +830,7 @@ public class Assembler {
 					}
 				}
 
-				else if (!legitPath(path, iterTerm)) {
+				else if (!legitPath(path, tempIterTerm)) {
 
 					if (!(iterTerm.charAt(iterTerm.length() - 1) == '?' || iterTerm.charAt(iterTerm.length() - 1) == '*'))
 						return false;
@@ -876,8 +887,11 @@ public class Assembler {
 
 		String[] splitAssemblyTerms;
 
-		if (prefixes.isEmpty())
-			splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		if (prefixes.isEmpty()){
+			
+			splitAssemblyTerms = new String[1];
+			splitAssemblyTerms[0] = assemblyTerm;
+		}
 
 		else
 			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
@@ -1031,7 +1045,7 @@ public class Assembler {
 			legit = false;
 		}
 
-		if (i == splitFormat.length - 1)
+		if (i != splitFormat.length)
 			return false;
 
 		return true;
@@ -1142,26 +1156,49 @@ public class Assembler {
 
 		return operand;
 	}
-
-	private HashMap<String, String> mapInsFieldLabels(String assemblyLine,
-			String insLabels) {
+	
+	private HashMap<String, String> mapInsFieldLabels(String assemblyLine, String insLabels) throws AssemblerException {
 
 		HashMap<String, String> insHash = new HashMap<String, String>();
 
-		String[] splitAssemblyTerms = assemblyLine.split("[^a-zA-Z0-9]+");
-		String[] splitInsTerms = insLabels.split("[^a-zA-Z0-9]+");
+//		insLabels = insLabels.replaceAll(",", "");		//TODO needed?
+		insLabels = insLabels.replaceAll("\\s+", " ");
+		
+		String[] splitInsTerms = insLabels.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		
+		String prefixes = "";
 
+		for (String str : splitInsTerms) {
+
+			if (!isAlphaNumeric(str))
+				prefixes += "\\" + str;
+		}
+
+		String[] splitAssemblyTerms = assemblyLine.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
+		
+		if(splitAssemblyTerms.length != splitInsTerms.length)
+			throw new AssemblerException("ERROR");		
+		
 		int i = 0;
 
 		for (String insTerm : splitInsTerms) {
 
-			String assemblyTerm = splitAssemblyTerms[i];
-			insHash.put(insTerm, assemblyTerm);
-
-			i++;
+			if (!isAlphaNumeric(insTerm)){
+				
+				if(!insTerm.equals(splitAssemblyTerms[i]))
+					throw new AssemblerException("ERROR");
+			}
+			
+			else{
+			
+				String assemblyTerm = splitAssemblyTerms[i];
+				insHash.put(insTerm, assemblyTerm);
+			}
+			
+			i++;			
 		}
 
-		return insHash;
+		return insHash;		
 	}
 
 	private ArrayList<String> splitToMinAdrUnits(String binary) {
