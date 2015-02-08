@@ -121,8 +121,7 @@ public class Assembler {
 	 * @param assemblyLine
 	 * @throws AssemblerException
 	 */
-	private void analyseLineFirstPass(String assemblyLine)
-			throws AssemblerException {
+	private void analyseLineFirstPass(String assemblyLine) throws AssemblerException {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
@@ -157,12 +156,11 @@ public class Assembler {
 
 			else
 				analyseInstructionsFirstPass(assemblyLine);
-
 		}
 	}
 
 	/**
-	 *  <pre>
+	 * <pre>
 	 * Analyses each instruction within .text and establishes size of 
 	 * each instruction, storing any labels with its address.
 	 * </pre>
@@ -170,11 +168,9 @@ public class Assembler {
 	 * @param assemblyLine
 	 * @throws AssemblerException
 	 */
-	private void analyseInstructionsFirstPass(String assemblyLine)
-			throws AssemblerException {
+	private void analyseInstructionsFirstPass(String assemblyLine) throws AssemblerException {
 
 		legitAdtPaths = new ArrayList<ArrayList<String>>();
-		assemblyTermTypeHash = new HashMap<String, String>();
 
 		assemblyLine = assemblyLine.trim();
 
@@ -182,9 +178,9 @@ public class Assembler {
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
-		ArrayList<String> mnemFormats = mnemData.getMnemFormats(); 
-		
-		String mnemFormat = "";
+		ArrayList<String> mnemFormats = mnemData.getMnemFormats();
+
+		String mnemFormat = null;
 
 		for (String format : mnemFormats) {
 
@@ -195,15 +191,15 @@ public class Assembler {
 			}
 		}
 
-		if (mnemFormat == "")
+		if (mnemFormat == null)
 			throw new AssemblerException("Mnem format mismatch.");
 
 		if (!correctSyntax(mnemFormat, assemblyLine))
 			throw new AssemblerException("Assembly line syntax error.");
 
-		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat); 
+		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);
 
-		ArrayList<String> instructionFormat = format.getInstructionFormat(); 																				
+		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
 		int insSize = 0;
 
@@ -272,12 +268,11 @@ public class Assembler {
 	 * Determines what part of assembly file line belongs to (.data or .text)
 	 * and diverts it for further analysis.
 	 * </pre>
-	 *
+	 * 
 	 * @param assemblyLine
 	 * @throws AssemblerException
 	 */
-	private void analyseLineSecondPass(String assemblyLine)
-			throws AssemblerException {
+	private void analyseLineSecondPass(String assemblyLine)	throws AssemblerException {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
@@ -311,10 +306,10 @@ public class Assembler {
 			}
 
 			else
-				populateInstructionSecondPass(assemblyLine);			
+				populateInstructionSecondPass(assemblyLine);
 		}
 	}
-	
+
 	// TODO
 	private void populateDataSecondPass(String assemblyLine) {
 
@@ -333,10 +328,9 @@ public class Assembler {
 		System.out.println(Integer.toHexString(adr) + ":	" + data);
 
 	}
-	
+
 	// TODO
-	private void analyseDataFirstPass(String assemblyLine)
-			throws AssemblerException {
+	private void analyseDataFirstPass(String assemblyLine) throws AssemblerException {
 
 		assemblyLine = assemblyLine.trim();
 
@@ -369,7 +363,7 @@ public class Assembler {
 		this.atData = atData;
 		this.atText = atText;
 	}
-	
+
 	/**
 	 * <pre>
 	 * Populates each instruction.
@@ -378,8 +372,7 @@ public class Assembler {
 	 * @param assemblyLine
 	 * @throws AssemblerException
 	 */
-	private void populateInstructionSecondPass(String assemblyLine)
-			throws AssemblerException {
+	private void populateInstructionSecondPass(String assemblyLine)	throws AssemblerException {
 
 		assemblyLine = assemblyLine.trim();
 
@@ -395,9 +388,9 @@ public class Assembler {
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
-		ArrayList<String> mnemFormats = mnemData.getMnemFormats(); 
-		
-		String mnemFormat = "";
+		ArrayList<String> mnemFormats = mnemData.getMnemFormats();
+
+		String mnemFormat = null;
 
 		for (String format : mnemFormats) {
 
@@ -408,16 +401,16 @@ public class Assembler {
 			}
 		}
 
-		if (mnemFormat == "")
+		if (mnemFormat == null)
 			throw new AssemblerException("Mnem format mismatch.");
 
-		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat); 
+		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);
 
 		String insFieldLabels = format.getInsFieldLabels();
 		String relevantOperands = getRelevantOperands(mnemFormat);
 		HashMap<String, String> insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);
 
-		ArrayList<String> instructionFormat = format.getInstructionFormat(); 
+		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
 		String binary = "";
 		insNumber++;
@@ -460,9 +453,9 @@ public class Assembler {
 						else if (type.equals("HEX"))
 							binaryTemp = hexToBinary(assemblyTerm);
 
-						else if (type.equals("LABEL")) 
+						else if (type.equals("LABEL"))
 							binaryTemp = relativeJumpInBinary(assemblyTerm,	bits);
-						
+
 					}
 				}
 
@@ -547,10 +540,8 @@ public class Assembler {
 				for (String str : splitParseTerm)
 					splitParseTermList.add(str);
 
-				ArrayList<String> newParseTermsIter = updateTermsIter(
-						splitParseTermList, parseTermsIter, parent);
-				ArrayList<String> newFullParseTermsIter = updateTermsIter(
-						splitParseTermList, fullParseTermsIter, parent);
+				ArrayList<String> newParseTermsIter = updateTermsIter(splitParseTermList, parseTermsIter, parent);
+				ArrayList<String> newFullParseTermsIter = updateTermsIter(splitParseTermList, fullParseTermsIter, parent);
 
 				done = analyseOperands(splitParseTermList, assemblyListIter,
 						newParseTermsIter, newFullParseTermsIter, paths,
@@ -571,10 +562,8 @@ public class Assembler {
 							+ "*";
 					oneOrMoreParseTerm.add(oneOrMore);
 
-					ArrayList<String> newParseTermsIter = updateTermsIter(
-							oneOrMoreParseTerm, parseTermsIter, parseTerm);
-					ArrayList<String> newFullParseTermsIter = updateTermsIter(
-							oneOrMoreParseTerm, fullParseTermsIter, parseTerm);
+					ArrayList<String> newParseTermsIter = updateTermsIter(oneOrMoreParseTerm, parseTermsIter, parseTerm);
+					ArrayList<String> newFullParseTermsIter = updateTermsIter(oneOrMoreParseTerm, fullParseTermsIter, parseTerm);
 
 					done = analyseOperands(oneOrMoreParseTerm,
 							assemblyListIter, newParseTermsIter,
@@ -584,8 +573,7 @@ public class Assembler {
 						return true;
 				}
 
-				ArrayList<String> adtTerms = data.getAdt().getAdtHash()
-						.get(tempParseTerm);
+				ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(tempParseTerm);
 
 				ArrayList<String> newCurrentPath = clone(currentPath);
 				newCurrentPath.add(parseTerm);
@@ -597,10 +585,8 @@ public class Assembler {
 						ArrayList<String> parseTerm1 = new ArrayList<String>();
 						parseTerm1.add(parseTerm);
 
-						ArrayList<String> newParseTermsIter = updateTermsIter(
-								parseTerm1, parseTermsIter, parent);
-						ArrayList<String> newFullParseTermsIter = updateTermsIter(
-								parseTerm1, fullParseTermsIter, parent);
+						ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
+						ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
 
 						done = analyseOperands(adtTerms, assemblyListIter,
 								newParseTermsIter, newFullParseTermsIter,
@@ -631,24 +617,19 @@ public class Assembler {
 						ArrayList<ArrayList<String>> newPaths = clone2(paths);
 						newPaths.add(newCurrentPath);
 
-						parseTermsIter = updateTermsIter(parseTermsIter,
-								newCurrentPath);
+						parseTermsIter = updateTermsIter(parseTermsIter,newCurrentPath);
 						assemblyListIter = removeFirstElement(assemblyListIter);
 
 						newCurrentPath = new ArrayList<String>();
 
-						if (parseTermsIter.isEmpty()
-								|| assemblyListIter.isEmpty()) {
+						if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
 
-							if (parseTermsIter.isEmpty()
-									&& !assemblyListIter.isEmpty())
+							if (parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
 								return false;
 
-							else if (!parseTermsIter.isEmpty()
-									&& assemblyListIter.isEmpty()) {
+							else if (!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()) {
 
-								if (!legitWithFullTermsIter(fullParseTermsIter,
-										newPaths))
+								if (!legitWithFullTermsIter(fullParseTermsIter,	newPaths))
 									return false;
 							}
 
@@ -676,8 +657,7 @@ public class Assembler {
 		return done;
 	}
 
-	private ArrayList<String> updateTermsIter(ArrayList<String> parseTermsIter,
-			ArrayList<String> currentPath) {
+	private ArrayList<String> updateTermsIter(ArrayList<String> parseTermsIter,	ArrayList<String> currentPath) {
 
 		ArrayList<String> newTermsIter = new ArrayList<String>();
 		String newIterStr = "";
@@ -726,9 +706,7 @@ public class Assembler {
 		return newTermsIter;
 	}
 
-	private ArrayList<String> updateTermsIter(
-			ArrayList<String> splitParseTermList,
-			ArrayList<String> parseTermsIter, String parent) {
+	private ArrayList<String> updateTermsIter(ArrayList<String> splitParseTermList,	ArrayList<String> parseTermsIter, String parent) {
 
 		ArrayList<String> newTermsIter = new ArrayList<String>();
 
@@ -759,8 +737,7 @@ public class Assembler {
 		return newTermsIter;
 	}
 
-	private boolean legitIter(ArrayList<String> parseTermsIter,
-			ArrayList<String> newCurrentPath) {
+	private boolean legitIter(ArrayList<String> parseTermsIter,	ArrayList<String> newCurrentPath) {
 
 		boolean legit = false;
 
@@ -780,8 +757,7 @@ public class Assembler {
 			if (legit)
 				return true;
 
-			else if (!(iterTerm.charAt(iterTerm.length() - 1) == '?')
-					&& !(iterTerm.charAt(iterTerm.length() - 1) == '*'))
+			else if (!(iterTerm.charAt(iterTerm.length() - 1) == '?') && !(iterTerm.charAt(iterTerm.length() - 1) == '*'))
 				return false;
 		}
 
@@ -805,9 +781,7 @@ public class Assembler {
 		return newList;
 	}
 
-	private boolean legitWithFullTermsIter(
-			ArrayList<String> fullParseTermsIter,
-			ArrayList<ArrayList<String>> newPaths) {
+	private boolean legitWithFullTermsIter(ArrayList<String> fullParseTermsIter, ArrayList<ArrayList<String>> newPaths) {
 
 		String str = fullParseTermsIter.get(0);
 		String[] splitFullTermsIter = str.split("\\s+");
@@ -847,8 +821,7 @@ public class Assembler {
 
 				else if (!legitPath(path, iterTerm)) {
 
-					if (!(iterTerm.charAt(iterTerm.length() - 1) == '?' || iterTerm
-							.charAt(iterTerm.length() - 1) == '*'))
+					if (!(iterTerm.charAt(iterTerm.length() - 1) == '?' || iterTerm.charAt(iterTerm.length() - 1) == '*'))
 						return false;
 				}
 
@@ -876,8 +849,7 @@ public class Assembler {
 		return false;
 	}
 
-	private boolean match(String adtTerm, String assemblyTerm,
-			ArrayList<String> currentPath) {
+	private boolean match(String adtTerm, String assemblyTerm, ArrayList<String> currentPath) {
 
 		if (adtTerm.startsWith("\"") && adtTerm.endsWith("\"")) {
 
@@ -890,11 +862,9 @@ public class Assembler {
 			return nestedMatch(adtTerm, assemblyTerm, currentPath);
 	}
 
-	private boolean nestedMatch(String adtTerm, String assemblyTerm,
-			ArrayList<String> currentPath) {
+	private boolean nestedMatch(String adtTerm, String assemblyTerm, ArrayList<String> currentPath) {
 
-		String[] splitAdtTerms = adtTerm
-				.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		String[] splitAdtTerms = adtTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 
 		String prefixes = "";
 
@@ -907,12 +877,10 @@ public class Assembler {
 		String[] splitAssemblyTerms;
 
 		if (prefixes.isEmpty())
-			splitAssemblyTerms = assemblyTerm
-					.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+			splitAssemblyTerms = assemblyTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 
 		else
-			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes
-					+ "])|(?<=[" + prefixes + "])");
+			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
 
 		if (splitAdtTerms.length != splitAssemblyTerms.length)
 			return false;
@@ -940,15 +908,13 @@ public class Assembler {
 			else {
 
 				boolean legit = false;
-				ArrayList<String> adtTerms = data.getAdt().getAdtHash()
-						.get(term);
+				ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(term);
 
 				if (adtTerms != null) {
 
 					for (String termFromHash : adtTerms) {
 
-						if (match(termFromHash, splitAssemblyTerms[i],
-								currentPath)) {
+						if (match(termFromHash, splitAssemblyTerms[i], currentPath)) {
 
 							legit = true;
 							break;
@@ -1000,8 +966,7 @@ public class Assembler {
 		return true;
 	}
 
-	private MnemonicData getMnemData(String assemblyLine)
-			throws AssemblerException {
+	private MnemonicData getMnemData(String assemblyLine) throws AssemblerException {
 
 		String[] assemblyLineSplit = assemblyLine.split("\\s+"); // space
 		ArrayList<String> assemblyTermList = new ArrayList<String>();
@@ -1039,8 +1004,6 @@ public class Assembler {
 		int i = 0;
 		boolean legit = false;
 
-		// TODO what if optional one in format defined?
-
 		for (ArrayList<String> path : legitAdtPaths) {
 
 			for (String pathTerm : path) {
@@ -1067,6 +1030,9 @@ public class Assembler {
 
 			legit = false;
 		}
+
+		if (i == splitFormat.length - 1)
+			return false;
 
 		return true;
 	}
@@ -1208,8 +1174,7 @@ public class Assembler {
 
 		while (index < binary.length()) {
 
-			binaryArray.add(binary.substring(index,
-					Math.min(index + minAdrUnit, binary.length())));
+			binaryArray.add(binary.substring(index,	Math.min(index + minAdrUnit, binary.length())));
 
 			index += minAdrUnit;
 		}
@@ -1256,8 +1221,7 @@ public class Assembler {
 		return hexObjCode;
 	}
 
-	private ArrayList<ArrayList<String>> clone2(
-			ArrayList<ArrayList<String>> sourceList) {
+	private ArrayList<ArrayList<String>> clone2( ArrayList<ArrayList<String>> sourceList) {
 
 		ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
 
@@ -1284,7 +1248,7 @@ public class Assembler {
 		return newList;
 	}
 
-	public static String binaryFromIntFormatted(String intStr, int bits) {
+	public static String binaryFromIntFormatted(String intStr, int bits) throws AssemblerException {
 
 		String binary = intToBinary(intStr);
 
@@ -1301,7 +1265,7 @@ public class Assembler {
 		return finalString;
 	}
 
-	public static String binaryFromHexFormatted(String hex, int bits) {
+	public static String binaryFromHexFormatted(String hex, int bits) throws AssemblerException {
 
 		String binary = hexToBinary(hex);
 
@@ -1318,10 +1282,13 @@ public class Assembler {
 		return finalString;
 	}
 
-	public static String binaryFromBinaryFormatted(String binary, int bits) {
+	public static String binaryFromBinaryFormatted(String binary, int bits)	throws AssemblerException {
 
 		int initialLength = binary.length();
-		
+
+		if (initialLength > bits)
+			throw new AssemblerException("Number of bits mismatch");
+
 		int zerosNeeded = bits - initialLength;
 
 		String zeros = "";
@@ -1334,17 +1301,17 @@ public class Assembler {
 		return finalString;
 	}
 
-	public static String hexToBinary(String hex) {
+	public static String hexToBinary(String hex) throws AssemblerException {
 
-		String binary = "";
+		int i = 0;
 
-		if (hex.contains("x"))
-			binary = Integer.toBinaryString(Integer.decode(hex));
-
-		else {
-			int i = Integer.parseInt(hex, 16);
-			binary = Integer.toBinaryString(i);
+		try {
+			i = Integer.parseInt(hex, 16);
+		} catch (NumberFormatException e) {
+			throw new AssemblerException("Number format exception");
 		}
+
+		String binary = Integer.toBinaryString(i);
 
 		return binary;
 	}
@@ -1357,10 +1324,17 @@ public class Assembler {
 		return hex;
 	}
 
-	public static String intToBinary(String intStr) {
+	public static String intToBinary(String intStr) throws AssemblerException {
 
-		int decimalInt = Integer.parseInt(intStr);
-		String binary = Integer.toBinaryString(decimalInt);
+		int i = 0;
+
+		try {
+			i = Integer.parseInt(intStr);
+		} catch (NumberFormatException e) {
+			throw new AssemblerException("Number format exception");
+		}
+
+		String binary = Integer.toBinaryString(i);
 
 		return binary;
 	}

@@ -115,6 +115,7 @@ public class FileParser {
 	/**
 	 * <pre>
 	 * Scans specification file (line by line) and stores parsed data in data source.
+	 * MnemonicData is last section scanned for error checking purposes.
 	 * </pre>
 	 * 
 	 * @param fileName - Specification file to be scanned
@@ -122,38 +123,69 @@ public class FileParser {
 	private void scanSpecFile(String fileName) {
 
 		Scanner inputFile = null;
+		Scanner inputFile2 = null;
 
 		try {
 			inputFile = new Scanner(new FileInputStream(fileName));
+			inputFile2 = new Scanner(new FileInputStream(fileName));
 		} catch (FileNotFoundException e) {
 			System.out.println("File " + fileName + " not found.");
 			System.exit(0);
 		}
 
 		int lineCounter = 0;
-
+		
 		while (inputFile.hasNextLine()) {
 
-			String assemblyLine = inputFile.nextLine();
+			String specLine = inputFile.nextLine();
 			lineCounter++;
 
 			// Comments (;...) omitted
-			String[] commentSplit = assemblyLine.split(";");
-			assemblyLine = commentSplit[0];
+			String[] commentSplit = specLine.split(";");
+			specLine = commentSplit[0];
 
 			// Remove end whitespace
-			assemblyLine = assemblyLine.replaceAll("\\s+$", "");
+			specLine = specLine.replaceAll("\\s+$", "");
 
 			try {
-				scanLine(assemblyLine);
+				scanLine(specLine);
 			} catch (AssemblerException e) {
-				System.out.println("Exception at line " + lineCounter + ": " + assemblyLine.trim());
+				System.out.println("Exception at line " + lineCounter + ": " + specLine.trim());
 				System.out.println();
 				System.out.println(e.getMessage());
 				System.out.println();
 				System.exit(0);
 			}
 		}
+		
+		inputFile.close();
+		
+		lineCounter = 0;
+		
+		while (inputFile2.hasNextLine()) {
+
+			String specLine = inputFile2.nextLine();
+			lineCounter++;
+
+			// Comments (;...) omitted
+			String[] commentSplit = specLine.split(";");
+			specLine = commentSplit[0];
+
+			// Remove end whitespace
+			specLine = specLine.replaceAll("\\s+$", "");
+
+			try {
+				scanLineForMnemonicData(specLine);
+			} catch (AssemblerException e) {
+				System.out.println("Exception at line " + lineCounter + ": " + specLine.trim());
+				System.out.println();
+				System.out.println(e.getMessage());
+				System.out.println();
+				System.exit(0);
+			}
+		}
+		
+		inputFile2.close();
 
 		// If missing sections in specification file
 		if (!(foundArchitecture && foundRegisters && foundMnemData
@@ -192,8 +224,51 @@ public class FileParser {
 				System.exit(0);
 			}
 		}
+	}
 
-		inputFile.close();
+	private void scanLineForMnemonicData(String specLine) throws AssemblerException {
+		
+		String lowerCaseLine = specLine.toLowerCase();
+
+		if (lowerCaseLine.startsWith("architecture:"))
+			setBooleanValues(true, false, false, false, false, false, false);
+
+		else if (lowerCaseLine.startsWith("registers:"))
+			setBooleanValues(false, true, false, false, false, false, false);
+
+		else if (lowerCaseLine.startsWith("mnemonicdata:"))
+			setBooleanValues(false, false, true, false, false, false, false);
+
+		else if (lowerCaseLine.startsWith("instructionformat:"))
+			setBooleanValues(false, false, false, true, false, false, false);
+
+		else if (lowerCaseLine.startsWith("adt:"))
+			setBooleanValues(false, false, false, false, true, false, false);
+
+		else if (lowerCaseLine.startsWith("endian:"))
+			setBooleanValues(false, false, false, false, false, true, false);
+
+		else if (lowerCaseLine.startsWith("minaddressableunit:"))
+			setBooleanValues(false, false, false, false, false, false, true);
+
+		else if (architecture);
+
+		else if (registers);			
+
+		else if (mnemonicData)
+			analyseMnemonicData(specLine);
+
+		else if (instructionFormat);
+
+		else if (adt);
+
+		else if (endian);
+
+		else if (minAddressableUnit);
+
+		else if (!(specLine.trim().length() == 0))
+			throw new AssemblerException("Missing section header.");
+		
 	}
 
 	/**
@@ -202,13 +277,13 @@ public class FileParser {
 	 * it belongs to and diverts it to relevant method for further analysis.
 	 * </pre>
 	 * 
-	 * @param line - Line from specification file to be scanned
+	 * @param specLine - Line from specification file to be scanned
 	 * @throws AssemblerException
 	 */
-	private void scanLine(String line) throws AssemblerException {
+	private void scanLine(String specLine) throws AssemblerException {
 
 		// Section labels in specification file not case sensitive
-		String lowerCaseLine = line.toLowerCase();
+		String lowerCaseLine = specLine.toLowerCase();
 
 		if (lowerCaseLine.startsWith("architecture:"))
 			setBooleanValues(true, false, false, false, false, false, false);
@@ -232,27 +307,26 @@ public class FileParser {
 			setBooleanValues(false, false, false, false, false, false, true);
 
 		else if (architecture)
-			analyseArchitecture(line);
+			analyseArchitecture(specLine);
 
 		else if (registers)
-			analyseRegisters(line);
+			analyseRegisters(specLine);
 
-		else if (mnemonicData)
-			analyseMnemonicData(line);
+		else if (mnemonicData);
 
 		else if (instructionFormat)
-			analyseInstructionFormat(line);
+			analyseInstructionFormat(specLine);
 
 		else if (adt)
-			analyseADT(line);
+			analyseADT(specLine);
 
 		else if (endian)
-			analyseEndian(line);
+			analyseEndian(specLine);
 
 		else if (minAddressableUnit)
-			analyseMinAdrUnit(line);
+			analyseMinAdrUnit(specLine);
 
-		else if (!(line.trim().length() == 0))
+		else if (!(specLine.trim().length() == 0))
 			throw new AssemblerException("Missing section header.");
 	}
 
