@@ -33,8 +33,7 @@ public class FileParser {
 			adt, endian, minAddressableUnit;
 	private boolean foundArchitecture, foundRegisters, foundMnemData,
 			foundInsFormat, foundAdt, foundEndian, foundMinAdrUnit;
-	private boolean atMnemName, working, atGlobalOpcodes, first, emptyLine,
-			atMnemFormatHeader, atMnemFormat, abort;
+	private boolean working, doneGlobalOpcodes, emptyLine, abort;
 	private boolean atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
 	private boolean firstAdtEntry;
 	private MnemonicData currentMnemonicData;
@@ -71,13 +70,9 @@ public class FileParser {
 		foundEndian = false;
 		foundMinAdrUnit = false;
 
-		atMnemName = false;
 		working = false;
-		atGlobalOpcodes = false;
-		first = false;
+		doneGlobalOpcodes = false;
 		emptyLine = false;
-		atMnemFormatHeader = false;
-		atMnemFormat = false;
 		abort = false;
 		atLocalInsLabels = false;
 		atLocalOpcodes = false;
@@ -659,7 +654,7 @@ public class FileParser {
 	 * 
 	 * @param line - Mnemonic data line
 	 * @throws AssemblerException if line format/syntax error
-	 */
+	 */	
 	private void analyseMnemonicData(String line) throws AssemblerException {
 		
 		try{
@@ -674,12 +669,12 @@ public class FileParser {
 			if (working)
 				emptyLine = true;
 
-			if (atMnemFormatHeader || atLocalInsLabels || atLocalOpcodes
-					|| atLocalInsFormat) {
+			if (atLocalInsLabels || atLocalOpcodes || atLocalInsFormat) {
 
 				abort = true;
+				
 				throw new AssemblerException(
-						"Mnemonic data line format error.\n" +
+						"MnemonicData error: Unexpected empty line.\n" +
 						getMnemDataErrorMessage(currentMnemonicData));
 			}
 
@@ -689,80 +684,44 @@ public class FileParser {
 		foundMnemData = true;
 
 		// New mnemonic (no whitespace at beginning)
-		if (!line.startsWith(" ") && !line.startsWith("\t"))
-			atMnemName = true;
+		if (Pattern.matches("[^\t\\s].*", line)){
+			
+			analyseMnemName(line);
+			
+			currentMnemonicData.getRawLines().add(line);			
+		}			
 
 		else if (abort)
 			return;
+		
+		else if(currentMnemonicData == null){
+			
+			abort = true;
+			
+			throw new AssemblerException("MnemonicData error: Mnemonic name not declared.");
+		}
 
 		// Global opcodes (starts with tab and not passed an empty line)
-		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine) {
+		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine && !doneGlobalOpcodes) {
 
-			if (first) {
-
-				atGlobalOpcodes = true;
-				first = false;
-			}
+			analyseGlobalOpcodes(line);
+			
+			doneGlobalOpcodes = true;
 		}
 
 		// Mnemonic format header (starts with tab and empty line passed)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && emptyLine) {
 
-			if (!(atLocalInsLabels || atLocalOpcodes || atLocalInsFormat))
-				atMnemFormatHeader = true;
-		}
-
-		// Mnemonic format data (starts with double tab and empty line passed)
-		else if (Pattern.matches("\t\t[^\t\\s].*", line) && emptyLine)
-			atMnemFormat = true;
-
-		// Exception (indentation not recognised)
-		else {
-
-			abort = true;
-			throw new AssemblerException(
-					"Mnemonic data line format error.\n" +
-					getMnemDataErrorMessage(currentMnemonicData));
-		}
-
-		if (atMnemName) {
-
-			analyseMnemName(line);
-			
-			currentMnemonicData.getRawLines().add(line);
-			
-			atMnemName = false;
-		}
-
-		// Exception (passed atMnemName but working flag not true)
-		else if (!working) {
-
-			abort = true;
-			throw new AssemblerException(
-					"Mnemonic data line format error.\n" +
-					getMnemDataErrorMessage(currentMnemonicData));
-		}
-
-		else if (atGlobalOpcodes) {
-
-			analyseGlobalOpcodes(line);
-			
-			atGlobalOpcodes = false;
-		}
-
-		else if (atMnemFormatHeader) {
-
 			analyseMnemFormatHeader(line);
+			atLocalInsLabels = true;
 			
 			try{
 				currentMnemFormat.addToRawLineString(line);
 			} catch(NullPointerException e){}
-			
-			atMnemFormatHeader = false;
-			atLocalInsLabels = true;
 		}
 
-		else if (atMnemFormat) {
+		// Mnemonic format data (starts with double tab and empty line passed)
+		else if (Pattern.matches("\t\t[^\t\\s].*", line) && emptyLine){
 			
 			try{
 				currentMnemFormat.addToRawLineString(line);
@@ -771,12 +730,12 @@ public class FileParser {
 			analyseMnemFormat(line);
 		}
 
-		// Exception
+		// Exception (indentation not recognised)
 		else {
 
 			abort = true;
 			throw new AssemblerException(
-					"Mnemonic data line format error.\n" +
+					"MnemonicData error: Line indentation error.\n" +
 					getMnemDataErrorMessage(currentMnemonicData));
 		}
 	}
@@ -805,7 +764,7 @@ public class FileParser {
 
 			abort = true;
 			throw new AssemblerException(
-					"Mnemonic data syntax error, mnemonic name should only be single string (no spaces).");
+					"MnemonicData error: Mnemonic name should only be single token (no spaces).");
 		}
 
 		currentMnemonicData = new MnemonicData();
@@ -837,7 +796,7 @@ public class FileParser {
 
 			if (!adtTokens.contains(formatToken)){
 				abort = true;
-				throw new AssemblerException(formatToken + " not found in ADT");
+				throw new AssemblerException("MnemonicData error: \"" + formatToken + "\" not found in ADT.");
 			}
 		}
 
@@ -858,8 +817,6 @@ public class FileParser {
 	 * @throws AssemblerException if syntax or indentation error
 	 */
 	private void analyseMnemFormat(String line) throws AssemblerException {
-
-		atMnemFormat = false;
 
 		if (atLocalInsLabels) {
 
@@ -884,14 +841,14 @@ public class FileParser {
 				// (space* comma space* (!(space|equals|comma))+ space* equals
 				// space* (!(space|equals|comma))+)*
 				boolean legitLocalOpcodes = Pattern.matches(
-								"[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
+								"[A-Za-z0-9]+\\s*=\\s*[A-Za-z0-9]+(\\s*,\\s*[A-Za-z0-9]+\\s*=\\s*[A-Za-z0-9]+)*",
 								line);
 
 				if (!legitLocalOpcodes) {
 
 					abort = true;
 					throw new AssemblerException(
-							"Mnemonic data syntax error, codeLabel=codeValue(,codeLabel=codeValue)* expected.");
+							"MnemonicData error: Local opcodes syntax error, <fieldName>=<value> expected.");
 				}
 
 				// Legit local opcodes so omit unnecessary spaces
@@ -930,7 +887,8 @@ public class FileParser {
 
 			abort = true;
 			throw new AssemblerException(
-					"Mnemonic data line format error, indentation error:\n" + getMnemDataErrorMessage(currentMnemonicData));
+					"MnemonicData error: Line format error:\n" 
+					+ getMnemDataErrorMessage(currentMnemonicData));
 		}
 	}
 	
@@ -1100,14 +1058,10 @@ public class FileParser {
 
 		abort = false;
 
-		atMnemName = false;
-		atGlobalOpcodes = false;
-		first = true;
+		doneGlobalOpcodes = false;
 		working = false;
 		emptyLine = false;
 		
-		atMnemFormatHeader = false;
-		atMnemFormat = false;
 		atLocalInsLabels = false;
 		atLocalOpcodes = false;
 		atLocalInsFormat = false;
