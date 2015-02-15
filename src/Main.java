@@ -15,14 +15,14 @@ public class Main {
 	
 		if(args.length == 0){
 			
-			System.out.println("Assembly file and specification file not given.");
+			System.out.println("Specification and assembly filenames not given.");
 			System.exit(0);
 		}
 		
 		else if(args.length == 1){
 			
-			System.out.println("Specification file not given.");
-			System.out.println("Assembly file: " + args[0]);
+			System.out.println("Assembly file not given.");
+			System.out.println("Specification file: " + args[0]);
 			System.exit(0);
 		}
 				
@@ -66,7 +66,8 @@ public class Main {
 		
 //		System.out.println("minAdrUnit " + data.getMinAdrUnit());
 		
-		Assembler assembler = new Assembler(data);
+		
+		Assembler assembler	 = new Assembler(data);
 		
 	}
 }

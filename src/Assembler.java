@@ -5,6 +5,10 @@
  * Supervisor: John T O'Donnell
  */
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,6 +39,8 @@ public class Assembler {
 	private boolean first, second;
 
 	private boolean debug = false;
+	
+	private ArrayList<String> objectCode;
 
 	/**
 	 * <pre>
@@ -61,6 +67,8 @@ public class Assembler {
 
 		first = false;
 		second = false;
+		
+		objectCode = new ArrayList<String>();
 
 		assemble();
 	}
@@ -71,15 +79,48 @@ public class Assembler {
 	 * </pre>
 	 */
 	private void assemble() {
+		
+		if(!data.isErrorInSpecFile()){
 
-		firstPass();
+			firstPass();
 
-		insNumber++;
-		insAdrTable.put(insNumber, locationCounter); // to account for last line
+			insNumber++;
+			insAdrTable.put(insNumber, locationCounter); // to account for last line
 
-		insNumber = 0;
+			insNumber = 0;
 
-		secondPass();
+			secondPass();
+		}
+		
+		else
+			objectCode.add("Error in specification file.");
+	
+		
+		writeObjectCodeToFile();
+	}
+
+	private void writeObjectCodeToFile() {
+		
+		File file = null;
+
+		try {			
+			file = new File("object.txt");
+			file.createNewFile();			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			FileWriter writer = new FileWriter(file);
+			
+			for(String line: objectCode)
+				writer.write(line + "\n");		
+			
+			writer.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 	
 	}
 
 	/**
@@ -309,7 +350,6 @@ public class Assembler {
 		}
 	}
 
-	// TODO
 	private void populateDataSecondPass(String assemblyLine) {
 
 		assemblyLine = assemblyLine.trim();
@@ -328,7 +368,6 @@ public class Assembler {
 
 	}
 
-	// TODO
 	private void analyseDataFirstPass(String assemblyLine) throws AssemblerException {
 
 		assemblyLine = assemblyLine.trim();
@@ -354,7 +393,6 @@ public class Assembler {
 		insAdrTable.put(insNumber, locationCounter);
 
 		locationCounter += noOfMinAdrUnits;
-
 	}
 
 	private void setBooleanValues(boolean atData, boolean atText) {
@@ -466,6 +504,9 @@ public class Assembler {
 
 		String hexObjCode = getHexObjCode(binaryArray);
 		int adr = insAdrTable.get(insNumber);
+		
+		String objectCodeLine = Integer.toHexString(adr) + ":		" + hexObjCode;
+		objectCode.add(objectCodeLine);
 
 		System.out.println(Integer.toHexString(adr) + ":	" + hexObjCode);
 	}
@@ -1338,15 +1379,11 @@ public class Assembler {
 		return finalString;
 	}
 
-	public static String hexToBinary(String hex) throws AssemblerException {
+	public static String hexToBinary(String hex) {
 
 		int i = 0;
 
-		try {
-			i = Integer.parseInt(hex, 16);
-		} catch (NumberFormatException e) {
-			throw new AssemblerException("Number format exception");
-		}
+		i = Integer.parseInt(hex, 16);
 
 		String binary = Integer.toBinaryString(i);
 
@@ -1361,15 +1398,11 @@ public class Assembler {
 		return hex;
 	}
 
-	public static String intToBinary(String intStr) throws AssemblerException {
+	public static String intToBinary(String intStr) {
 
 		int i = 0;
 
-		try {
-			i = Integer.parseInt(intStr);
-		} catch (NumberFormatException e) {
-			throw new AssemblerException("Number format exception");
-		}
+		i = Integer.parseInt(intStr);		
 
 		String binary = Integer.toBinaryString(i);
 
