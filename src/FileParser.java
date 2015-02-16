@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.RestoreAction;
-
 /**
  * <pre>
  * This class parses both the specification and assembly files and stores the information
@@ -32,12 +30,12 @@ public class FileParser {
 	private ArrayList<String> errorReport;
 
 	private boolean architecture, registers, mnemonicData, instructionFormat,
-			adt, endian, minAddressableUnit;
+			assemblyOpTree, endian, minAddressableUnit;
 	private boolean foundArchitecture, foundRegisters, foundMnemData,
-			foundInsFormat, foundAdt, foundEndian, foundMinAdrUnit;
+			foundInsFormat, foundAssemblyOpTree, foundEndian, foundMinAdrUnit;
 	private boolean doneGlobalOpcodes, emptyLine, abort;
 	private boolean foundFormatHeader, atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
-	private boolean firstAdtEntry;
+	private boolean firstAssemblyOpTreeEntry;
 	private MnemonicData currentMnemonicData;
 	private MnemFormat currentMnemFormat;
 
@@ -60,7 +58,7 @@ public class FileParser {
 		registers = false;
 		mnemonicData = false;
 		instructionFormat = false;
-		adt = false;
+		assemblyOpTree = false;
 		endian = false;
 		minAddressableUnit = false;
 
@@ -68,7 +66,7 @@ public class FileParser {
 		foundRegisters = false;
 		foundMnemData = false;
 		foundInsFormat = false;
-		foundAdt = false;
+		foundAssemblyOpTree = false;
 		foundEndian = false;
 		foundMinAdrUnit = false;
 
@@ -81,7 +79,7 @@ public class FileParser {
 		atLocalOpcodes = false;
 		atLocalInsFormat = false;
 
-		firstAdtEntry = true;
+		firstAssemblyOpTreeEntry = true;
 
 		currentMnemonicData = null;
 		currentMnemFormat = null;
@@ -235,7 +233,7 @@ public class FileParser {
 
 		// If missing sections in specification file
 		if (!(foundArchitecture && foundRegisters && foundMnemData
-				&& foundInsFormat && foundAdt && foundEndian && foundMinAdrUnit)) {
+				&& foundInsFormat && foundAssemblyOpTree && foundEndian && foundMinAdrUnit)) {
 
 			String missingSections = "";
 
@@ -251,8 +249,8 @@ public class FileParser {
 			if (!foundInsFormat)
 				missingSections += "\"instructionFormat\" ";
 
-			if (!foundAdt)
-				missingSections += "\"adt\" ";
+			if (!foundAssemblyOpTree)
+				missingSections += "\"assemblyOpTree\" ";
 
 			if (!foundEndian)
 				missingSections += "\"endian\" ";
@@ -301,7 +299,7 @@ public class FileParser {
 		else if (lowerCaseLine.startsWith("instructionformat:"))
 			setBooleanValues(false, false, false, true, false, false, false);
 
-		else if (lowerCaseLine.startsWith("adt:"))
+		else if (lowerCaseLine.startsWith("assemblyoptree:"))
 			setBooleanValues(false, false, false, false, true, false, false);
 
 		else if (lowerCaseLine.startsWith("endian:"))
@@ -319,7 +317,7 @@ public class FileParser {
 
 		else if (instructionFormat);
 
-		else if (adt);
+		else if (assemblyOpTree);
 
 		else if (endian);
 
@@ -356,7 +354,7 @@ public class FileParser {
 		else if (lowerCaseLine.startsWith("instructionformat:"))
 			setBooleanValues(false, false, false, true, false, false, false);
 
-		else if (lowerCaseLine.startsWith("adt:"))
+		else if (lowerCaseLine.startsWith("assemblyoptree:"))
 			setBooleanValues(false, false, false, false, true, false, false);
 
 		else if (lowerCaseLine.startsWith("endian:"))
@@ -376,8 +374,8 @@ public class FileParser {
 		else if (instructionFormat)
 			analyseInstructionFormat(specLine);
 
-		else if (adt)
-			analyseADT(specLine);
+		else if (assemblyOpTree)
+			analyseAssemblyOpTree(specLine);
 
 		else if (endian)
 			analyseEndian(specLine);
@@ -444,38 +442,38 @@ public class FileParser {
 
 	/**
 	 * <pre>
-	 * Analyses ADT line, expected format: 
+	 * Analyses AssemblyOpTree line, expected format: 
 	 * label : label label*
 	 * </pre>
 	 * 
-	 * @param line - Adt line
+	 * @param line - assemblyOpTree line
 	 * @throws AssemblerException if line syntax error
 	 */
-	private void analyseADT(String line) throws AssemblerException {
+	private void analyseAssemblyOpTree(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
 
-		foundAdt = true;
+		foundAssemblyOpTree = true;
 
 		line = line.trim();
 
-		// Legit adt expression:
+		// Legit assemblyOpTree expression:
 		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
 		// (!(space|colon))+)*
-		boolean legitAdtExp = Pattern.matches(
+		boolean legitAssemblyOpTreeExp = Pattern.matches(
 				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
 
-		if (!legitAdtExp)
+		if (!legitAssemblyOpTreeExp)
 			throw new AssemblerException(
-					"ADT syntax error.");	//TODO
+					"AssemblyOpTree syntax error.");	//TODO
 
-		ADT adt = data.getAdt();
+		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
 
-		String[] adtTokens = line.split("[^A-Za-z0-9]+");
+		String[] assemblyOpTreeTokens = line.split("[^A-Za-z0-9]+");
 
-		for (String adtToken : adtTokens)
-			adt.getAdtTokens().add(adtToken);
+		for (String assemblyOpTreeToken : assemblyOpTreeTokens)
+			assemblyOpTree.getAssemblyOpTreeTokens().add(assemblyOpTreeToken);
 
 		String[] colonSplit = line.split("(?=[:])|(?<=[:])");
 
@@ -483,11 +481,11 @@ public class FileParser {
 		String terms = colonSplit[2].trim();
 
 		// First entry must be root term
-		if (firstAdtEntry) {
+		if (firstAssemblyOpTreeEntry) {
 
-			String rootTerm = label;
-			adt.setRootTerm(rootTerm);
-			firstAdtEntry = false;
+			String rootToken = label;
+			assemblyOpTree.setRootToken(rootToken);
+			firstAssemblyOpTreeEntry = false;
 		}
 
 		ArrayList<String> termsList = new ArrayList<String>();
@@ -495,13 +493,13 @@ public class FileParser {
 
 		// If label already exists in hash, then add to existing list, else put
 		// label in hash
-		ArrayList<String> list = adt.getAdtHash().get(label);
+		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(label);
 
 		if (list != null)
 			list.add(terms);
 
 		else
-			adt.getAdtHash().put(label, termsList);
+			assemblyOpTree.getAssemblyOpTreeHash().put(label, termsList);
 	}
 
 	/**
@@ -513,18 +511,18 @@ public class FileParser {
 	 * @param registers
 	 * @param mnemonicData
 	 * @param instructionFormat
-	 * @param adt
+	 * @param assemblyOpTree
 	 * @param endian
 	 */
 	private void setBooleanValues(boolean architecture, boolean registers,
-			boolean mnemonicData, boolean instructionFormat, boolean adt,
+			boolean mnemonicData, boolean instructionFormat, boolean assemblyOpTree,
 			boolean endian, boolean minAddressableUnit) {
 
 		this.architecture = architecture;
 		this.registers = registers;
 		this.mnemonicData = mnemonicData;
 		this.instructionFormat = instructionFormat;
-		this.adt = adt;
+		this.assemblyOpTree = assemblyOpTree;
 		this.endian = endian;
 		this.minAddressableUnit = minAddressableUnit;
 	}
@@ -836,7 +834,7 @@ public class FileParser {
 	 * </pre>
 	 * 
 	 * @param line - Mnemonic header line
-	 * @throws AssemblerException if format token does not exist in ADT
+	 * @throws AssemblerException if format token does not exist in AssemblyOpTree
 	 */
 	private void analyseMnemFormatHeader(String line) throws AssemblerException {
 
@@ -844,13 +842,13 @@ public class FileParser {
 
 		String[] formatTokens = line.split("[^A-Za-z0-9]+");
 
-		ArrayList<String> adtTokens = data.getAdt().getAdtTokens();
+		ArrayList<String> assemblyOpTreeTokens = data.getAssemblyOpTree().getAssemblyOpTreeTokens();
 
 		for (String formatToken : formatTokens) {
 
-			if (!adtTokens.contains(formatToken)){
+			if (!assemblyOpTreeTokens.contains(formatToken)){
 				abort = true;
-				throw new AssemblerException("MnemonicData error: Mnemonic format token \"" + formatToken + "\" not found in ADT.");
+				throw new AssemblerException("MnemonicData error: Mnemonic format token \"" + formatToken + "\" not found in AssemblyOpTree.");
 			}
 		}
 
@@ -914,7 +912,7 @@ public class FileParser {
 				for (String token : tokens) {
 
 					String[] elements = token.split("=");
-					currentMnemFormat.getOpCodes().put(elements[0], elements[1]);
+					currentMnemFormat.getOpcodes().put(elements[0], elements[1]);
 				}
 			}
 
@@ -1030,9 +1028,9 @@ public class FileParser {
 					}
 				}
 
-				else if (currentMnemFormat.getOpCodes().get(field) != null) {
+				else if (currentMnemFormat.getOpcodes().get(field) != null) {
 
-					String opcode = currentMnemFormat.getOpCodes().get(field);
+					String opcode = currentMnemFormat.getOpcodes().get(field);
 					int noOfBits = opcode.length();
 
 					if (noOfBits > bits){

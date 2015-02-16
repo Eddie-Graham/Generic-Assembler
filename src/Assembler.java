@@ -32,7 +32,7 @@ public class Assembler {
 	private HashMap<String, Integer> symbolTable;
 	private HashMap<String, Integer> dataTable;
 
-	private ArrayList<ArrayList<String>> legitAdtPaths;
+	private ArrayList<ArrayList<String>> legitAssemblyOpTreePaths;
 	private HashMap<String, String> assemblyTermTypeHash;
 
 	private boolean atData, atText;
@@ -59,7 +59,7 @@ public class Assembler {
 		symbolTable = new HashMap<String, Integer>();
 		dataTable = new HashMap<String, Integer>();
 
-		legitAdtPaths = new ArrayList<ArrayList<String>>();
+		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
 		assemblyTermTypeHash = new HashMap<String, String>();
 
 		atData = false;
@@ -211,11 +211,11 @@ public class Assembler {
 	 */
 	private void analyseInstructionsFirstPass(String assemblyLine) throws AssemblerException {
 
-		legitAdtPaths = new ArrayList<ArrayList<String>>();
+		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
 
 		assemblyLine = assemblyLine.trim();
 
-		analyseWithADT(assemblyLine);
+		analyseWithAssemblyOpTree(assemblyLine);
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
@@ -416,12 +416,12 @@ public class Assembler {
 		System.out.println("*****************************");
 		System.out.println(assemblyLine);
 
-		legitAdtPaths = new ArrayList<ArrayList<String>>();
+		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
 		assemblyTermTypeHash = new HashMap<String, String>();
 
-		analyseWithADT(assemblyLine);
+		analyseWithAssemblyOpTree(assemblyLine);
 
-		System.out.println(legitAdtPaths);
+		System.out.println(legitAssemblyOpTreePaths);
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
@@ -470,8 +470,8 @@ public class Assembler {
 				if (mnemData.getGlobalOpCodes().get(field) != null) // global
 					binaryTemp = mnemData.getGlobalOpCodes().get(field);
 
-				else if (format.getOpCodes().get(field) != null) // local
-					binaryTemp = format.getOpCodes().get(field);
+				else if (format.getOpcodes().get(field) != null) // local
+					binaryTemp = format.getOpcodes().get(field);
 
 				else {
 
@@ -511,19 +511,19 @@ public class Assembler {
 		System.out.println(Integer.toHexString(adr) + ":	" + hexObjCode);
 	}
 
-	private void analyseWithADT(String assemblyLine) throws AssemblerException {
+	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
 
-		ADT adt = data.getAdt();
-		String adtRoot = adt.getRootTerm();
+		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
+		String assemblyOpTreeRoot = assemblyOpTree.getRootToken();
 
 		ArrayList<String> rootTerm = new ArrayList<String>();
-		rootTerm.add(adtRoot);
+		rootTerm.add(assemblyOpTreeRoot);
 
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
 
 		ArrayList<String> fullTermsIter = new ArrayList<String>();
-		fullTermsIter.add(adtRoot);
+		fullTermsIter.add(assemblyOpTreeRoot);
 
 		ArrayList<String> assemblyList = new ArrayList<String>();
 
@@ -541,10 +541,10 @@ public class Assembler {
 		}
 
 		analyseOperands(rootTerm, assemblyList, rootTerm, fullTermsIter, paths,
-				currentPath, adtRoot);
+				currentPath, assemblyOpTreeRoot);
 
-		if (legitAdtPaths.isEmpty())
-			throw new AssemblerException("Line not consistent with ADT");
+		if (legitAssemblyOpTreePaths.isEmpty())
+			throw new AssemblerException("Line not consistent with AssemblyOpTree");
 	}
 
 	private boolean analyseOperands(ArrayList<String> parseTerms,
@@ -614,7 +614,7 @@ public class Assembler {
 				
 				else{
 
-					ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(tempParseTerm);
+					ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(tempParseTerm);
 
 					ArrayList<String> newCurrentPath = clone(currentPath);
 //					newCurrentPath.add(parseTerm);
@@ -624,7 +624,7 @@ public class Assembler {
 				
 					newCurrentPath.add(tempParseTerm);
 
-					if (adtTerms != null) { // not leaf
+					if (assemblyOpTreeTerms != null) { // not leaf
 
 						if (!(parent.charAt(parent.length() - 1) == '*')) {
 
@@ -634,13 +634,13 @@ public class Assembler {
 							ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
 							ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
 
-							done = analyseOperands(adtTerms, assemblyListIter,
+							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
 									newParseTermsIter, newFullParseTermsIter,
 									paths, newCurrentPath, parseTerm);
 						}
 
 						else
-							done = analyseOperands(adtTerms, assemblyListIter,
+							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
 									parseTermsIter, fullParseTermsIter, paths,
 									newCurrentPath, parent);
 
@@ -679,7 +679,7 @@ public class Assembler {
 										return false;
 								}
 
-								legitAdtPaths = newPaths; // legit
+								legitAssemblyOpTreePaths = newPaths; // legit
 
 								return true;
 							}
@@ -687,7 +687,7 @@ public class Assembler {
 							done = analyseOperands(parseTermsIter,
 									assemblyListIter, parseTermsIter,
 									fullParseTermsIter, newPaths, newCurrentPath,
-									data.getAdt().getRootTerm());
+									data.getAssemblyOpTree().getRootToken());
 
 							if (done)
 								return true;
@@ -901,26 +901,26 @@ public class Assembler {
 		return false;
 	}
 
-	private boolean match(String adtTerm, String assemblyTerm, ArrayList<String> currentPath) {
+	private boolean match(String assemblyOpTreeTerm, String assemblyTerm, ArrayList<String> currentPath) {
 
-		if (adtTerm.startsWith("\"") && adtTerm.endsWith("\"")) {
+		if (assemblyOpTreeTerm.startsWith("\"") && assemblyOpTreeTerm.endsWith("\"")) {
 
-			adtTerm = adtTerm.replaceAll("\"", "");
+			assemblyOpTreeTerm = assemblyOpTreeTerm.replaceAll("\"", "");
 
-			return adtTerm.equals(assemblyTerm);
+			return assemblyOpTreeTerm.equals(assemblyTerm);
 		}
 
 		else
-			return nestedMatch(adtTerm, assemblyTerm, currentPath);
+			return nestedMatch(assemblyOpTreeTerm, assemblyTerm, currentPath);
 	}
 
-	private boolean nestedMatch(String adtTerm, String assemblyTerm, ArrayList<String> currentPath) {
+	private boolean nestedMatch(String assemblyOpTreeTerm, String assemblyTerm, ArrayList<String> currentPath) {
 
-		String[] splitAdtTerms = adtTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		String[] splitAssemblyOpTreeTerms = assemblyOpTreeTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 
 		String prefixes = "";
 
-		for (String str : splitAdtTerms) {
+		for (String str : splitAssemblyOpTreeTerms) {
 
 			if (!isAlphaNumeric(str))
 				prefixes += "\\" + str;
@@ -937,12 +937,12 @@ public class Assembler {
 		else
 			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
 
-		if (splitAdtTerms.length != splitAssemblyTerms.length)
+		if (splitAssemblyOpTreeTerms.length != splitAssemblyTerms.length)
 			return false;
 
 		int i = 0;
 
-		for (String term : splitAdtTerms) {
+		for (String term : splitAssemblyOpTreeTerms) {
 
 			if (term.isEmpty() || splitAssemblyTerms[i].isEmpty()) {
 
@@ -963,11 +963,11 @@ public class Assembler {
 			else {
 
 				boolean legit = false;
-				ArrayList<String> adtTerms = data.getAdt().getAdtHash().get(term);
+				ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(term);
 
-				if (adtTerms != null) {
+				if (assemblyOpTreeTerms != null) {
 
-					for (String termFromHash : adtTerms) {
+					for (String termFromHash : assemblyOpTreeTerms) {
 
 						if (match(termFromHash, splitAssemblyTerms[i], currentPath)) {
 
@@ -1059,7 +1059,7 @@ public class Assembler {
 		int i = 0;
 		boolean legit = false;
 
-		for (ArrayList<String> path : legitAdtPaths) {
+		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
 
 			for (String pathTerm : path) {
 
@@ -1134,7 +1134,7 @@ public class Assembler {
 		String label = "";
 		boolean foundLabel = false;
 
-		for (ArrayList<String> path : legitAdtPaths) {
+		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
 
 			for (String term : path) {
 
@@ -1173,7 +1173,7 @@ public class Assembler {
 
 		int i = 0;
 
-		for (ArrayList<String> path : legitAdtPaths) {
+		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
 
 			for (String pathTerm : path) {
 

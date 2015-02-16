@@ -12,7 +12,7 @@ public class MnemFormat {
 	
 	private String mnemFormat;
 	private String insFieldLabels;
-	private HashMap<String,String> opCodes;
+	private HashMap<String,String> opcodes;
 	private ArrayList<String> instructionFormat;
 	private String rawLinesString;
 	
@@ -20,7 +20,7 @@ public class MnemFormat {
 		
 		mnemFormat = "";
 		insFieldLabels = "";
-		opCodes = new HashMap<String, String>();
+		opcodes = new HashMap<String, String>();
 		instructionFormat = new ArrayList<String>();	
 		rawLinesString = "";
 	}
@@ -41,12 +41,12 @@ public class MnemFormat {
 		this.insFieldLabels = insFieldLabels;
 	}
 
-	public HashMap<String, String> getOpCodes() {
-		return opCodes;
+	public HashMap<String, String> getOpcodes() {
+		return opcodes;
 	}
 
-	public void setOpCodes(HashMap<String, String> opCodes) {
-		this.opCodes = opCodes;
+	public void setOpcodes(HashMap<String, String> opCodes) {
+		this.opcodes = opCodes;
 	}
 
 	public ArrayList<String> getInstructionFormat() {

@@ -62,7 +62,7 @@ public class Main {
 //		System.out.println("mnemTypes " + data.getMnemonicTable().get(s).getMnemTypes());
 		
 		
-//		System.out.println("ADT " + data.getAdt().getAdtHash());
+//		System.out.println("AssemblyOpTree " + data.getAdt().getAdtHash());
 		
 //		System.out.println("minAdrUnit " + data.getMinAdrUnit());
 		

@@ -18,7 +18,7 @@ public class DataSource {
 	private HashMap<String, MnemonicData> mnemonicTable;
 	private HashMap<String, InstructionFormatData> instructionFormat;	
 	private HashMap<String, String> registerHash;
-	private ADT adt;
+	private AssemblyOpTree assemblyOpTree;
 	private String endian;
 	private int minAdrUnit;
 	
@@ -33,7 +33,7 @@ public class DataSource {
 		mnemonicTable = new HashMap<String, MnemonicData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
-		adt = new ADT();
+		assemblyOpTree = new AssemblyOpTree();
 		endian = "";
 	}
 
@@ -43,6 +43,14 @@ public class DataSource {
 
 	public void setAssemblyCode(ArrayList<String> assemblyCode) {
 		this.assemblyCode = assemblyCode;
+	}
+
+	public boolean isErrorInSpecFile() {
+		return errorInSpecFile;
+	}
+
+	public void setErrorInSpecFile(boolean errorInSpecFile) {
+		this.errorInSpecFile = errorInSpecFile;
 	}
 
 	public String getArchitecture() {
@@ -65,8 +73,7 @@ public class DataSource {
 		return instructionFormat;
 	}
 
-	public void setInstructionFormat(
-			HashMap<String, InstructionFormatData> instructionFormat) {
+	public void setInstructionFormat(HashMap<String, InstructionFormatData> instructionFormat) {
 		this.instructionFormat = instructionFormat;
 	}
 
@@ -78,12 +85,12 @@ public class DataSource {
 		this.registerHash = registerHash;
 	}
 
-	public ADT getAdt() {
-		return adt;
+	public AssemblyOpTree getAssemblyOpTree() {
+		return assemblyOpTree;
 	}
 
-	public void setAdt(ADT adt) {
-		this.adt = adt;
+	public void setAssemblyOpTree(AssemblyOpTree assemblyOpTree) {
+		this.assemblyOpTree = assemblyOpTree;
 	}
 
 	public String getEndian() {
@@ -100,13 +107,5 @@ public class DataSource {
 
 	public void setMinAdrUnit(int minAdrUnit) {
 		this.minAdrUnit = minAdrUnit;
-	}
-
-	public boolean isErrorInSpecFile() {
-		return errorInSpecFile;
-	}
-
-	public void setErrorInSpecFile(boolean errorInSpecFile) {
-		this.errorInSpecFile = errorInSpecFile;
 	}		
 }
