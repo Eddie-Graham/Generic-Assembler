@@ -1,19 +1,20 @@
 section .data
 
 
-
 section .text
 	global main
 main:
 
-	loop	 ADD cl, al
-		 ADD ecx, eax
-		 ADD edi, [ebx]
-		 ADD ebx, [ebp+1]
-	 ADD ebp, [5+eax*1]
-		 ADD edx, 5
-		 ADD ecx, [ebx+edi*4]
-		 JMP loop
+   loop ADD bh, al
+		ADD ecx, eax
+		ADD edi, [ebx]
+		ADD ebx, [ebp+1]
+	 	ADD ebp, [5+eax*1]
+		ADD edx, 5
+		ADD ecx, [ebx+edi*4]
+		JMP loop
+		 
+
 		 
 
 			

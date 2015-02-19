@@ -45,8 +45,8 @@ public class FileParser {
 	 * ("scanAssemblyFile(assemblyFile)" and "scanSpecFile(specFile)").
 	 * </pre>
 	 * 
-	 * @param specFile - Specification file to be scanned
-	 * @param assemblyFile - Assembly file to be scanned
+	 * @param specFile
+	 * @param assemblyFile
 	 */
 	public FileParser(String specFile, String assemblyFile) {
 
@@ -71,9 +71,9 @@ public class FileParser {
 		foundMinAdrUnit = false;
 
 		doneGlobalOpcodes = false;
-		emptyLine = false;
+		emptyLine = true;
 		abort = false;
-		
+
 		foundFormatHeader = true;
 		atLocalInsLabels = false;
 		atLocalOpcodes = false;
@@ -83,58 +83,58 @@ public class FileParser {
 
 		currentMnemonicData = null;
 		currentMnemFormat = null;
-		
-		scan(assemblyFile,specFile);
+
+		scan(assemblyFile, specFile);
 	}
 
 	private void scan(String assemblyFile, String specFile) {
-		
+
 		scanAssemblyFile(assemblyFile);
+		
 		scanSpecFile(specFile);
-		
+
 		writeErrorReport();
-		
 	}
 
 	private void writeErrorReport() {
-		
+
 		File file = null;
 
-		try {			
-			file = new File("error.txt");
-			file.createNewFile();			
+		try {
+			
+			file = new File("spec_error_report.txt");
+			file.createNewFile();
+			
 		} catch (Exception e) {
+			
 			e.printStackTrace();
 		}
-		
+
 		try {
+			
 			FileWriter writer = new FileWriter(file);
-			
-			for(String line: errorReport)
-				writer.write(line + "\n");		
-			
+
+			for (String line : errorReport)
+				writer.write(line + "\n");
+
 			writer.close();
-			
+
 		} catch (IOException e) {
+			
 			e.printStackTrace();
-		} 	
-		
+		}
 	}
 
-	/**
-	 * <pre>
-	 * Scans assembly file (line by line) and stores raw data in data source.
-	 * </pre>
-	 * 
-	 * @param fileName - Assembly file to be scanned
-	 */
 	private void scanAssemblyFile(String fileName) {
 
 		Scanner inputFile = null;
 
 		try {
+
 			inputFile = new Scanner(new FileInputStream(fileName));
+
 		} catch (FileNotFoundException e) {
+
 			System.out.println("Assembly file \"" + fileName + "\" not found.");
 			System.exit(0);
 		}
@@ -148,102 +148,119 @@ public class FileParser {
 		inputFile.close();
 	}
 
-	/**
-	 * <pre>
-	 * Scans specification file (line by line) and stores parsed data in data source.
-	 * MnemonicData is last section scanned for error checking purposes.
-	 * </pre>
-	 * 
-	 * @param fileName - Specification file to be scanned
-	 */
 	private void scanSpecFile(String fileName) {
 
 		Scanner inputFile = null;
 		Scanner inputFile2 = null;
 
 		try {
+
 			inputFile = new Scanner(new FileInputStream(fileName));
 			inputFile2 = new Scanner(new FileInputStream(fileName));
+
 		} catch (FileNotFoundException e) {
+
 			System.out.println("Specification file \"" + fileName + "\" not found.");
 			System.exit(0);
 		}
 
 		int lineCounter = 0;
-		
+
 		while (inputFile.hasNextLine()) {
 
 			String fullSpecLine = inputFile.nextLine();
 			String specLine = fullSpecLine;
-			
+
 			lineCounter++;
 
 			// Comments (;...) omitted
 			String[] commentSplit = specLine.split(";");
-			specLine = commentSplit[0];
+
+			try {
+
+				specLine = commentSplit[0];
+
+			} catch (ArrayIndexOutOfBoundsException e) {
+
+				specLine = "";
+			}
 
 			// Remove end whitespace
 			specLine = specLine.replaceAll("\\s+$", "");
 
 			try {
+
 				scanLine(specLine);
+
 			} catch (AssemblerException e) {
-//				errorExists = true;
+
 				data.setErrorInSpecFile(true);
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
-
 			}
 		}
-		
+
 		inputFile.close();
-		
+
 		lineCounter = 0;
 		String fullSpecLine = null;
-		
+
 		while (inputFile2.hasNextLine()) {
 
 			fullSpecLine = inputFile2.nextLine();
 			String specLine = fullSpecLine;
-			
+
 			lineCounter++;
 
 			// Comments (;...) omitted
 			String[] commentSplit = specLine.split(";");
-			specLine = commentSplit[0];
+
+			try {
+
+				specLine = commentSplit[0];
+
+			} catch (ArrayIndexOutOfBoundsException e) {
+
+				specLine = "";
+			}
 
 			// Remove end whitespace
 			specLine = specLine.replaceAll("\\s+$", "");
 
 			try {
+
 				scanLineForMnemonicData(specLine);
+
 			} catch (AssemblerException e) {
 
 				data.setErrorInSpecFile(true);
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
-				
+
 				resetBooleanValues();
 				abort = true;
 				foundFormatHeader = true;
-
 			}
 		}
-		
-		if(!foundFormatHeader){			
-			
+
+		if (!foundFormatHeader) {
+
 			try {
+
 				throw new AssemblerException(
-						"MnemonicData error: Mnemonic format missing for mnemonic \"" 
-						+ currentMnemonicData.getMnemonic() +"\".\n"
-						+ getMnemDataErrorMessage());
+						"MnemonicData error: Mnemonic format missing for mnemonic \""
+								+ currentMnemonicData.getMnemonic() 
+								+ "\".\n"
+								+ getMnemDataErrorMessage());
+
 			} catch (AssemblerException e) {
+
 				data.setErrorInSpecFile(true);
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
 			}
 		}
-		
+
 		inputFile2.close();
 
 		// If missing sections in specification file
@@ -276,9 +293,12 @@ public class FileParser {
 			missingSections = missingSections.trim();
 
 			try {
-				throw new AssemblerException("Section/s " + missingSections
+				
+				throw new AssemblerException("Section/s " + missingSections		// TODO newline?
 						+ " missing from specification file.");
+				
 			} catch (AssemblerException e) {
+				
 				data.setErrorInSpecFile(true);
 				String error = e.getMessage();
 				errorReport.add(error);
@@ -287,7 +307,7 @@ public class FileParser {
 	}
 
 	private String getErrorMessage(int lineCounter, String fullSpecLine, String message) {
-		
+
 		String msg = "------------------------------------------\n";
 		msg += "Exception at line " + lineCounter + " :\n";
 		msg += "\n";
@@ -295,12 +315,12 @@ public class FileParser {
 		msg += "\n";
 		msg += "\n";
 		msg += message + "\n\n";
-		
+
 		return msg;
 	}
 
 	private void scanLineForMnemonicData(String specLine) throws AssemblerException {
-		
+
 		String lowerCaseLine = specLine.toLowerCase();
 
 		if (lowerCaseLine.startsWith("architecture:"))
@@ -326,7 +346,7 @@ public class FileParser {
 
 		else if (architecture);
 
-		else if (registers);			
+		else if (registers);
 
 		else if (mnemonicData)
 			analyseMnemonicData(specLine);
@@ -341,18 +361,8 @@ public class FileParser {
 
 		else if (!(specLine.trim().length() == 0))
 			throw new AssemblerException("Missing section header.");
-		
 	}
 
-	/**
-	 * <pre>
-	 * Scans line from specification file, determines what section in specification file 
-	 * it belongs to and diverts it to relevant method for further analysis.
-	 * </pre>
-	 * 
-	 * @param specLine - Line from specification file to be scanned
-	 * @throws AssemblerException
-	 */
 	private void scanLine(String specLine) throws AssemblerException {
 
 		// Section labels in specification file not case sensitive
@@ -425,14 +435,6 @@ public class FileParser {
 		minAddressableUnit = false;
 	}
 
-	/**
-	 * <pre>
-	 * Sets endian, "big" or "little" (not case sensitive).
-	 * </pre>
-	 * 
-	 * @param line - Endian line
-	 * @throws AssemblerException if endian does not equal "little" or "big"
-	 */
 	private void analyseEndian(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
@@ -456,15 +458,6 @@ public class FileParser {
 		endian = false;
 	}
 
-	/**
-	 * <pre>
-	 * Analyses AssemblyOpTree line, expected format: 
-	 * label : label label*
-	 * </pre>
-	 * 
-	 * @param line - assemblyOpTree line
-	 * @throws AssemblerException if line syntax error
-	 */
 	private void analyseAssemblyOpTree(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
@@ -481,8 +474,7 @@ public class FileParser {
 				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
 
 		if (!legitAssemblyOpTreeExp)
-			throw new AssemblerException(
-					"AssemblyOpTree syntax error.");	//TODO
+			throw new AssemblerException("AssemblyOpTree syntax error."); // TODO
 
 		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
 
@@ -509,7 +501,8 @@ public class FileParser {
 
 		// If label already exists in hash, then add to existing list, else put
 		// label in hash
-		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(label);
+		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(
+				label);
 
 		if (list != null)
 			list.add(terms);
@@ -518,21 +511,9 @@ public class FileParser {
 			assemblyOpTree.getAssemblyOpTreeHash().put(label, termsList);
 	}
 
-	/**
-	 * <pre>
-	 * Sets boolean values for which section of specification file is being analysed.
-	 * </pre>
-	 * 
-	 * @param architecture
-	 * @param registers
-	 * @param mnemonicData
-	 * @param instructionFormat
-	 * @param assemblyOpTree
-	 * @param endian
-	 */
 	private void setBooleanValues(boolean architecture, boolean registers,
-			boolean mnemonicData, boolean instructionFormat, boolean assemblyOpTree,
-			boolean endian, boolean minAddressableUnit) {
+			boolean mnemonicData, boolean instructionFormat,
+			boolean assemblyOpTree, boolean endian, boolean minAddressableUnit) {
 
 		this.architecture = architecture;
 		this.registers = registers;
@@ -548,7 +529,7 @@ public class FileParser {
 	 * Sets architecture name.
 	 * </pre>
 	 * 
-	 * @param line - Architecture line
+	 * @param line
 	 */
 	private void analyseArchitecture(String line) {
 
@@ -562,20 +543,6 @@ public class FileParser {
 		architecture = false;
 	}
 
-	/**
-	 * <pre>
-	 * Sets register name and value (value is converted to binary before it is stored
-	 * in data source), expected format: 
-	 * regName regValue 
-	 * RegValue must end in "B", "H" or "D" to indicate data type. 
-	 * "B" means value is binary.
-	 * "H" means value is hexadecimal.
-	 * "I" means value is an integer.
-	 * </pre>
-	 * 
-	 * @param line - Register line
-	 * @throws AssemblerException if line syntax error or register value not valid
-	 */
 	private void analyseRegisters(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
@@ -591,9 +558,9 @@ public class FileParser {
 
 		if (!legitRegExp)
 			throw new AssemblerException(
-					"Register syntax error, <registerName> <value><B/H/I> expected. For example:\n" +
-					"\n" +
-					"eax    000B");	
+					"Register syntax error, <registerName> <value><B/H/I> expected. For example:\n"
+							+ "\n" 
+							+ "eax    000B");
 
 		String[] tokens = line.split("\\s+");
 
@@ -605,28 +572,35 @@ public class FileParser {
 
 		// Binary
 		if (dataType == 'B') {
-			
-			if(regValue.isEmpty())
-				throw new AssemblerException("Register syntax error, <registerName> <value><B/H/I> expected.\n" +
-						"Binary value missing.\n");
+
+			if (regValue.isEmpty())
+				throw new AssemblerException(
+						"Register syntax error, <registerName> <value><B/H/I> expected.\n"
+								+ "Binary value missing.\n");
 
 			if (!isBinary(regValue))
-				throw new AssemblerException("\"" + regValue + "\" is not a valid binary value.");
+				throw new AssemblerException("\"" + regValue
+						+ "\" is not a valid binary value.");
 
 			data.getRegisterHash().put(regLabel, regValue);
 		}
 
 		// Hex
 		else if (dataType == 'H') {
-			
-			if(regValue.isEmpty())
-				throw new AssemblerException("Register syntax error, <registerName> <value><B/H/I> expected.\n" +
-						"Hex value missing.\n");
+
+			if (regValue.isEmpty())
+				throw new AssemblerException(
+						"Register syntax error, <registerName> <value><B/H/I> expected.\n"
+								+ "Hex value missing.\n");
 
 			try {
+				
 				regValue = Assembler.hexToBinary(regValue);
+				
 			} catch (NumberFormatException e) {
-				throw new AssemblerException("\"" + regValue + "\" is not a valid hex value.");
+				
+				throw new AssemblerException("\"" + regValue
+						+ "\" is not a valid hex value.");
 			}
 
 			data.getRegisterHash().put(regLabel, regValue);
@@ -634,15 +608,20 @@ public class FileParser {
 
 		// Integer
 		else if (dataType == 'I') {
-			
-			if(regValue.isEmpty())
-				throw new AssemblerException("Register syntax error, <registerName> <value><B/H/I> expected.\n" +
-						"Integer value missing.\n");
+
+			if (regValue.isEmpty())
+				throw new AssemblerException(
+						"Register syntax error, <registerName> <value><B/H/I> expected.\n"
+								+ "Integer value missing.\n");
 
 			try {
+				
 				regValue = Assembler.intToBinary(regValue);
+				
 			} catch (NumberFormatException e) {
-				throw new AssemblerException("\"" + regValue + "\" is not a valid integer.");
+				
+				throw new AssemblerException("\"" + regValue
+						+ "\" is not a valid integer.");
 			}
 
 			data.getRegisterHash().put(regLabel, regValue);
@@ -650,47 +629,29 @@ public class FileParser {
 
 		else
 			throw new AssemblerException(
-					"Register syntax error, <registerName> <value><B/H/I> expected.\n" +
-					"Last character of second string (\"" + valueAndType + "\") should indicate data type (\"B\", \"H\" or \"I\").");
+					"Register syntax error, <registerName> <value><B/H/I> expected.\n"
+							+ "Last character of second string (\""
+							+ valueAndType
+							+ "\") should indicate data type (\"B\", \"H\" or \"I\").");
 	}
 
-	/**
-	 * <pre>
-	 * Analyses mnemonic data, and diverts line to relevant method for analysis, expected line format:
-	 * 
-	 * <mnemonicName>
-	 * 	<globalOpcodes>
-	 * 
-	 * 	<mnemFormat>
-	 * 		<instructionFieldLabels>
-	 * 		<localOpcodes>
-	 * 		<instructionFormat>
-	 * 
-	 * 	<mnemFormat>
-	 * 		...
-	 * 
-	 * <mnemonicName>
-	 * 	...
-	 * </pre>
-	 * 
-	 * @param line - Mnemonic data line
-	 * @throws AssemblerException if line format/syntax error
-	 */	
 	private void analyseMnemonicData(String line) throws AssemblerException {
-		
-		try{
+
+		try {
+			
 			currentMnemonicData.getRawLines().add(line);
-		} catch(NullPointerException e){}
+			
+		} catch (NullPointerException e) {}
 
 		if (line.trim().length() == 0) {
-			
+
 			emptyLine = true;
 
 			if (abort)
-				return;			
+				return;
 
 			if (atLocalInsLabels || atLocalOpcodes || atLocalInsFormat)
-				checkWhatLineExpected();			
+				checkWhatLineExpected();
 
 			return;
 		}
@@ -698,127 +659,127 @@ public class FileParser {
 		foundMnemData = true;
 
 		// New mnemonic (no whitespace at beginning)
-		if (Pattern.matches("[^\t\\s].*", line) && emptyLine && foundFormatHeader && !atLocalInsLabels && !atLocalOpcodes && !atLocalInsFormat){
-			
+		if (Pattern.matches("[^\t\\s].*", line) && emptyLine
+				&& foundFormatHeader && !atLocalInsLabels && !atLocalOpcodes
+				&& !atLocalInsFormat) {
+
 			emptyLine = false;
-			
+
 			analyseMnemName(line);
-			
-			currentMnemonicData.getRawLines().add(line);			
-		}			
+
+			currentMnemonicData.getRawLines().add(line);
+		}
 
 		else if (abort)
 			return;
-		
-		else if(currentMnemonicData == null){
-			
+
+		else if (currentMnemonicData == null) {
+
 			abort = true;
-			
-			throw new AssemblerException("MnemonicData error: Mnemonic name not declared.");
+
+			throw new AssemblerException(
+					"MnemonicData error: Mnemonic name not declared.");
 		}
 
 		// Global opcodes (starts with tab and not passed an empty line)
-		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine && !doneGlobalOpcodes) {
+		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine
+				&& !doneGlobalOpcodes) {
 
 			emptyLine = false;
-			
+
 			analyseGlobalOpcodes(line);
-			
+
 			doneGlobalOpcodes = true;
 		}
 
 		// Mnemonic format header (starts with tab and empty line passed)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && emptyLine) {
-			
+
 			emptyLine = false;
 
-			analyseMnemFormatHeader(line);
-			
+			analyseOperandFormat(line);
+
 			atLocalInsLabels = true;
-			foundFormatHeader = true;			
-			
-			try{
+			foundFormatHeader = true;
+
+			try {
+				
 				currentMnemFormat.addToRawLineString(line);
-			} catch(NullPointerException e){}
+				
+			} catch (NullPointerException e) {}
 		}
 
 		// Mnemonic format data (starts with double tab and empty line passed)
-		else if (Pattern.matches("\t\t[^\t\\s].*", line) && (atLocalInsLabels || atLocalOpcodes || atLocalInsFormat)){
-			
-			try{
-				currentMnemFormat.addToRawLineString(line);
-			} catch(NullPointerException e){}
+		else if (Pattern.matches("\t\t[^\t\\s].*", line)
+				&& (atLocalInsLabels || atLocalOpcodes || atLocalInsFormat)) {
 
-			analyseMnemFormat(line);
+			try {
+				
+				currentMnemFormat.addToRawLineString(line);
+				
+			} catch (NullPointerException e) {}
+
+			analyseOperandFormatData(line);
 		}
 
 		// Exception (indentation not recognised)
 		else {
 
 			abort = true;
-			
+
 			checkWhatLineExpected();
 		}
 	}
 
 	private void checkWhatLineExpected() throws AssemblerException {
-		
-		if(!foundFormatHeader){
-			
+
+		if (!foundFormatHeader) {
+
 			abort = true;
-			
+
 			throw new AssemblerException(
-					"MnemonicData error: Mnemonic format missing for mnemonic \"" 
-					+ currentMnemonicData.getMnemonic() +"\".\n"
-					+ getMnemDataErrorMessage());
+					"MnemonicData error: Mnemonic format missing for mnemonic \""
+							+ currentMnemonicData.getMnemonic() + "\".\n"
+							+ getMnemDataErrorMessage());
 		}
-		
-		else if (atLocalInsLabels){
-			
+
+		else if (atLocalInsLabels) {
+
 			abort = true;
-			
+
 			throw new AssemblerException(
 					"MnemonicData error: Line format/indentation error, instruction field labels line expected.\n"
-					+ getMnemDataErrorMessage());
+							+ getMnemDataErrorMessage());
 		}
-		
-		else if (atLocalOpcodes){
-			
+
+		else if (atLocalOpcodes) {
+
 			abort = true;
-			
+
 			throw new AssemblerException(
 					"MnemonicData error: Line format/indentation error, local opcodes line expected.\n"
-					+ getMnemDataErrorMessage());
+							+ getMnemDataErrorMessage());
 		}
-		
-		else if (atLocalInsFormat){
-			
+
+		else if (atLocalInsFormat) {
+
 			abort = true;
-			
+
 			throw new AssemblerException(
 					"MnemonicData error: Line format/indentation error, instruction format line expected.\n"
-					+ getMnemDataErrorMessage());
-		}	
-		
-		else{
-			
+							+ getMnemDataErrorMessage());
+		}
+
+		else {
+
 			abort = true;
-			
+
 			throw new AssemblerException(
 					"MnemonicData error: Line format error, empty line expected.\n"
-					+ getMnemDataErrorMessage());
-		}		
+							+ getMnemDataErrorMessage());
+		}
 	}
 
-	/**
-	 * <pre>
-	 * Sets mnemonic name, expected format:
-	 * mnemName
-	 * </pre>
-	 * 
-	 * @param line - Mnemonic name line
-	 * @throws AssemblerException if syntax error
-	 */
 	private void analyseMnemName(String line) throws AssemblerException {
 
 		// Reset boolean values for new mnemonic
@@ -833,6 +794,7 @@ public class FileParser {
 		if (!legitMnemName) {
 
 			abort = true;
+			
 			throw new AssemblerException(
 					"MnemonicData error: Mnemonic name should only be single token (no spaces).");
 		}
@@ -844,15 +806,7 @@ public class FileParser {
 		data.getMnemonicTable().put(mnem, currentMnemonicData);
 	}
 
-	/**
-	 * <pre>
-	 * Sets mnemonic header.
-	 * </pre>
-	 * 
-	 * @param line - Mnemonic header line
-	 * @throws AssemblerException if format token does not exist in AssemblyOpTree
-	 */
-	private void analyseMnemFormatHeader(String line) throws AssemblerException {
+	private void analyseOperandFormat(String line) throws AssemblerException {
 
 		line = line.trim();
 
@@ -862,9 +816,14 @@ public class FileParser {
 
 		for (String formatToken : formatTokens) {
 
-			if (!assemblyOpTreeTokens.contains(formatToken)){
+			if (!assemblyOpTreeTokens.contains(formatToken)) {
+				
 				abort = true;
-				throw new AssemblerException("MnemonicData error: Mnemonic format token \"" + formatToken + "\" not found in AssemblyOpTree.");
+				
+				throw new AssemblerException(
+						"MnemonicData error: Mnemonic format token \""
+								+ formatToken
+								+ "\" not found in AssemblyOpTree.");
 			}
 		}
 
@@ -874,17 +833,7 @@ public class FileParser {
 		currentMnemonicData.getMnemFormatHash().put(line, currentMnemFormat);
 	}
 
-	/**
-	 * <pre>
-	 * Analyses mnemonic format data (instruction labels, local opcodes and instruction format).
-	 * Expected format of local opcodes:
-	 * codeLabel=codeValue(,codeLabel=codeValue)*
-	 * </pre>
-	 * 
-	 * @param line - Mnemonic format line
-	 * @throws AssemblerException if syntax or indentation error
-	 */
-	private void analyseMnemFormat(String line) throws AssemblerException {
+	private void analyseOperandFormatData(String line) throws AssemblerException {
 
 		if (atLocalInsLabels) {
 
@@ -915,9 +864,10 @@ public class FileParser {
 				if (!legitLocalOpcodes) {
 
 					abort = true;
+					
 					throw new AssemblerException(
-							"MnemonicData error: Local opcodes syntax error," +
-							"\n<fieldName>=<value> or \"--\" (if no local opcodes) expected.");
+							"MnemonicData error: Local opcodes syntax error,"
+									+ "\n<fieldName>=<value> or \"--\" (if no local opcodes) expected.");
 				}
 
 				// Legit local opcodes so omit unnecessary spaces
@@ -951,50 +901,43 @@ public class FileParser {
 		}
 	}
 	
-	private String getMnemDataErrorMessage(){
-		
+	private String getMnemDataErrorMessage() {
+
 		ArrayList<String> rawLines = currentMnemonicData.getRawLines();
-		
+
 		int noOfLines = rawLines.size();
 		int maxLineLength = 0;
-		
-		String msg = "";		
-		
-		for(String str: rawLines){	
-			
-			str = str.replaceAll("\\s+$", "");			
-			
-			if(str.length() > maxLineLength)
+
+		String msg = "";
+
+		for (String str : rawLines) {
+
+			str = str.replaceAll("\\s+$", "");
+
+			if (str.length() > maxLineLength)
 				maxLineLength = str.length();
-			
+
 			msg += "\n" + str;
-		}	
-		
-		int lastLineLength = rawLines.get(noOfLines-1).replaceAll("\\s+$", "").length();
+		}
+
+		int lastLineLength = rawLines.get(noOfLines - 1).replaceAll("\\s+$", "").length();
 		int noOfSpaces = 0;
 		String whiteSpace = "\t\t\t";
-		
-		if(lastLineLength == 0)
-			noOfSpaces = maxLineLength;	
-		
+
+		if (lastLineLength == 0)
+			noOfSpaces = maxLineLength;
+
 		else
 			noOfSpaces = maxLineLength - lastLineLength;
-		
-		for(; noOfSpaces > 0; noOfSpaces -= 1)
+
+		for (; noOfSpaces > 0; noOfSpaces -= 1)
 			whiteSpace += " ";
-		
-		msg += whiteSpace + "<---";		
-		
-		return msg;		
+
+		msg += whiteSpace + "<---";
+
+		return msg;
 	}
 
-	/**
-	 * <pre>
-	 * Error checking of mnemonic data
-	 * </pre>
-	 * 
-	 * @throws AssemblerException
-	 */
 	private void endOfFormatErrorCheck() throws AssemblerException {
 
 		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();
@@ -1004,12 +947,13 @@ public class FileParser {
 			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
 
 			if (insFormat == null) {
-				
+
 				abort = true;
 
 				throw new AssemblerException(
 						currentMnemFormat.getRawLinesString()
-								+ "\nMnemonicData error: Instruction \"" + instruction
+								+ "\nMnemonicData error: Instruction \""
+								+ instruction
 								+ "\" does not exist in instructionFormat.");
 			}
 
@@ -1021,26 +965,27 @@ public class FileParser {
 
 				if (currentMnemonicData.getGlobalOpCodes().get(field) != null) {
 
-					String opcode = currentMnemonicData.getGlobalOpCodes().get(field);
+					String opcode = currentMnemonicData.getGlobalOpCodes().get(field);					
 					int noOfBits = opcode.length();
 
-					if (noOfBits > bits){
-						
+					if (noOfBits > bits) {
+
 						abort = true;
-						
+
 						throw new AssemblerException(
-								currentMnemFormat.getRawLinesString()+
-										"\nMnemonicData error: Field \""
+								currentMnemFormat.getRawLinesString()
+										+ "\nMnemonicData error: Field \""
 										+ field
 										+ "\" in \""
 										+ currentMnemonicData.getMnemonic()
 										+ "\" global opcodes ("
 										+ currentMnemonicData.getRawGlobalOpcodesString()
-										+ ")\nexceeds expected " + bits
+										+ ")\nexceeds expected " 
+										+ bits
 										+ " bits in instruction format \""
 										+ instruction + "\" ("
-										+ insFormat.getRawLineString() + ").");
-						
+										+ insFormat.getRawLineString() 
+										+ ").");
 					}
 				}
 
@@ -1049,50 +994,49 @@ public class FileParser {
 					String opcode = currentMnemFormat.getOpcodes().get(field);
 					int noOfBits = opcode.length();
 
-					if (noOfBits > bits){
-						
+					if (noOfBits > bits) {
+
 						abort = true;
-						
+
 						throw new AssemblerException(
 								currentMnemFormat.getRawLinesString()
 										+ "\nMnemonicData error: Field \""
-										+ field
-										+ "\" in local opcodes for \"" 
+										+ field 
+										+ "\" in local opcodes for \""
 										+ currentMnemonicData.getMnemonic()
 										+ "\" format \""
 										+ currentMnemFormat.getMnemFormat()
-										+ "\""
-										+ "\nexceeds expected "
+										+ "\"\nexceeds expected " 
 										+ bits
 										+ " bits in instruction format \""
 										+ instruction + "\" ("
-										+ insFormat.getRawLineString() + ").");
+										+ insFormat.getRawLineString() 
+										+ ").");
 					}
 				}
 
-				else if (existsInInsFieldLabels(currentMnemFormat.getInsFieldLabels(), field));
+				else if (existsInInsFieldLabels(
+						currentMnemFormat.getInsFieldLabels(), field));
 
 				else {
-					
+
 					abort = true;
 
-					throw new AssemblerException(
-									"Field \""
-									+ field
-									+ "\" in instruction format \""
-									+ instruction
-									+ "\" ("
-									+ insFormat.getRawLineString()
-									+ ")\nnot found within global \""
-									+ currentMnemonicData.getMnemonic()
-									+ "\" opcodes ("
-									+ currentMnemonicData.getRawGlobalOpcodesString()
-									+ ") or in \""
-									+ currentMnemonicData.getMnemonic()
-									+ "\" format \""
-									+ currentMnemFormat.getMnemFormat()
-									+ "\":\n\n"
-									+ currentMnemFormat.getRawLinesString());
+					throw new AssemblerException("Field \"" 
+							+ field
+							+ "\" in instruction format \"" 
+							+ instruction
+							+ "\" (" + insFormat.getRawLineString()
+							+ ")\nnot found within global \""
+							+ currentMnemonicData.getMnemonic()
+							+ "\" opcodes ("
+							+ currentMnemonicData.getRawGlobalOpcodesString()
+							+ ") or in \"" 
+							+ currentMnemonicData.getMnemonic()
+							+ "\" format \""
+							+ currentMnemFormat.getMnemFormat() 
+							+ "\":\n\n"
+							+ currentMnemFormat.getRawLinesString());
 				}
 			}
 		}
@@ -1111,18 +1055,13 @@ public class FileParser {
 		return false;
 	}
 
-	/**
-	 * <pre>
-	 * Resets boolean values when about to work on a new mnemonic.
-	 * </pre>
-	 */
 	private void resetBooleanValues() {
 
 		abort = false;
 
 		doneGlobalOpcodes = false;
 		emptyLine = false;
-		
+
 		foundFormatHeader = false;
 		atLocalInsLabels = false;
 		atLocalOpcodes = false;
@@ -1131,15 +1070,6 @@ public class FileParser {
 		currentMnemonicData = null;
 	}
 
-	/**
-	 * <pre>
-	 * Sets global opcodes, expected format:
-	 * codeLabel=codeValue(,codeLabel=codeValue)*
-	 * </pre>
-	 * 
-	 * @param line - Global opcodes line
-	 * @throws AssemblerException if syntax error
-	 */
 	private void analyseGlobalOpcodes(String line) throws AssemblerException {
 
 		line = line.trim();
@@ -1156,6 +1086,7 @@ public class FileParser {
 		if (!legitGlobalOpcodes) {
 
 			abort = true;
+			
 			throw new AssemblerException(
 					"MnemonicData error: Global opcodes syntax error, <fieldName>=<value> expected.");
 		}
@@ -1174,17 +1105,7 @@ public class FileParser {
 		currentMnemonicData.setRawGlobalOpcodesString(line);
 	}
 
-	/**
-	 * <pre>
-	 * Sets instruction formats, expected format:
-	 * insName=opLabel(bitSize) (opLabel(bitSize))*
-	 * </pre>
-	 * 
-	 * @param line - Instruction format line
-	 * @throws AssemblerException if syntax error
-	 */
-	private void analyseInstructionFormat(String line)
-			throws AssemblerException {
+	private void analyseInstructionFormat(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
@@ -1205,9 +1126,8 @@ public class FileParser {
 
 			abort = true;
 			throw new AssemblerException(
-					"Instruction format syntax error, <instructionName> : <fieldName>(<bitLength>) expected. For example:\n" +
-					"\n" +
-					"opcode : op(6) d(1) s(1)");
+					"Instruction format syntax error, <instructionName> : <fieldName>(<bitLength>) expected. For example:\n"
+							+ "\nopcode : op(6) d(1) s(1)");
 		}
 
 		InstructionFormatData insF = new InstructionFormatData();
@@ -1234,15 +1154,7 @@ public class FileParser {
 		insF.setRawLineString(line.trim());
 		data.getInstructionFormat().put(insName, insF);
 	}
-
-	/**
-	 * <pre>
-	 * Returns true if string represents a binary number (0's and 1's), else false.
-	 * </pre>
-	 * 
-	 * @param s - String
-	 * @return true if binary, else false
-	 */
+	
 	private boolean isBinary(String s) {
 
 		String pattern = "[0-1]*$";
@@ -1253,13 +1165,6 @@ public class FileParser {
 		return false;
 	}
 
-	/**
-	 * <pre>
-	 * Get data source that this file parser created.
-	 * </pre>
-	 * 
-	 * @return data
-	 */
 	public DataSource getData() {
 		return data;
 	}

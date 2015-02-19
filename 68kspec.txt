@@ -1,6 +1,7 @@
 architecture:
 68000
 
+
 registers:	
 
 D0	0I
@@ -31,7 +32,7 @@ jump : op(8) adr(8)
 displacement: dis(16)
 
 
-adt:	; ? optional, + one or more, * zero or more
+assemblyoptree:	
 
 statement : label? mnem op*
 
@@ -79,18 +80,16 @@ mnem : "BRA"
 label : LABEL
 
 
-mnemonicdata:			
-
-	
+mnemonicdata:
 		
 LINK
-	op=0100111001010	
-	
+	op=0100111001010
+			
 	mnem regDirect, imm 
 		mnem reg #dis
 		--
-		opcode displacement
-		
+		opcode displacement	
+						
 BRA 
 	op=01100000
 	
@@ -100,10 +99,10 @@ BRA
 		jump
 
 
-
 minaddressableunit:
 
 8
+
 
 endian:
 

@@ -1,12 +1,13 @@
 section .data
 
-
+x 4MAU "He"
 
 
 section .text
 	global main
 main:
 
+			LW $t0, x
 			ADD $t1, $t1, $t1	
 			ADDI $t1, $t1, 3
 			AND $t1, $t2, $t3

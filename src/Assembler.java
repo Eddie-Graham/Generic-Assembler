@@ -39,7 +39,7 @@ public class Assembler {
 	private boolean first, second;
 
 	private boolean debug = false;
-	
+
 	private ArrayList<String> objectCode;
 
 	/**
@@ -67,17 +67,12 @@ public class Assembler {
 
 		first = false;
 		second = false;
-		
+
 		objectCode = new ArrayList<String>();
 
 		assemble();
 	}
 
-	/**
-	 * <pre>
-	 * Two-pass assemble.
-	 * </pre>
-	 */
 	private void assemble() {
 		
 		if(!data.isErrorInSpecFile()){
@@ -123,11 +118,6 @@ public class Assembler {
 		} 	
 	}
 
-	/**
-	 * <pre>
-	 * First pass, sends each non empty line to be analysed .
-	 * </pre>
-	 */
 	private void firstPass() {
 
 		int lineCounter = 0;
@@ -137,7 +127,11 @@ public class Assembler {
 			lineCounter++;
 
 			String[] commentSplit = assemblyLine.split(";");
-			assemblyLine = commentSplit[0];
+			try{
+				assemblyLine = commentSplit[0];
+			} catch(ArrayIndexOutOfBoundsException e){
+				assemblyLine = "";
+			}
 
 			if (assemblyLine.trim().length() > 0) {
 
@@ -166,15 +160,6 @@ public class Assembler {
 		return msg;
 	}
 
-	/**
-	 * <pre>
-	 * Determines what part of assembly file line belongs to (.data or .text)
-	 * and diverts it for further analysis.
-	 * </pre>
-	 * 
-	 * @param assemblyLine
-	 * @throws AssemblerException
-	 */
 	private void analyseLineFirstPass(String assemblyLine) throws AssemblerException {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
@@ -213,15 +198,6 @@ public class Assembler {
 		}
 	}
 
-	/**
-	 * <pre>
-	 * Analyses each instruction within .text and establishes size of 
-	 * each instruction, storing any labels with its address.
-	 * </pre>
-	 * 
-	 * @param assemblyLine
-	 * @throws AssemblerException
-	 */
 	private void analyseInstructionsFirstPass(String assemblyLine) throws AssemblerException {
 
 		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
@@ -305,11 +281,6 @@ public class Assembler {
 		locationCounter += noOfAdrUnits;
 	}
 
-	/**
-	 * <pre>
-	 * Second pass, sends each non empty line to be analysed .
-	 * </pre>
-	 */
 	private void secondPass() {
 
 		int lineCounter = 0;
@@ -319,7 +290,11 @@ public class Assembler {
 			lineCounter++;
 
 			String[] commentSplit = assemblyLine.split(";");
-			assemblyLine = commentSplit[0];
+			try{
+				assemblyLine = commentSplit[0];
+			} catch(ArrayIndexOutOfBoundsException e){
+				assemblyLine = "";
+			}
 
 			if (assemblyLine.trim().length() > 0) {
 
@@ -335,15 +310,6 @@ public class Assembler {
 		}
 	}
 
-	/**
-	 * <pre>
-	 * Determines what part of assembly file line belongs to (.data or .text)
-	 * and diverts it for further analysis.
-	 * </pre>
-	 * 
-	 * @param assemblyLine
-	 * @throws AssemblerException
-	 */
 	private void analyseLineSecondPass(String assemblyLine)	throws AssemblerException {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
@@ -410,7 +376,7 @@ public class Assembler {
 				
 			}			
 		}
-//		System.out.println(binary);
+
 		int adr = insAdrTable.get(insNumber);
 		
 		ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
@@ -421,7 +387,6 @@ public class Assembler {
 		
 		String objectCodeLine = Integer.toHexString(adr) + ":		" + hexObjCode;
 		objectCode.add(objectCodeLine);
-
 	}
 
 	private void analyseDataFirstPass(String assemblyLine) throws AssemblerException {
@@ -457,14 +422,6 @@ public class Assembler {
 		this.atText = atText;
 	}
 
-	/**
-	 * <pre>
-	 * Populates each instruction.
-	 * </pre>
-	 * 
-	 * @param assemblyLine
-	 * @throws AssemblerException
-	 */
 	private void populateInstructionSecondPass(String assemblyLine)	throws AssemblerException {
 
 		assemblyLine = assemblyLine.trim();
@@ -599,7 +556,7 @@ public class Assembler {
 		String objectCodeLine = Integer.toHexString(adr) + ":		" + hexObjCode;
 		objectCode.add(objectCodeLine);
 
-		System.out.println(Integer.toHexString(adr) + ":	" + hexObjCode);
+		System.out.println(objectCodeLine);
 	}
 
 	private String dataOffset(String assemblyTerm, int bits) {
@@ -663,6 +620,7 @@ public class Assembler {
 			System.out.println("paths: " + paths);
 			System.out.println("curpath: " + currentPath);
 			System.out.println("asslist: " + assemblyListIter);
+			System.out.println("fulltermsIter: " + fullParseTermsIter);
 			System.out.println("termsIter: " + parseTermsIter);
 		}
 

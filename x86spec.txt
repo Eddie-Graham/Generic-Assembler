@@ -1,5 +1,7 @@
 architecture:
-x86
+
+x86 
+
 
 instructionformat:
 
@@ -16,11 +18,11 @@ displacement : dis(32)
 
 registers:	
 
-al  000B
+al  000B 
 cl  001B
-dl  010B
+dl  010B 
 bl  011B
-ah  100B
+ah  100B 
 ch  101B
 dh	110B
 bh  111B			
@@ -44,10 +46,7 @@ esi	110B
 edi	111B
 
 
-
-
-
-adt:	
+assemblyoptree:	
 
 statement : label? mnem operands
 
@@ -126,15 +125,15 @@ label : LABEL
 mnemonicdata:	
 	
 ADD 
-	op=000000
+	op=000000	
 	
 	mnem reg32, reg32 
-		mnem reg rm	
-		d=0, s=0, mod=11
+		mnem reg rm 
+		d=0, s=0, mod=11		
 		opcode mod-r/m
 
 	mnem reg8, reg8 
-		mnem reg rm
+		mnem reg rm 		
 		d=1, s=0, mod=11
 		opcode mod-r/m	
 		
@@ -173,15 +172,14 @@ JMP
 		jmp	
 		
 
-
 endian:
 
 big
 
+
 minaddressableunit:
 
 8
-
 
 
 
