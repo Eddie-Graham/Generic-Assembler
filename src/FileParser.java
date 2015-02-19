@@ -199,10 +199,11 @@ public class FileParser {
 		inputFile.close();
 		
 		lineCounter = 0;
+		String fullSpecLine = null;
 		
 		while (inputFile2.hasNextLine()) {
 
-			String fullSpecLine = inputFile2.nextLine();
+			fullSpecLine = inputFile2.nextLine();
 			String specLine = fullSpecLine;
 			
 			lineCounter++;
@@ -226,6 +227,20 @@ public class FileParser {
 				abort = true;
 				foundFormatHeader = true;
 
+			}
+		}
+		
+		if(!foundFormatHeader){			
+			
+			try {
+				throw new AssemblerException(
+						"MnemonicData error: Mnemonic format missing for mnemonic \"" 
+						+ currentMnemonicData.getMnemonic() +"\".\n"
+						+ getMnemDataErrorMessage());
+			} catch (AssemblerException e) {
+				data.setErrorInSpecFile(true);
+				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
+				errorReport.add(error);
 			}
 		}
 		
@@ -264,6 +279,7 @@ public class FileParser {
 				throw new AssemblerException("Section/s " + missingSections
 						+ " missing from specification file.");
 			} catch (AssemblerException e) {
+				data.setErrorInSpecFile(true);
 				String error = e.getMessage();
 				errorReport.add(error);
 			}
@@ -276,9 +292,9 @@ public class FileParser {
 		msg += "Exception at line " + lineCounter + " :\n";
 		msg += "\n";
 		msg += fullSpecLine + "\n";
-		msg += "------------------------------------------\n";
 		msg += "\n";
-		msg += message + "\n\n\n";
+		msg += "\n";
+		msg += message + "\n\n";
 		
 		return msg;
 	}
@@ -1067,17 +1083,16 @@ public class FileParser {
 									+ instruction
 									+ "\" ("
 									+ insFormat.getRawLineString()
-									+ ")\nnot defined within \""
+									+ ")\nnot found within global \""
+									+ currentMnemonicData.getMnemonic()
+									+ "\" opcodes ("
+									+ currentMnemonicData.getRawGlobalOpcodesString()
+									+ ") or in \""
 									+ currentMnemonicData.getMnemonic()
 									+ "\" format \""
 									+ currentMnemFormat.getMnemFormat()
 									+ "\":\n\n"
-									+ currentMnemFormat.getRawLinesString()
-									+ "\nor in global \""
-									+ currentMnemonicData.getMnemonic()
-									+ "\" opcodes ("
-									+ currentMnemonicData.getRawGlobalOpcodesString()
-									+ ").");
+									+ currentMnemFormat.getRawLinesString());
 				}
 			}
 		}

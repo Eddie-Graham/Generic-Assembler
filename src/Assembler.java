@@ -144,13 +144,26 @@ public class Assembler {
 				try {
 					analyseLineFirstPass(assemblyLine);
 				} catch (AssemblerException e) {
-					System.out.println("Exception at line " + lineCounter);
-					System.out.println("Line: " + assemblyLine.trim());
-					System.out.println(e.getMessage());
+					String error = getErrorMessage(lineCounter, assemblyLine, e.getMessage());
+					objectCode.add(error);
+					writeObjectCodeToFile();
 					System.exit(0);
 				}
 			}
 		}
+	}
+	
+	private String getErrorMessage(int lineCounter, String assemblyLine, String message) {
+		
+		String msg = "------------------------------------------\n";
+		msg += "Exception at line " + lineCounter + " :\n";
+		msg += "\n";
+		msg += assemblyLine + "\n";
+		msg += "\n";
+		msg += "\n";
+		msg += message + "\n\n";
+		
+		return msg;
 	}
 
 	/**
@@ -216,8 +229,15 @@ public class Assembler {
 		assemblyLine = assemblyLine.trim();
 
 		analyseWithAssemblyOpTree(assemblyLine);
+		
+		if (legitAssemblyOpTreePaths.isEmpty())
+			throw new AssemblerException("Line not consistent with assemblyOpTree");
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
+		
+		if (mnemData == null)
+			throw new AssemblerException(
+					"Unable to find mnemonic in mnemonicData.");
 
 		ArrayList<String> mnemFormats = mnemData.getMnemFormats();
 
@@ -232,11 +252,23 @@ public class Assembler {
 			}
 		}
 
-		if (mnemFormat == null)
-			throw new AssemblerException("Mnem format mismatch.");
+		if (mnemFormat == null){
+			
+			String error = "Incorrectly formatted operands. Expected:\n";
+			
+			for(String format: mnemFormats)
+				error += "\n"+format;
+			
+			throw new AssemblerException(error);
+		}
 
-		if (!correctSyntax(mnemFormat, assemblyLine))
-			throw new AssemblerException("Assembly line syntax error.");
+		if (!correctSyntax(mnemFormat, assemblyLine)){
+			
+			String error = "Assembly line syntax error. Check use of commas and spaces between operands. Expected syntax:\n";
+			error += "\n" + mnemFormat;
+			
+			throw new AssemblerException(error);
+		}
 
 		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);
 
@@ -294,9 +326,9 @@ public class Assembler {
 				try {
 					analyseLineSecondPass(assemblyLine);
 				} catch (AssemblerException e) {
-					System.out.println("Exception at line " + lineCounter);
-					System.out.println("Line: " + assemblyLine.trim());
-					System.out.println(e.getMessage());
+					String error = getErrorMessage(lineCounter, assemblyLine, e.getMessage());
+					objectCode.add(error);
+					writeObjectCodeToFile();
 					System.exit(0);
 				}
 			}
@@ -356,15 +388,39 @@ public class Assembler {
 
 		insNumber++;
 
-		String[] splitDataTerm = assemblyLine.split("\\s+");
+		String[] splitDataLine = assemblyLine.split("\\s+");
+//		String[] dataTerm = assemblyLine.split("\"");
+//		System.out.println(Arrays.toString(dataTerm));
 
-		String label = splitDataTerm[0];
-		String minUnitTerm = splitDataTerm[1];
-		String data = splitDataTerm[2];
-
+		String label = splitDataLine[0];
+		String minUnitTerm = splitDataLine[1];
+		String data = splitDataLine[2];
+		
+		String binary = "";
+		
+		if(data.charAt(0) == '\"' && data.charAt((data.length()-1)) == '\"'){
+			
+			data = data.substring(1, data.length()-1);
+			
+			for(int i = 0; i < data.length(); i++){
+				
+				char character = data.charAt(i);				
+				int ascii = (int) character; 
+				binary += Integer.toBinaryString(ascii);
+				
+			}			
+		}
+//		System.out.println(binary);
 		int adr = insAdrTable.get(insNumber);
+		
+		ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
 
-		System.out.println(Integer.toHexString(adr) + ":	" + data);
+		String hexObjCode = getHexObjCode(binaryArray);
+
+		System.out.println(Integer.toHexString(adr) + ":	" + hexObjCode);
+		
+		String objectCodeLine = Integer.toHexString(adr) + ":		" + hexObjCode;
+		objectCode.add(objectCodeLine);
 
 	}
 
@@ -373,15 +429,15 @@ public class Assembler {
 		assemblyLine = assemblyLine.trim();
 
 		boolean legitDataLine = Pattern.matches(
-				"[A-Za-z0-9]+\\s+[0-9]+MA\\s+[^\\s]+", assemblyLine);
+				"[A-Za-z0-9]+\\s+[0-9]+MAU\\s+[^\\s]+", assemblyLine);
 
 		if (!legitDataLine)
-			throw new AssemblerException("Incorrect syntax.");
+			throw new AssemblerException(".data line incorrect syntax.");
 
 		String[] splitDataTerm = assemblyLine.split("\\s+");
 
 		String minUnitTerm = splitDataTerm[1];
-		String[] splitMinUnitTerm = minUnitTerm.split("MA");
+		String[] splitMinUnitTerm = minUnitTerm.split("MAU");
 		String noOfMinAdrUnitsStr = splitMinUnitTerm[0];
 		int noOfMinAdrUnits = Integer.parseInt(noOfMinAdrUnitsStr);
 
@@ -473,14 +529,14 @@ public class Assembler {
 				else if (format.getOpcodes().get(field) != null) // local
 					binaryTemp = format.getOpcodes().get(field);
 
-				else {
+				else if(insFieldHash.get(field) != null){
 
 					String assemblyTerm = insFieldHash.get(field);
 
 					if (data.getRegisterHash().get(assemblyTerm) != null) // reg
 						binaryTemp = data.getRegisterHash().get(assemblyTerm);
 
-					else { // imm etc
+					else if(assemblyTermTypeHash.get(assemblyTerm) != null){
 
 						String type = assemblyTermTypeHash.get(assemblyTerm);
 
@@ -490,10 +546,45 @@ public class Assembler {
 						else if (type.equals("HEX"))
 							binaryTemp = hexToBinary(assemblyTerm);
 
-						else if (type.equals("LABEL"))
-							binaryTemp = relativeJumpInBinary(assemblyTerm,	bits);
-
+						else if (type.equals("LABEL")){
+							
+							if(symbolTable.get(assemblyTerm) != null)
+								binaryTemp = relativeJumpInBinary(assemblyTerm,	bits);
+							
+							else if(dataTable.get(assemblyTerm) != null){
+								binaryTemp = dataOffset(assemblyTerm, bits);
+							}	
+							
+							else
+								throw new AssemblerException("Label \"" + assemblyTerm + " \" not found.");
+						}
 					}
+					
+					else{
+						throw new AssemblerException(
+								"Encoding data for \""
+										+ assemblyTerm
+										+ "\" (for instrucution field \""
+										+ field
+										+ "\") not found.\nIf term is a register, make sure it is defined as \""
+										+ assemblyTerm
+										+ "\" in registers (i.e., "
+										+ assemblyTerm
+										+ " 001B).\nIf term is an INT etc, make sure it is specified as so in assemblyOpTree (i.e., immediate : INT).");
+					}
+					
+					int binaryLength = binaryTemp.length();
+
+					if (binaryLength > bits){
+						
+						String error = "Bit representation of \""
+								+ assemblyTerm
+								+ "\" exceeds expected number of bits (" + bits
+								+ ")\nfor instruction field \"" + field + "\".";
+						throw new AssemblerException(error);
+						
+					}
+					
 				}
 
 				binary += binaryFromBinaryFormatted(binaryTemp, bits);
@@ -509,6 +600,18 @@ public class Assembler {
 		objectCode.add(objectCodeLine);
 
 		System.out.println(Integer.toHexString(adr) + ":	" + hexObjCode);
+	}
+
+	private String dataOffset(String assemblyTerm, int bits) {
+
+		int dataOffset = dataTable.get(assemblyTerm);
+		
+		String binary = Integer.toBinaryString(dataOffset);
+
+		if (binary.length() > bits)
+			binary = binary.substring(binary.length() - bits);		
+
+		return binary;
 	}
 
 	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
@@ -542,9 +645,6 @@ public class Assembler {
 
 		analyseOperands(rootTerm, assemblyList, rootTerm, fullTermsIter, paths,
 				currentPath, assemblyOpTreeRoot);
-
-		if (legitAssemblyOpTreePaths.isEmpty())
-			throw new AssemblerException("Line not consistent with AssemblyOpTree");
 	}
 
 	private boolean analyseOperands(ArrayList<String> parseTerms,
@@ -986,7 +1086,7 @@ public class Assembler {
 
 				else if (term.equals("HEX")) {
 
-					if (!isAlphaNumeric(splitAssemblyTerms[i]))
+					if (!isHexNumber(splitAssemblyTerms[i]))
 						return false;
 
 					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);
@@ -1044,10 +1144,6 @@ public class Assembler {
 				break;
 			}
 		}
-
-		if (mnemData == null)
-			throw new AssemblerException(
-					"Unable to find mnemonic in mnemonicData.");
 
 		return mnemData;
 	}
@@ -1202,7 +1298,6 @@ public class Assembler {
 
 		HashMap<String, String> insHash = new HashMap<String, String>();
 
-//		insLabels = insLabels.replaceAll(",", "");		//TODO needed?
 		insLabels = insLabels.replaceAll("\\s+", " ");
 		
 		String[] splitInsTerms = insLabels.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
@@ -1217,8 +1312,15 @@ public class Assembler {
 
 		String[] splitAssemblyTerms = assemblyLine.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
 		
-		if(splitAssemblyTerms.length != splitInsTerms.length)
-			throw new AssemblerException("ERROR");		
+//		System.out.println(Arrays.toString(splitAssemblyTerms));
+//		System.out.println(Arrays.toString(splitInsTerms));
+		
+		if(splitAssemblyTerms.length != splitInsTerms.length){
+			
+			String error = "Could not map instruction fields to assembly line:\n\n" + insLabels;
+			
+			throw new AssemblerException(error);	
+		}
 		
 		int i = 0;
 
@@ -1226,8 +1328,13 @@ public class Assembler {
 
 			if (!isAlphaNumeric(insTerm)){
 				
-				if(!insTerm.equals(splitAssemblyTerms[i]))
-					throw new AssemblerException("ERROR");
+				if(!insTerm.equals(splitAssemblyTerms[i])){
+					
+					String error = "Could not map instruction fields to assembly line:\n\n" + insLabels;
+					
+					throw new AssemblerException(error);
+				}
+					
 			}
 			
 			else{
@@ -1360,12 +1467,9 @@ public class Assembler {
 		return finalString;
 	}
 
-	public static String binaryFromBinaryFormatted(String binary, int bits)	throws AssemblerException {
+	public static String binaryFromBinaryFormatted(String binary, int bits){
 
 		int initialLength = binary.length();
-
-		if (initialLength > bits)
-			throw new AssemblerException("Number of bits mismatch");
 
 		int zerosNeeded = bits - initialLength;
 
@@ -1437,5 +1541,16 @@ public class Assembler {
 			return true;
 
 		return false;
+	}
+	
+	private static boolean isHexNumber (String str) {
+		  try {
+		    Long.parseLong(str, 16);
+		    return true;
+		  }
+		  catch (NumberFormatException e) {
+		    // Error handling code...
+		    return false;
+		  }
 	}
 }
