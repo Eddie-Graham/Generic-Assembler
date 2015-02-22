@@ -29,12 +29,12 @@ public class DataSource {
 		
 		errorInSpecFile = false;
 		
-		architecture = "";
+		architecture = null;
 		mnemonicTable = new HashMap<String, MnemonicData>();
 		instructionFormat = new HashMap<String, InstructionFormatData>();		
 		registerHash = new HashMap<String, String>();
 		assemblyOpTree = new AssemblyOpTree();
-		endian = "";
+		endian = null;
 	}
 
 	public ArrayList<String> getAssemblyCode() {

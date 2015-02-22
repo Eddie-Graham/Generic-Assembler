@@ -16,7 +16,7 @@ public class AssemblyOpTree {
 	
 	public AssemblyOpTree(){
 		
-		rootToken= "";
+		rootToken= null;
 		assemblyOpTreeHash = new HashMap<String, ArrayList<String>>();
 		assemblyOpTreeTokens = new ArrayList<String>();
 	}

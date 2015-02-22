@@ -19,11 +19,11 @@ public class MnemonicData {
 	
 	public MnemonicData(){
 		
-		mnemonic = "";
+		mnemonic = null;
 		globalOpCodes = new HashMap<String, String>();
 		mnemFormatHash = new HashMap<String, MnemFormat>();
 		mnemFormats = new ArrayList<String>();
-		rawGlobalOpcodesString = "";
+		rawGlobalOpcodesString = null;
 		rawLines = new ArrayList<String>();
 	}
 

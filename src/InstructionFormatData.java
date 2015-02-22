@@ -18,10 +18,10 @@ public class InstructionFormatData {
 	
 	public InstructionFormatData(){
 		
-		instructionName = "";
+		instructionName = null;
 		operandBitHash = new HashMap<String, Integer>();
 		operands = new ArrayList<String>();	
-		rawLineString = "";
+		rawLineString = null;
 	}
 
 	public String getInstructionName() {

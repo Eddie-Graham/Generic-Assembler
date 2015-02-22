@@ -836,11 +836,12 @@ public class FileParser {
 	private void analyseOperandFormatData(String line) throws AssemblerException {
 
 		if (atLocalInsLabels) {
-
+			
 			line = line.trim();
-
-			currentMnemFormat.setInsFieldLabels(line);
-
+			
+			if (!line.equals("--"))
+				currentMnemFormat.setInsFieldLabels(line);
+			
 			atLocalInsLabels = false;
 			atLocalOpcodes = true;
 		}
