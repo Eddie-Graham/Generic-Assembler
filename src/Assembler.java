@@ -476,12 +476,13 @@ public class Assembler {
 
 		int adr = insAdrTable.get(insNumber);
 
-		String hexObjCode = getHexObjCode(binaryArray);
+		String address = Integer.toHexString(adr) + ":";
+		String hexObjCode = getHexObjCode(binaryArray);		
 
-		System.out.println(Integer.toHexString(adr) + ":	" + hexObjCode);
-
-		String objectCodeLine = Integer.toHexString(adr) + ":		" + hexObjCode;
+		String objectCodeLine = String.format("%-10s %s", address, hexObjCode);
 		objectCode.add(objectCodeLine);
+		
+		System.out.println(objectCodeLine);
 	}
 
 	private void populateInstructionSecondPass(String assemblyLine) throws AssemblerException {
@@ -520,7 +521,7 @@ public class Assembler {
 		HashMap<String, String> insFieldHash = null;
 		String relevantOperands = null;
 
-		if (insFieldLabels != null) {
+		if (insFieldLabels != "") {
 
 			relevantOperands = getRelevantOperands(mnemFormat);
 			insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);
@@ -616,12 +617,14 @@ public class Assembler {
 
 		ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
 
-		String hexObjCode = getHexObjCode(binaryArray);
 		int adr = insAdrTable.get(insNumber);
 
-		String objectCodeLine = Integer.toHexString(adr) + ":		" + hexObjCode;
-		objectCode.add(objectCodeLine);
+		String address = Integer.toHexString(adr) + ":";
+		String hexObjCode = getHexObjCode(binaryArray);		
 
+		String objectCodeLine = String.format("%-10s %s", address, hexObjCode);
+		objectCode.add(objectCodeLine);
+		
 		System.out.println(objectCodeLine);
 	}
 

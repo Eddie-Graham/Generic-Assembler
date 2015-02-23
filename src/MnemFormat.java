@@ -18,11 +18,11 @@ public class MnemFormat {
 	
 	public MnemFormat(){
 		
-		mnemFormat = null;
-		insFieldLabels = null;
+		mnemFormat = "";
+		insFieldLabels = "";
 		opcodes = new HashMap<String, String>();
 		instructionFormat = new ArrayList<String>();	
-		rawLinesString = null;
+		rawLinesString = "";
 	}
 
 	public String getMnemFormat() {

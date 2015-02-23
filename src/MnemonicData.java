@@ -16,14 +16,16 @@ public class MnemonicData {
 	private ArrayList<String> mnemFormats;
 	private ArrayList<String> rawLines;
 	private String rawGlobalOpcodesString;
+	private String rawLinesString;
 	
 	public MnemonicData(){
 		
-		mnemonic = null;
+		mnemonic = "";
 		globalOpCodes = new HashMap<String, String>();
 		mnemFormatHash = new HashMap<String, MnemFormat>();
 		mnemFormats = new ArrayList<String>();
-		rawGlobalOpcodesString = null;
+		rawGlobalOpcodesString = "";
+		rawLinesString = "";
 		rawLines = new ArrayList<String>();
 	}
 
@@ -77,6 +79,15 @@ public class MnemonicData {
 	
 	public void addToRawLines(String str){
 		
-		rawLines.add(str);
+		this.rawLines.add(str);
+		this.rawLinesString += str + "\n";
+	}
+
+	public String getRawLinesString() {
+		return rawLinesString;
+	}
+
+	public void setRawLinesString(String rawLinesString) {
+		this.rawLinesString = rawLinesString;
 	}
 }
