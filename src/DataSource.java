@@ -107,5 +107,5 @@ public class DataSource {
 
 	public void setMinAdrUnit(int minAdrUnit) {
 		this.minAdrUnit = minAdrUnit;
-	}		
+	}
 }

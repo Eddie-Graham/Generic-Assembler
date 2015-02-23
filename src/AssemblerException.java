@@ -8,10 +8,13 @@
 @SuppressWarnings("serial")
 public class AssemblerException extends Exception {
 
-    public AssemblerException() {}
+    public AssemblerException() {
+    	
+    	super();
+    }
 
-    public AssemblerException(String message)
-    {
+    public AssemblerException(String message){
+    	
        super(message);
     }
 }

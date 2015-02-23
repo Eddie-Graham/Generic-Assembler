@@ -190,7 +190,7 @@ public class FileParser {
 
 			try {
 
-				scanLine(specLine);
+				scanLine(specLine, false, false, true, false, false, false, false, false);
 
 			} catch (AssemblerException e) {
 
@@ -229,7 +229,7 @@ public class FileParser {
 
 			try {
 
-				scanLineForMnemonicData(specLine);
+				scanLine(specLine, true, true, false, true, true, true, true, true);
 
 			} catch (AssemblerException e) {
 
@@ -242,6 +242,8 @@ public class FileParser {
 				foundFormatHeader = true;
 			}
 		}
+		
+		inputFile2.close();
 
 		if (!foundFormatHeader) {
 
@@ -261,11 +263,10 @@ public class FileParser {
 			}
 		}
 
-		inputFile2.close();
-
 		// If missing sections in specification file
 		if (!(foundArchitecture && foundRegisters && foundMnemData
-				&& foundInsFormat && foundAssemblyOpTree && foundEndian && foundMinAdrUnit)) {
+				&& foundInsFormat && foundAssemblyOpTree && foundEndian
+				&& foundMinAdrUnit)) {
 
 			String missingSections = "";
 
@@ -363,7 +364,67 @@ public class FileParser {
 			throw new AssemblerException("Missing section header.");
 	}
 
-	private void scanLine(String specLine) throws AssemblerException {
+//	private void scanLine(String specLine) throws AssemblerException {
+//
+//		// Section labels in specification file not case sensitive
+//		String lowerCaseLine = specLine.toLowerCase();
+//
+//		if (lowerCaseLine.startsWith("architecture:"))
+//			setBooleanValues(true, false, false, false, false, false, false, false);
+//
+//		else if (lowerCaseLine.startsWith("registers:"))
+//			setBooleanValues(false, true, false, false, false, false, false, false);
+//
+//		else if (lowerCaseLine.startsWith("mnemonicdata:"))
+//			setBooleanValues(false, false, true, false, false, false, false, false);
+//
+//		else if (lowerCaseLine.startsWith("instructionformat:"))
+//			setBooleanValues(false, false, false, true, false, false, false, false);
+//
+//		else if (lowerCaseLine.startsWith("assemblyoptree:"))
+//			setBooleanValues(false, false, false, false, true, false, false, false);
+//
+//		else if (lowerCaseLine.startsWith("endian:"))
+//			setBooleanValues(false, false, false, false, false, true, false, false);
+//
+//		else if (lowerCaseLine.startsWith("minaddressableunit:"))
+//			setBooleanValues(false, false, false, false, false, false, true, false);
+//		
+//		else if (lowerCaseLine.startsWith("instructionsize:"))
+//			setBooleanValues(false, false, false, false, false, false, false, true);
+//
+//		else if (architecture)
+//			analyseArchitecture(specLine);
+//
+//		else if (registers)
+//			analyseRegisters(specLine);
+//
+//		else if (mnemonicData);
+//
+//		else if (instructionFormat)
+//			analyseInstructionFormat(specLine);
+//
+//		else if (assemblyOpTree)
+//			analyseAssemblyOpTree(specLine);
+//
+//		else if (endian)
+//			analyseEndian(specLine);
+//
+//		else if (minAddressableUnit)
+//			analyseMinAdrUnit(specLine);
+//		
+//		else if (instructionSize)
+//			analyseInsSize(specLine);
+//
+//		else if (!(specLine.trim().length() == 0))
+//			throw new AssemblerException("Missing section header.");
+//	}
+	
+	private void scanLine(String specLine, boolean ignoreArchitecture,
+			boolean ignoreRegisters, boolean ignoreMnemonicData,
+			boolean ignoreInstructionFormat, boolean ignoreAssemblyOpTree,
+			boolean ignoreEndian, boolean ignoreMinAddressableUnit,
+			boolean ignoreInstructionSize) throws AssemblerException {
 
 		// Section labels in specification file not case sensitive
 		String lowerCaseLine = specLine.toLowerCase();
@@ -389,34 +450,38 @@ public class FileParser {
 		else if (lowerCaseLine.startsWith("minaddressableunit:"))
 			setBooleanValues(false, false, false, false, false, false, true);
 
-		else if (architecture)
+		else if (architecture && !ignoreArchitecture)
 			analyseArchitecture(specLine);
 
-		else if (registers)
+		else if (registers && !ignoreRegisters)
 			analyseRegisters(specLine);
 
-		else if (mnemonicData);
+		else if (mnemonicData && !ignoreMnemonicData)
+			analyseMnemonicData(specLine);
 
-		else if (instructionFormat)
+		else if (instructionFormat && !ignoreInstructionFormat)
 			analyseInstructionFormat(specLine);
 
-		else if (assemblyOpTree)
+		else if (assemblyOpTree && !ignoreAssemblyOpTree)
 			analyseAssemblyOpTree(specLine);
 
-		else if (endian)
+		else if (endian && !ignoreEndian)
 			analyseEndian(specLine);
 
-		else if (minAddressableUnit)
-			analyseMinAdrUnit(specLine);
+		else if (minAddressableUnit && !ignoreMinAddressableUnit)
+			analyseMinAddressableUnit(specLine);
 
-		else if (!(specLine.trim().length() == 0))
-			throw new AssemblerException("Missing section header.");
+//		else if (!(specLine.trim().length() == 0))
+//			throw new AssemblerException("Missing section header.");
 	}
 
-	private void analyseMinAdrUnit(String line) throws AssemblerException {
+	private void analyseMinAddressableUnit(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		if(foundMinAdrUnit)
+			throw new AssemblerException("MinAddressableUnit error: Minimum addressable unit already specified.");
 
 		foundMinAdrUnit = true;
 
@@ -431,8 +496,6 @@ public class FileParser {
 		int minAdrUnit = Integer.parseInt(line);
 
 		data.setMinAdrUnit(minAdrUnit);
-
-		minAddressableUnit = false;
 	}
 
 	private void analyseEndian(String line) throws AssemblerException {
@@ -440,6 +503,9 @@ public class FileParser {
 		if (line.trim().length() == 0)
 			return;
 
+		if(foundEndian)
+			throw new AssemblerException("Endian error: Endian already specified.");
+		
 		foundEndian = true;
 
 		line = line.trim();
@@ -453,9 +519,7 @@ public class FileParser {
 
 		else
 			throw new AssemblerException(
-					"Endian not recognised, \"big\" or \"little\" expected.");
-
-		endian = false;
+					"Endian error: Endian not recognised, \"big\" or \"little\" expected.");
 	}
 
 	private void analyseAssemblyOpTree(String line) throws AssemblerException {
@@ -530,17 +594,19 @@ public class FileParser {
 	 * </pre>
 	 * 
 	 * @param line
+	 * @throws AssemblerException 
 	 */
-	private void analyseArchitecture(String line) {
+	private void analyseArchitecture(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
 			return;
+		
+		if(foundArchitecture)
+			throw new AssemblerException("Architecture error: architecture name already specified.");
 
 		foundArchitecture = true;
 
 		data.setArchitecture(line.trim());
-
-		architecture = false;
 	}
 
 	private void analyseRegisters(String line) throws AssemblerException {
@@ -942,6 +1008,7 @@ public class FileParser {
 	private void endOfFormatErrorCheck() throws AssemblerException {
 
 		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();
+		int totalBits = 0;
 
 		for (String instruction : instructionFormat) {
 
@@ -963,6 +1030,7 @@ public class FileParser {
 			for (String field : instructions) {
 
 				int bits = insFormat.getOperandBitHash().get(field);
+				totalBits += bits;
 
 				if (currentMnemonicData.getGlobalOpCodes().get(field) != null) {
 
@@ -1041,6 +1109,15 @@ public class FileParser {
 				}
 			}
 		}
+		
+		int minAdrUnit = data.getMinAdrUnit();
+
+		if (totalBits % minAdrUnit != 0)
+			throw new AssemblerException(
+					"InstructionFormat error: Instruction size ("
+							+ totalBits
+							+ " bits) should be divisable by the minimum addressable unit ("
+							+ minAdrUnit + ")");
 	}
 
 	private boolean existsInInsFieldLabels(String insFieldLabels, String field) {
@@ -1149,7 +1226,7 @@ public class FileParser {
 
 			insF.getOperands().add(op);
 			insF.getOperandBitHash().put(op, bitSize);
-		}
+		} 
 
 		insF.setInstructionName(insName);
 		insF.setRawLineString(line.trim());

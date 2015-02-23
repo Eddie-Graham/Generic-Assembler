@@ -1,16 +1,17 @@
 section .data
 
+	x .ascii "Hello" 
 
 section .text
 	global main
 main:
 
-   loop ADD bh, al
+  loop ADD bh, al
 		ADD ecx, eax
 		ADD edi, [ebx]
 		ADD ebx, [ebp+1]
-	 	ADD ebp, [5+eax*1]
-		ADD edx, 5
+		ADD ebp, [5+eax*1]
+		ADD edx, 120
 		ADD ecx, [ebx+edi*4]
 		JMP loop
 		 

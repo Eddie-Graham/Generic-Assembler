@@ -66,8 +66,10 @@ public class Main {
 		
 //		System.out.println("minAdrUnit " + data.getMinAdrUnit());
 		
+//		System.out.println(data.getInstructionSizes());
 		
-		Assembler assembler	 = new Assembler(data);
+		
+		Assembler assembler = new Assembler(data);
 		
 	}
 }

@@ -1,17 +1,28 @@
 section .data
 
-x 4MAU "He"
+string .ascii "Hello, World"
+
+int 6MAU 17171
+
+hello 2MAU
 
 
 section .text
 	global main
 main:
 
-			LW $t0, x
-			ADD $t1, $t1, $t1	
-			ADDI $t1, $t1, 3
-			AND $t1, $t2, $t3
-			LB $t0, 0($t1)
+			;LI $v0, 4
+			
+			ADDIU $v0, zero, 4
+			LUI $at, 1001
+			ORI $a0, $at, string
+			syscall 
+
+			;LW $t0, x
+			;ADD $t1, $t1, $t1	
+			;ADDI $t1, $t1, 3
+			;AND $t1, $t2, $t3
+			;LB $t0, 0($t1)
 
 
 
