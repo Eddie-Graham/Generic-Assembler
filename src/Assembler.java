@@ -554,8 +554,8 @@ public class Assembler {
 
 		String insFieldLabels = format.getInsFieldLabels();
 
-		HashMap<String, String> insFieldHash = null;
-		String relevantOperands = null;
+		HashMap<String, String> insFieldHash = null;		
+		ArrayList<String> relevantOperands = null;
 
 		if (insFieldLabels != "") {
 
@@ -1269,13 +1269,14 @@ public class Assembler {
 
 		return mnemData;
 	}
-
+	
 	private boolean formatMatch(String mnemFormat) {
 
 		String[] splitFormat = mnemFormat.split("[,\\s]+");
 
 		int i = 0;
-		boolean legit = false;
+		boolean found = false;
+		boolean optional = false;
 
 		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
 
@@ -1286,22 +1287,23 @@ public class Assembler {
 
 				if (pathTerm.equals(splitFormat[i])) {
 
-					legit = true;
-					i++;
-					break;
+					found = true;
 				}
 
 				else if ((pathTerm.charAt(pathTerm.length() - 1) == '?')) {
 
-					legit = true;
-					break;
+					optional = true;
 				}
 			}
-
-			if (!legit)
+			
+			if(found && !optional)	// assumes operands in opformat are not optional
+				i++;
+			
+			else if (!found && !optional)
 				return false;
 
-			legit = false;
+			found = false;
+			optional = false;
 		}
 
 		if (i != splitFormat.length)
@@ -1384,9 +1386,33 @@ public class Assembler {
 		return binary;
 	}
 
-	private String getRelevantOperands(String format) {
+//	private String getRelevantOperands(String format) {
+//
+//		String operands = "";
+//		String[] formatSplit = format.split("[,\\s]+");
+//
+//		int i = 0;
+//
+//		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
+//
+//			for (String pathTerm : path) {
+//
+//				if (pathTerm.equals(formatSplit[i])) {
+//
+//					operands += getAssemblyOperand(path) + " ";
+//					i++;
+//					break;
+//				}
+//			}
+//		}
+//
+//		return operands.trim();
+//	}
+	
+	private ArrayList<String> getRelevantOperands(String format) {
 
-		String operands = "";
+		ArrayList<String> relevantOperands = new ArrayList<String>();
+
 		String[] formatSplit = format.split("[,\\s]+");
 
 		int i = 0;
@@ -1397,14 +1423,14 @@ public class Assembler {
 
 				if (pathTerm.equals(formatSplit[i])) {
 
-					operands += getAssemblyOperand(path) + " ";
+					relevantOperands.add(getAssemblyOperand(path));
 					i++;
 					break;
 				}
 			}
 		}
 
-		return operands.trim();
+		return relevantOperands;
 	}
 
 	private String getAssemblyOperand(ArrayList<String> path) {
@@ -1415,65 +1441,97 @@ public class Assembler {
 
 		return operand;
 	}
-	
-	private HashMap<String, String> mapInsFieldLabels(String assemblyLine,
-			String insLabels) throws AssemblerException {
+
+	private HashMap<String, String> mapInsFieldLabels(
+			ArrayList<String> relevantOperands, String insFieldLine)
+			throws AssemblerException {
 
 		HashMap<String, String> insHash = new HashMap<String, String>();
 
-		insLabels = insLabels.replaceAll("\\s+", " ");
+		String[] instructionLabels = insFieldLine.split("[\\s]+");
 
-		String[] splitInsTerms = insLabels.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		if (relevantOperands.size() != instructionLabels.length) {
 
-		String prefixes = "";
+			String error = "Operand token mismatch between source assembly instruction operands and instruction field labels:\n\n";
 
-		for (String str : splitInsTerms) {
+			for (String operand : relevantOperands)
+				error += operand + " ";
 
-			if (!isAlphaNumeric(str))
-				prefixes += "\\" + str;
-		}
-
-		String[] splitAssemblyTerms = assemblyLine.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
-
-		// System.out.println(Arrays.toString(splitAssemblyTerms));
-		// System.out.println(Arrays.toString(splitInsTerms));
-
-		if (splitAssemblyTerms.length != splitInsTerms.length) {
-
-			String error = "Could not map instruction fields to assembly line:\n\n"
-					+ insLabels;
+			error += "\n" + insFieldLine;
 
 			throw new AssemblerException(error);
 		}
 
-		int i = 0;
+		int i1 = 0;
 
-		for (String insTerm : splitInsTerms) {
+		for (String insFieldToken : instructionLabels) {
 
-			if (!isAlphaNumeric(insTerm)) {
+			String operandToken = relevantOperands.get(i1);
 
-				if (!insTerm.equals(splitAssemblyTerms[i])) {
+			String[] splitInsTokens = insFieldToken.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 
-					String error = "Could not map instruction fields to assembly line:\n\n"
-							+ insLabels;
+			String prefixes = "";
 
-					throw new AssemblerException(error);
+			for (String str : splitInsTokens) {
+
+				if (!isAlphaNumeric(str))
+					prefixes += "\\" + str;
+			}
+
+			String[] splitOpTokens;
+
+			if (prefixes.isEmpty()) {
+
+				splitOpTokens = new String[1];
+				splitOpTokens[0] = operandToken;
+			}
+
+			else
+				splitOpTokens = operandToken.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
+
+			if (splitOpTokens.length != splitInsTokens.length) {
+
+				String error = "Syntax mismatch between instruction operands and instruction field labels:\n\n";
+
+				for (String operand : relevantOperands)
+					error += operand + " ";
+
+				error += "\n" + insFieldLine;
+
+				throw new AssemblerException(error);
+			}
+
+			int i2 = 0;
+
+			for (String insTerm : splitInsTokens) {
+
+				if (!isAlphaNumeric(insTerm)) {
+
+					if (!insTerm.equals(splitOpTokens[i2])) {
+
+						String error = "Could not map instruction fields to assembly line:\n\n"
+								+ insFieldLine;
+
+						throw new AssemblerException(error);
+					}
+
 				}
 
+				else {
+
+					String assemblyTerm = splitOpTokens[i2];
+					insHash.put(insTerm, assemblyTerm);
+				}
+
+				i2++;
 			}
 
-			else {
-
-				String assemblyTerm = splitAssemblyTerms[i];
-				insHash.put(insTerm, assemblyTerm);
-			}
-
-			i++;
+			i1++;
 		}
 
 		return insHash;
 	}
-
+	
 	private ArrayList<String> splitToMinAdrUnits(String binary) {
 
 		ArrayList<String> binaryArray = new ArrayList<String>();
