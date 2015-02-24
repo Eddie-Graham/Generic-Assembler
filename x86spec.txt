@@ -18,7 +18,7 @@ displacement : dis(32)
 
 registers:	
 
-al  000B 
+al  000B
 cl  001B
 dl  010B 
 bl  011B
@@ -125,47 +125,46 @@ label : LABEL
 mnemonicdata:	
 	
 ADD 
-	op=000000	
-	
-	mnem reg32, reg32 
-		mnem reg rm 
-		d=0, s=0, mod=11		
-		opcode mod-r/m
-
+	op=000000B	
+				
 	mnem reg8, reg8 
 		mnem reg rm 		
-		d=1, s=0, mod=11
+		d=1B, s=0B, mod=11B
 		opcode mod-r/m	
+		
+	mnem reg32, reg32
+		mnem reg rm 
+		d=0B, s=0B, mod=11B		
+		opcode mod-r/m
 		
 	mnem reg32, dirReg
 		mnem reg [rm]
-		d=1, s=1, mod=00
+		d=1B, s=1B, mod=00B
 		opcode mod-r/m
 		
 	mnem reg32, baseIndDisp
 		mnem reg [rm+dis]
-		d=1, s=1, mod=10
+		d=1B, s=1B, mod=10B
 		opcode mod-r/m displacement
 		
-	mnem reg32, scaleOne	;sib
+	mnem reg32, scaleOne	
 		mnem reg [dis+index*1]
-		d=1, s=1, mod=00, rm=100, base=101, ss=00
+		d=1B, s=1B, mod=00B, rm=100B, base=101B, ss=00B
 		opcode mod-r/m sib displacement
 		
 	mnem reg32, imm
 		mnem reg dis
-		d=1, s=1, mod=00, rm=101
+		d=1B, s=1B, mod=00B, rm=101B
 		opcode mod-r/m displacement
 		
 	mnem reg32, baseIndScale
 		mnem reg [base+index*4]
-		d=1, s=1, ss=10, mod=00, rm=100
+		d=1B, s=1B, ss=10B, mod=00B, rm=100B
 		opcode mod-r/m sib
-		
-		
+				
 JMP
-	op=11101011
-	
+	op=11101011B
+		
 	mnem adrLabel
 		mnem adr
 		--

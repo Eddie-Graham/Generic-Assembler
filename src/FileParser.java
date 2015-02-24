@@ -540,74 +540,77 @@ public class FileParser {
 		String[] tokens = line.split("\\s+");
 
 		String regLabel = tokens[0];
-		String valueAndType = tokens[1];
-
-		char dataType = valueAndType.charAt(valueAndType.length() - 1);
-		String regValue = valueAndType.substring(0, valueAndType.length() - 1);
+		String valueAndBase = tokens[1];
+		
+		String regValue = getBinaryFromBase(valueAndBase);
+		
+		data.getRegisterHash().put(regLabel, regValue);
+	}
+	
+	private String getBinaryFromBase(String valueAndBase) throws AssemblerException{
+		
+		char base = valueAndBase.charAt(valueAndBase.length() - 1);
+		String value = valueAndBase.substring(0, valueAndBase.length() - 1);
 
 		// Binary
-		if (dataType == 'B') {
+		if (base == 'B') {
 
-			if (regValue.isEmpty())
+			if (value.isEmpty())
 				throw new AssemblerException(
 						"Registers error: Syntax error, <registerName> <value><B/H/I> expected.\n"
 								+ "Binary value missing.");
 
-			if (!isBinary(regValue))
-				throw new AssemblerException("Registers error: \"" + regValue
+			if (!isBinary(value))
+				throw new AssemblerException("Registers error: \"" + value
 						+ "\" is not a valid binary value.");
-
-			data.getRegisterHash().put(regLabel, regValue);
 		}
 
 		// Hex
-		else if (dataType == 'H') {
+		else if (base == 'H') {
 
-			if (regValue.isEmpty())
+			if (value.isEmpty())
 				throw new AssemblerException(
 						"Registers error: Syntax error, <registerName> <value><B/H/I> expected.\n"
 								+ "Hex value missing.");
 
 			try {
 				
-				regValue = Assembler.hexToBinary(regValue);
+				value = Assembler.hexToBinary(value);
 				
 			} catch (NumberFormatException e) {
 				
-				throw new AssemblerException("Registers error: \"" + regValue
+				throw new AssemblerException("Registers error: \"" + value
 						+ "\" is not a valid hex value.");
 			}
-
-			data.getRegisterHash().put(regLabel, regValue);
 		}
 
 		// Integer
-		else if (dataType == 'I') {
+		else if (base == 'I') {
 
-			if (regValue.isEmpty())
+			if (value.isEmpty())
 				throw new AssemblerException(
 						"Registers error: Syntax error, <registerName> <value><B/H/I> expected.\n"
 								+ "Integer value missing.");
 
 			try {
 				
-				regValue = Assembler.intToBinary(regValue);
+				value = Assembler.intToBinary(value);
 				
 			} catch (NumberFormatException e) {
 				
-				throw new AssemblerException("Registers error: \"" + regValue
+				throw new AssemblerException("Registers error: \"" + value
 						+ "\" is not a valid integer.");
 			}
-
-			data.getRegisterHash().put(regLabel, regValue);
 		}
 
 		else
 			throw new AssemblerException(
 					"Registers error: Syntax error, <registerName> <value><B/H/I> expected.\n"
 							+ "Last character of second string (\""
-							+ valueAndType
+							+ valueAndBase
 							+ "\") should indicate data type (\"B\", \"H\" or \"I\").");
+		
+		return value;
 	}
 
 	private void analyseMnemonicData(String line) throws AssemblerException {
@@ -850,7 +853,13 @@ public class FileParser {
 				for (String token : tokens) {
 
 					String[] elements = token.split("=");
-					currentMnemFormat.getOpcodes().put(elements[0], elements[1]);
+					
+					String opcode = elements[0];
+					
+					String valueAndBase = elements[1];
+					String binary = getBinaryFromBase(valueAndBase);
+					
+					currentMnemFormat.getOpcodes().put(opcode, binary);
 				}
 			}
 
@@ -1081,7 +1090,13 @@ public class FileParser {
 		for (String token : tokens) {
 
 			String[] elements = token.split("=");
-			currentMnemonicData.getGlobalOpCodes().put(elements[0], elements[1]);
+			
+			String opcode = elements[0];
+			
+			String valueAndBase = elements[1];
+			String binary = getBinaryFromBase(valueAndBase);
+			
+			currentMnemonicData.getGlobalOpCodes().put(opcode, binary);
 		}
 
 		currentMnemonicData.setRawGlobalOpcodesString(line);

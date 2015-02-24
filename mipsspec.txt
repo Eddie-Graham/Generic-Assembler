@@ -101,7 +101,7 @@ label: LABEL
 mnemonicdata:
 
 ADD
-	opcode=000000, func=100000, shamt=00000
+	opcode=000000B, func=100000B, shamt=00000B
 
 	mnem reg, reg, reg
 		mnem rd rs rt
@@ -109,7 +109,7 @@ ADD
 		R-type
 		
 ADDI
-	opcode=001000
+	opcode=001000B
 
 	mnem reg, reg, imm
 		mnem rt rs immediate
@@ -117,7 +117,7 @@ ADDI
 		I-type
 		
 AND
-	opcode=000000, shamt=00000, func=100100
+	opcode=000000B, shamt=00000B, func=100100B
 	
 	mnem reg, reg, reg
 		mnem rd rs rt
@@ -126,7 +126,7 @@ AND
 		
 		
 LB
-	opcode=100000
+	opcode=100000B
 	
 	mnem reg, mem
 		mnem rt immediate(rs)
@@ -134,22 +134,22 @@ LB
 		I-type
 		
 LW	
-	opcode=100011
+	opcode=100011B
 
 	mnem reg, LABEL
 		mnem rt immediate
-		generic = 00111100000000010001000000000001, rs =1
+		generic = 00111100000000010001000000000001B, rs =1B
 		lw I-type
 		
 LI	
 
 	mnem reg, imm
 		mnem rt immediate
-		opcode = 001001, rs=0		
+		opcode = 001001B, rs=0B
 		I-type
 		
 ADDIU
-	opcode = 001001
+	opcode = 001001B
 
 	mnem reg, reg, imm
 		mnem rt rs immediate
@@ -157,15 +157,15 @@ ADDIU
 		I-type
 		
 LUI
-	opcode =001111
+	opcode =001111B
 	
 	mnem reg, imm
 		mnem rt immediate
-		rs=0
+		rs=0B
 		I-type
 		
 ORI
-	opcode = 001101
+	opcode = 001101B
 	
 	mnem reg, reg, LABEL
 		mnem rt rs immediate
@@ -173,7 +173,7 @@ ORI
 		I-type
 		
 syscall
-	call = 1100
+	call = 1100B
 	
 	mnem
 		--

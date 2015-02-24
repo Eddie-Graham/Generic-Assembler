@@ -83,7 +83,7 @@ label : LABEL
 mnemonicdata:
 		
 LINK
-	op=0100111001010
+	op=0100111001010B
 			
 	mnem regDirect, imm 
 		mnem reg #dis
@@ -91,7 +91,7 @@ LINK
 		opcode displacement	
 						
 BRA 
-	op=01100000
+	op=01100000B
 	
 	mnem label
 		mnem adr

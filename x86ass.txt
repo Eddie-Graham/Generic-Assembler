@@ -6,7 +6,7 @@ section .text
 	global main
 main:
 
-  loop ADD bh, al
+   loop ADD bh, al
 		ADD ecx, eax
 		ADD edi, [ebx]
 		ADD ebx, [ebp+1]
