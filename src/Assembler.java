@@ -243,38 +243,47 @@ public class Assembler {
 		if (mnemData == null)
 			throw new AssemblerException("Unable to find mnemonic in mnemonicData.");
 
-		ArrayList<String> mnemFormats = mnemData.getMnemFormats();
+		ArrayList<String> operandFormats = mnemData.getMnemFormats();
 
-		String mnemFormat = null;
+		ArrayList<String> legitOpFormats = new ArrayList<String>();
 
-		for (String format : mnemFormats) {
+		for (String opFormat : operandFormats) {
 
-			if (formatMatch(format)) {
-
-				mnemFormat = format; // find type
-				break;
-			}
+			if (formatMatch(opFormat))
+				legitOpFormats.add(opFormat);
 		}
 
-		if (mnemFormat == null) {
+		if (legitOpFormats.isEmpty()) {
 
 			String error = "Incorrectly formatted operands. Expected:\n";
 
-			for (String format : mnemFormats)
-				error += "\n" + format;
+			for (String opFormat : operandFormats)
+				error += "\n" + opFormat;
 
 			throw new AssemblerException(error);
 		}
+		
+		String foundOpFormat = null;
 
-		if (!correctSyntax(mnemFormat, assemblyLine)) {
-
+		for(String opFormat: legitOpFormats){
+			
+			if(correctSyntax(opFormat, assemblyLine)){
+				foundOpFormat = opFormat;
+				break;
+			}
+		}
+		
+		if(foundOpFormat == null){
+			
 			String error = "Assembly line syntax error. Check use of commas and spaces between operands. Expected syntax:\n";
-			error += "\n" + mnemFormat;
+			
+			for(String opFormat: legitOpFormats)
+				error += "\n" + opFormat;
 
 			throw new AssemblerException(error);
 		}
 
-		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);
+		MnemFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
 
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
@@ -501,20 +510,47 @@ public class Assembler {
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
-		ArrayList<String> mnemFormats = mnemData.getMnemFormats();
+		ArrayList<String> operandFormats = mnemData.getMnemFormats();
 
-		String mnemFormat = null;
+		ArrayList<String> legitOpFormats = new ArrayList<String>();
 
-		for (String format : mnemFormats) {
+		for (String opFormat : operandFormats) {
 
-			if (formatMatch(format)) {
+			if (formatMatch(opFormat))
+				legitOpFormats.add(opFormat);
+		}
 
-				mnemFormat = format; // find type
+		if (legitOpFormats.isEmpty()) {
+
+			String error = "Incorrectly formatted operands. Expected:\n";
+
+			for (String opFormat : operandFormats)
+				error += "\n" + opFormat;
+
+			throw new AssemblerException(error);
+		}
+		
+		String foundOpFormat = null;
+
+		for(String opFormat: legitOpFormats){
+			
+			if(correctSyntax(opFormat, assemblyLine)){
+				foundOpFormat = opFormat;
 				break;
 			}
 		}
+		
+		if(foundOpFormat == null){
+			
+			String error = "Assembly line syntax error. Check use of commas and spaces between operands. Expected syntax:\n";
+			
+			for(String opFormat: legitOpFormats)
+				error += "\n" + opFormat;
 
-		MnemFormat format = mnemData.getMnemFormatHash().get(mnemFormat);
+			throw new AssemblerException(error);
+		}
+
+		MnemFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
 
 		String insFieldLabels = format.getInsFieldLabels();
 
@@ -523,7 +559,7 @@ public class Assembler {
 
 		if (insFieldLabels != "") {
 
-			relevantOperands = getRelevantOperands(mnemFormat);
+			relevantOperands = getRelevantOperands(foundOpFormat);
 			insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);
 		}
 

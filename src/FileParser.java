@@ -726,7 +726,7 @@ public class FileParser {
 		else if (atLocalInsFormat) {
 
 			throw new AssemblerException(
-					"MnemonicData error: Line format/indentation error, instruction format line expected.\n"
+					"MnemonicData error: Line format or indentation error, instruction format line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 		
@@ -747,7 +747,7 @@ public class FileParser {
 		}
 		
 		else{
-			throw new AssemblerException("HEEEEEEREEEEEE");
+			throw new AssemblerException("HEEEEEEREEEEEE");	//TODO
 		}
 	}
 
