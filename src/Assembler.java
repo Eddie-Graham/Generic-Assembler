@@ -76,22 +76,16 @@ public class Assembler {
 
 	private void assemble() {
 
-		if (!data.isErrorInSpecFile()) {
+		firstPass();
 
-			firstPass();
+		insNumber++;
+		insAdrTable.put(insNumber, locationCounter); // to account for last line
 
-			insNumber++;
-			insAdrTable.put(insNumber, locationCounter); // to account for last line
+		insNumber = 0;
 
-			insNumber = 0;
+		secondPass();
 
-			secondPass();
-		}
-
-		else
-			objectCode.add("Error in specification file. See \"spec_error_report.txt\"");
-
-		writeObjectCodeToFile();
+		writeLinesToFile("object_code.txt", objectCode);
 	}
 
 	private void firstPass() {
@@ -123,7 +117,7 @@ public class Assembler {
 					
 					String error = getErrorMessage(lineCounter, assemblyLine, e.getMessage());
 					objectCode.add(error);
-					writeObjectCodeToFile();
+					writeLinesToFile("object_code.txt", objectCode);
 					System.exit(0);
 				}
 			}
@@ -234,6 +228,8 @@ public class Assembler {
 		assemblyLine = assemblyLine.trim();
 
 		analyseWithAssemblyOpTree(assemblyLine);
+		
+		System.out.println(legitAssemblyOpTreePaths);
 
 		if (legitAssemblyOpTreePaths.isEmpty())
 			throw new AssemblerException("Line not consistent with assemblyOpTree");
@@ -354,7 +350,7 @@ public class Assembler {
 					
 					String error = getErrorMessage(lineCounter, assemblyLine, e.getMessage());
 					objectCode.add(error);
-					writeObjectCodeToFile();
+					writeLinesToFile("object_code.txt", objectCode);
 					System.exit(0);
 				}
 			}
@@ -664,13 +660,13 @@ public class Assembler {
 		System.out.println(objectCodeLine);
 	}
 
-	private void writeObjectCodeToFile() {
+	static public void writeLinesToFile(String filename, ArrayList<String> lines) {
 
 		File file = null;
 
 		try {
 			
-			file = new File("object.txt");
+			file = new File(filename);
 			file.createNewFile();
 			
 		} catch (Exception e) {
@@ -682,7 +678,7 @@ public class Assembler {
 			
 			FileWriter writer = new FileWriter(file);
 
-			for (String line : objectCode)
+			for (String line : lines)
 				writer.write(line + "\n");
 
 			writer.close();

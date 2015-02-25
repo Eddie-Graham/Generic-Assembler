@@ -93,35 +93,15 @@ public class FileParser {
 		
 		scanSpecFile(specFile);
 
-		writeErrorReport();
-	}
-
-	private void writeErrorReport() {
-
-		File file = null;
-
-		try {
+		Assembler.writeLinesToFile("spec_error_report.txt", errorReport);
+		
+		if(!errorReport.isEmpty()){
 			
-			file = new File("spec_error_report.txt");
-			file.createNewFile();
+			ArrayList<String> empty = new ArrayList<String>();
+			empty.add("Error in specification file, see \"spec_error_report.text\".");
 			
-		} catch (Exception e) {
-			
-			e.printStackTrace();
-		}
-
-		try {
-			
-			FileWriter writer = new FileWriter(file);
-
-			for (String line : errorReport)
-				writer.write(line + "\n");
-
-			writer.close();
-
-		} catch (IOException e) {
-			
-			e.printStackTrace();
+			Assembler.writeLinesToFile("object_code.txt", empty);
+			System.exit(0);
 		}
 	}
 
@@ -194,15 +174,18 @@ public class FileParser {
 
 			} catch (AssemblerException e) {
 
-				data.setErrorInSpecFile(true);
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
 			}
 		}
 		
-		if(data.isErrorInSpecFile()){
+		if(!errorReport.isEmpty()){
 			
-			writeErrorReport();
+			ArrayList<String> empty = new ArrayList<String>();
+			empty.add("Error in specification file, see \"spec_error_report.text\".");
+			
+			Assembler.writeLinesToFile("spec_error_report.txt", errorReport);
+			Assembler.writeLinesToFile("object_code.txt", empty);
 			System.exit(0);			// TODO make empty object file?
 		}
 
@@ -239,7 +222,6 @@ public class FileParser {
 
 			} catch (AssemblerException e) {
 
-				data.setErrorInSpecFile(true);
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
 
@@ -263,7 +245,6 @@ public class FileParser {
 
 			} catch (AssemblerException e) {
 
-				data.setErrorInSpecFile(true);
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
 			}
@@ -306,7 +287,6 @@ public class FileParser {
 				
 			} catch (AssemblerException e) {
 				
-				data.setErrorInSpecFile(true);
 				String error = e.getMessage();
 				errorReport.add(error);
 			}

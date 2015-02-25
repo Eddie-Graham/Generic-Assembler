@@ -12,8 +12,6 @@ public class DataSource {
 	
 	private ArrayList<String> assemblyCode;	
 	
-	private boolean errorInSpecFile;
-	
 	private String architecture;
 	private HashMap<String, MnemonicData> mnemonicTable;
 	private HashMap<String, InstructionFormatData> instructionFormat;	
@@ -26,8 +24,6 @@ public class DataSource {
 	public DataSource(){
 		
 		assemblyCode = new ArrayList<String>();	
-		
-		errorInSpecFile = false;
 		
 		architecture = null;
 		mnemonicTable = new HashMap<String, MnemonicData>();
@@ -43,14 +39,6 @@ public class DataSource {
 
 	public void setAssemblyCode(ArrayList<String> assemblyCode) {
 		this.assemblyCode = assemblyCode;
-	}
-
-	public boolean isErrorInSpecFile() {
-		return errorInSpecFile;
-	}
-
-	public void setErrorInSpecFile(boolean errorInSpecFile) {
-		this.errorInSpecFile = errorInSpecFile;
 	}
 
 	public String getArchitecture() {
