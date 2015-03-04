@@ -37,7 +37,6 @@ public class Assembler {
 	private HashMap<String, String> assemblyTermTypeHash;
 
 	private boolean atData, atText;
-	private boolean first, second;
 
 	private boolean debug = false;
 
@@ -65,9 +64,6 @@ public class Assembler {
 
 		atData = false;
 		atText = false;
-
-		first = false;
-		second = false;
 
 		objectCode = new ArrayList<String>();
 
@@ -128,38 +124,24 @@ public class Assembler {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
-		if (assemblyLine.startsWith("section .data"))
-			setBooleanValues(true, false);
+		if (assemblyLine.startsWith("section .data")){
+			
+			atData = true;
+			atText = false;
+		}
 
 		else if (assemblyLine.startsWith("section .text")) {
 			
-			setBooleanValues(false, true);
-			first = true;
+			atData=false;
+			atText=true;
 		}
 
 		else if (atData) 
 			analyseDataFirstPass(assemblyLine);
 
-		else if (atText) {
-
-			if (first) {
-
-				if (assemblyLine.startsWith("\tglobal main")) {
-
-					first = false;
-					second = true;
-				}
-			}
-
-			else if (second) {
-
-				if (assemblyLine.startsWith("main:"))
-					second = false;
-			}
-
-			else
-				analyseInstructionsFirstPass(assemblyLine);
-		}
+		else if (atText) 
+			analyseInstructionsFirstPass(assemblyLine);
+		
 	}
 
 	private void analyseDataFirstPass(String assemblyLine) throws AssemblerException {
@@ -175,11 +157,11 @@ public class Assembler {
 		boolean legitUninitializedDataLine = Pattern.matches(
 				"[A-Za-z0-9]+\\s+[0-9]+MAU", assemblyLine);
 
-		String[] splitDataLine = assemblyLine.split("\\s+");
-		String label = splitDataLine[0];
-
 		if (!legitIntDataLine && !legitAsciiDataLine && !legitUninitializedDataLine)
 			throw new AssemblerException(".data line incorrect syntax.");
+		
+		String[] splitDataLine = assemblyLine.split("\\s+");
+		String label = splitDataLine[0];
 
 		int noOfMinAdrUnits = 0;
 
@@ -232,7 +214,7 @@ public class Assembler {
 		System.out.println(legitAssemblyOpTreePaths);
 
 		if (legitAssemblyOpTreePaths.isEmpty())
-			throw new AssemblerException("Line not consistent with assemblyOpTree");
+			throw new AssemblerException("Assembly line not consistent with assemblyOpTree. Please check tree.");
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
@@ -251,10 +233,12 @@ public class Assembler {
 
 		if (legitOpFormats.isEmpty()) {
 
-			String error = "Incorrectly formatted operands. Expected:\n";
+			String error = "Incorrectly formatted operands. Expected formats for mnemonic \""+ mnemData.getMnemonic()+"\":\n";
 
 			for (String opFormat : operandFormats)
 				error += "\n" + opFormat;
+			
+			error += "\n\nOperand tree built from assembly line:\n\n" + legitAssemblyOpTreePaths;
 
 			throw new AssemblerException(error);
 		}
@@ -361,38 +345,25 @@ public class Assembler {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
-		if (assemblyLine.startsWith("section .data"))
-			setBooleanValues(true, false);
+		if (assemblyLine.startsWith("section .data")){
+			
+			atData = true;
+			atText = false;
+		}
+			
 
 		else if (assemblyLine.startsWith("section .text")) {
 			
-			setBooleanValues(false, true);
-			first = true;
+			atData = false;
+			atText = true;
 		}
 
 		else if (atData)
 			populateDataSecondPass(assemblyLine);
 
-		else if (atText) {
-
-			if (first) {
-
-				if (assemblyLine.startsWith("\tglobal main")) {
-
-					first = false;
-					second = true;
-				}
-			}
-
-			else if (second) {
-
-				if (assemblyLine.startsWith("main:"))
-					second = false;
-			}
-
-			else
-				populateInstructionSecondPass(assemblyLine);
-		}
+		else if (atText) 
+			populateInstructionSecondPass(assemblyLine);
+		
 	}
 
 	private void populateDataSecondPass(String assemblyLine) throws AssemblerException {
@@ -695,17 +666,11 @@ public class Assembler {
 		msg += "Exception at line " + lineCounter + " :\n";
 		msg += "\n";
 		msg += assemblyLine + "\n";
-		msg += "\n";
+		msg += "------------------------------------------\n";
 		msg += "\n";
 		msg += message + "\n\n";
 
 		return msg;
-	}
-
-	private void setBooleanValues(boolean atData, boolean atText) {
-
-		this.atData = atData;
-		this.atText = atText;
 	}
 
 	private String dataOffset(String assemblyTerm, int bits) {
@@ -720,13 +685,204 @@ public class Assembler {
 		return binary;
 	}
 
+//	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
+//
+//		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
+//		String assemblyOpTreeRoot = assemblyOpTree.getRootToken();
+//
+//		ArrayList<String> rootTerm = new ArrayList<String>();
+//		rootTerm.add(assemblyOpTreeRoot);
+//
+//		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
+//		ArrayList<String> currentPath = new ArrayList<String>();
+//
+//		ArrayList<String> fullTermsIter = new ArrayList<String>();
+//		fullTermsIter.add(assemblyOpTreeRoot);
+//
+//		ArrayList<String> assemblyList = new ArrayList<String>();
+//
+//		String[] assemblySplit = assemblyLine.split("\\s+"); // space
+//
+//		for (String str : assemblySplit) {
+//
+//			if (!str.matches(",+")) {
+//
+//				str = str.replaceAll("^,+", "");
+//				str = str.replaceAll(",+$", "");
+//
+//				assemblyList.add(str);
+//			}
+//		}
+//
+//		analyseOperands(rootTerm, assemblyList, rootTerm, fullTermsIter, paths,
+//				currentPath, assemblyOpTreeRoot);
+//	}
+//
+//	private boolean analyseOperands(ArrayList<String> parseTerms,
+//			ArrayList<String> assemblyListIter,
+//			ArrayList<String> parseTermsIter,
+//			ArrayList<String> fullParseTermsIter,
+//			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath,
+//			String parent) {
+//
+//		boolean done = false;
+//
+//		if (debug) {
+//			System.out.println("--------------------");
+//			System.out.println("terms: " + parseTerms);
+//			System.out.println("parent: " + parent);
+//			System.out.println("paths: " + paths);
+//			System.out.println("curpath: " + currentPath);
+//			System.out.println("asslist: " + assemblyListIter);
+//			System.out.println("fulltermsIter: " + fullParseTermsIter);
+//			System.out.println("termsIter: " + parseTermsIter);
+//		}
+//
+//		for (String parseTerm : parseTerms) {
+//
+//			if (debug)
+//				System.out.println(parseTerm);
+//
+//			String[] splitParseTerm = parseTerm.split("\\s+");
+//
+//			if (splitParseTerm.length > 1) { // more than one term, update iter
+//
+//				ArrayList<String> splitParseTermList = new ArrayList<String>();
+//
+//				for (String str : splitParseTerm)
+//					splitParseTermList.add(str);
+//
+//				ArrayList<String> newParseTermsIter = updateTermsIter(splitParseTermList, parseTermsIter, parent);
+//				ArrayList<String> newFullParseTermsIter = updateTermsIter(splitParseTermList, fullParseTermsIter, parent);
+//
+//				done = analyseOperands(splitParseTermList, assemblyListIter,
+//						newParseTermsIter, newFullParseTermsIter, paths,
+//						currentPath, parent);
+//
+//				if (done)
+//					return true;
+//			}
+//
+//			else { // one term
+//
+//				String tempParseTerm = parseTerm.replaceAll("\\?|\\*|\\+", "");
+//
+//				if (parseTerm.charAt(parseTerm.length() - 1) == '+') {
+//
+//					ArrayList<String> oneOrMoreParseTerm = new ArrayList<String>();
+//					String oneOrMore = tempParseTerm + " " + tempParseTerm + "*";
+//					oneOrMoreParseTerm.add(oneOrMore);
+//
+//					ArrayList<String> newParseTermsIter = updateTermsIter(oneOrMoreParseTerm, parseTermsIter, parseTerm);
+//					ArrayList<String> newFullParseTermsIter = updateTermsIter(oneOrMoreParseTerm, fullParseTermsIter, parseTerm);
+//
+//					done = analyseOperands(oneOrMoreParseTerm,
+//							assemblyListIter, newParseTermsIter,
+//							newFullParseTermsIter, paths, currentPath, parent);
+//
+//					if (done)
+//						return true;
+//				}
+//				
+//				else{
+//
+//					ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(tempParseTerm);
+//
+//					ArrayList<String> newCurrentPath = clone(currentPath);
+////					newCurrentPath.add(parseTerm);
+//				
+//					if(parseTerm.charAt(parseTerm.length()-1) == '?')
+//						newCurrentPath.add(parseTerm);
+//				
+//					newCurrentPath.add(tempParseTerm);
+//
+//					if (assemblyOpTreeTerms != null) { // not leaf
+//
+//						if (!(parent.charAt(parent.length() - 1) == '*')) {
+//
+//							ArrayList<String> parseTerm1 = new ArrayList<String>();
+//							parseTerm1.add(parseTerm);
+//
+//							ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
+//							ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
+//
+//							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
+//									newParseTermsIter, newFullParseTermsIter,
+//									paths, newCurrentPath, parseTerm);
+//						}
+//
+//						else
+//							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
+//									parseTermsIter, fullParseTermsIter, paths,
+//									newCurrentPath, parent);
+//
+//						if (done)
+//							return true;
+//					}
+//
+//					else { // leaf
+//
+//						String assemblyTerm = assemblyListIter.get(0);
+//
+//						if (match(parseTerm, assemblyTerm, newCurrentPath)) {
+//
+//							if (debug)
+//								System.out.println("found: " + parseTerm);
+//
+//							if (!legitIter(parseTermsIter, newCurrentPath))
+//								return false;
+//
+//							ArrayList<ArrayList<String>> newPaths = clone2(paths);
+//							newPaths.add(newCurrentPath);
+//
+//							parseTermsIter = updateTermsIter(parseTermsIter,newCurrentPath);
+//							assemblyListIter = removeFirstElement(assemblyListIter);
+//
+//							newCurrentPath = new ArrayList<String>();
+//
+//							if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
+//
+//								if (parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
+//									return false;
+//
+//								else if (!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()) {
+//
+//									if (!legitWithFullTermsIter(fullParseTermsIter,	newPaths))
+//										return false;
+//								}
+//
+//								legitAssemblyOpTreePaths = newPaths; // legit
+//
+//								return true;
+//							}
+//
+//							done = analyseOperands(parseTermsIter,
+//									assemblyListIter, parseTermsIter,
+//									fullParseTermsIter, newPaths, newCurrentPath,
+//									data.getAssemblyOpTree().getRootToken());
+//
+//							if (done)
+//								return true;
+//						}
+//
+//						else { // not found
+//
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		return done;
+//	}
+	
 	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
 
 		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
 		String assemblyOpTreeRoot = assemblyOpTree.getRootToken();
 
-		ArrayList<String> rootTerm = new ArrayList<String>();
-		rootTerm.add(assemblyOpTreeRoot);
+		
+		ArrayList<String> roots = assemblyOpTree.getAssemblyOpTreeHash().get(assemblyOpTreeRoot);
 
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
@@ -749,107 +905,104 @@ public class Assembler {
 			}
 		}
 
-		analyseOperands(rootTerm, assemblyList, rootTerm, fullTermsIter, paths,
-				currentPath, assemblyOpTreeRoot);
+		for(String rootTokens: roots){
+			ArrayList<String> rootTerm = new ArrayList<String>();
+			rootTerm.add(rootTokens);
+			
+			if(analyseOperands(rootTerm, assemblyList, rootTerm, rootTerm, paths,
+				currentPath))
+				break;
+		}
 	}
 
-	private boolean analyseOperands(ArrayList<String> parseTerms,
-			ArrayList<String> assemblyListIter,
-			ArrayList<String> parseTermsIter,
-			ArrayList<String> fullParseTermsIter,
-			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath,
-			String parent) {
+	private boolean analyseOperands(ArrayList<String> tokens,
+			ArrayList<String> assemblyTokens,
+			ArrayList<String> tokensToAnalyse, ArrayList<String> fullExp,
+			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath) {
 
 		boolean done = false;
 
 		if (debug) {
 			System.out.println("--------------------");
-			System.out.println("terms: " + parseTerms);
-			System.out.println("parent: " + parent);
+			System.out.println("terms: " + tokens);
 			System.out.println("paths: " + paths);
 			System.out.println("curpath: " + currentPath);
-			System.out.println("asslist: " + assemblyListIter);
-			System.out.println("fulltermsIter: " + fullParseTermsIter);
-			System.out.println("termsIter: " + parseTermsIter);
+			System.out.println("asslist: " + assemblyTokens);
+			System.out.println("fulltermsIter: " + fullExp);
+			System.out.println("termsIter: " + tokensToAnalyse);
 		}
 
-		for (String parseTerm : parseTerms) {
+		for (String token : tokens) {
 
 			if (debug)
-				System.out.println(parseTerm);
+				System.out.println(token);
 
-			String[] splitParseTerm = parseTerm.split("\\s+");
+			String[] furtherTokenSplit = token.split("\\s+");
 
-			if (splitParseTerm.length > 1) { // more than one term, update iter
+			if (furtherTokenSplit.length > 1) { 
+				
+				ArrayList<String> furtherTokens = new ArrayList<String>();
 
-				ArrayList<String> splitParseTermList = new ArrayList<String>();
+				for (String str : furtherTokenSplit)
+					furtherTokens.add(str);
 
-				for (String str : splitParseTerm)
-					splitParseTermList.add(str);
-
-				ArrayList<String> newParseTermsIter = updateTermsIter(splitParseTermList, parseTermsIter, parent);
-				ArrayList<String> newFullParseTermsIter = updateTermsIter(splitParseTermList, fullParseTermsIter, parent);
-
-				done = analyseOperands(splitParseTermList, assemblyListIter,
-						newParseTermsIter, newFullParseTermsIter, paths,
-						currentPath, parent);
+				done = analyseOperands(furtherTokens, assemblyTokens,
+						tokensToAnalyse, fullExp, paths, currentPath);
 
 				if (done)
 					return true;
+
+				else
+					return false;
 			}
 
 			else { // one term
 
-				String tempParseTerm = parseTerm.replaceAll("\\?|\\*|\\+", "");
+				String tempToken = "";
+				
+				if(token.charAt(token.length()-1) == '?' || token.charAt(token.length()-1) == '*' || token.charAt(token.length()-1) == '+')
+					tempToken = token.substring(0, token.length()-1);
+				
+				else
+					tempToken = token;			
 
-				if (parseTerm.charAt(parseTerm.length() - 1) == '+') {
+				if (token.charAt(token.length() - 1) == '+') {
 
-					ArrayList<String> oneOrMoreParseTerm = new ArrayList<String>();
-					String oneOrMore = tempParseTerm + " " + tempParseTerm + "*";
-					oneOrMoreParseTerm.add(oneOrMore);
+					ArrayList<String> oneOrMoreExp = new ArrayList<String>();
+					String oneOrMore = tempToken + " " + tempToken + "*";
+					oneOrMoreExp.add(oneOrMore);
 
-					ArrayList<String> newParseTermsIter = updateTermsIter(oneOrMoreParseTerm, parseTermsIter, parseTerm);
-					ArrayList<String> newFullParseTermsIter = updateTermsIter(oneOrMoreParseTerm, fullParseTermsIter, parseTerm);
+					ArrayList<String> newTokensToAnalyse = updateExp(oneOrMoreExp, tokensToAnalyse, token);
+					ArrayList<String> newFullExp = updateExp(oneOrMoreExp, fullExp, token);
 
-					done = analyseOperands(oneOrMoreParseTerm,
-							assemblyListIter, newParseTermsIter,
-							newFullParseTermsIter, paths, currentPath, parent);
+					done = analyseOperands(oneOrMoreExp, assemblyTokens,
+							newTokensToAnalyse, newFullExp, paths, currentPath);
 
 					if (done)
 						return true;
+
+					else
+						return false;
 				}
-				
-				else{
 
-					ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(tempParseTerm);
+				else {
 
-					ArrayList<String> newCurrentPath = clone(currentPath);
-//					newCurrentPath.add(parseTerm);
-				
-					if(parseTerm.charAt(parseTerm.length()-1) == '?')
-						newCurrentPath.add(parseTerm);
-				
-					newCurrentPath.add(tempParseTerm);
+					ArrayList<String> assemblyOpTreeToken = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(tempToken);
 
-					if (assemblyOpTreeTerms != null) { // not leaf
+					ArrayList<String> newCurrentPath = new ArrayList<String>(currentPath);
 
-						if (!(parent.charAt(parent.length() - 1) == '*')) {
+					if (token.charAt(token.length() - 1) == '?') {
+						newCurrentPath.add("?");
+					}
 
-							ArrayList<String> parseTerm1 = new ArrayList<String>();
-							parseTerm1.add(parseTerm);
+					if (!(token.startsWith("\"") && token.endsWith("\"")))
+						newCurrentPath.add(tempToken);
 
-							ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
-							ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
+					if (assemblyOpTreeToken != null) { // not leaf
 
-							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
-									newParseTermsIter, newFullParseTermsIter,
-									paths, newCurrentPath, parseTerm);
-						}
-
-						else
-							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
-									parseTermsIter, fullParseTermsIter, paths,
-									newCurrentPath, parent);
+						done = analyseOperands(assemblyOpTreeToken,
+								assemblyTokens, tokensToAnalyse, fullExp,
+								paths, newCurrentPath);
 
 						if (done)
 							return true;
@@ -857,32 +1010,35 @@ public class Assembler {
 
 					else { // leaf
 
-						String assemblyTerm = assemblyListIter.get(0);
+						String assemblyTerm = assemblyTokens.get(0);
 
-						if (match(parseTerm, assemblyTerm, newCurrentPath)) {
+						if (match(tempToken, assemblyTerm)) {
+
+							if(!newCurrentPath.contains(assemblyTerm))
+								newCurrentPath.add(assemblyTerm);
 
 							if (debug)
-								System.out.println("found: " + parseTerm);
+								System.out.println("found: " + token);
 
-							if (!legitIter(parseTermsIter, newCurrentPath))
+							if (!validWithTokensToAnalyse(tokensToAnalyse, newCurrentPath))
 								return false;
 
-							ArrayList<ArrayList<String>> newPaths = clone2(paths);
+							ArrayList<ArrayList<String>> newPaths = new ArrayList<ArrayList<String>>(paths);
 							newPaths.add(newCurrentPath);
 
-							parseTermsIter = updateTermsIter(parseTermsIter,newCurrentPath);
-							assemblyListIter = removeFirstElement(assemblyListIter);
+							tokensToAnalyse = updateTokensToAnalyse(tokensToAnalyse, newCurrentPath);
+							assemblyTokens = removeFirstElement(assemblyTokens);
 
 							newCurrentPath = new ArrayList<String>();
 
-							if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
+							if (tokensToAnalyse.isEmpty() || assemblyTokens.isEmpty()) {
 
-								if (parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
+								if (tokensToAnalyse.isEmpty() && !assemblyTokens.isEmpty())
 									return false;
 
-								else if (!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()) {
+								else if (!tokensToAnalyse.isEmpty()	&& assemblyTokens.isEmpty()) {
 
-									if (!legitWithFullTermsIter(fullParseTermsIter,	newPaths))
+									if (!validWithFullExp(fullExp, newPaths))
 										return false;
 								}
 
@@ -891,10 +1047,9 @@ public class Assembler {
 								return true;
 							}
 
-							done = analyseOperands(parseTermsIter,
-									assemblyListIter, parseTermsIter,
-									fullParseTermsIter, newPaths, newCurrentPath,
-									data.getAssemblyOpTree().getRootToken());
+							done = analyseOperands(tokensToAnalyse,
+									assemblyTokens, tokensToAnalyse, fullExp,
+									newPaths, newCurrentPath);
 
 							if (done)
 								return true;
@@ -911,32 +1066,38 @@ public class Assembler {
 		return done;
 	}
 
-	private ArrayList<String> updateTermsIter(ArrayList<String> parseTermsIter, ArrayList<String> currentPath) {
+	private ArrayList<String> updateTokensToAnalyse(ArrayList<String> tokensToAnalyse, ArrayList<String> currentPath) {
 
 		ArrayList<String> newTermsIter = new ArrayList<String>();
 		String newIterStr = "";
 
-		String termsIter = parseTermsIter.get(0);
+		String termsIter = tokensToAnalyse.get(0);
 		String[] splitTermsIter = termsIter.split("\\s+");
 
 		boolean found = false;
 		int index = 0;
 
-		for (String iterTerm : splitTermsIter) {
-
-			String tempIterTerm = iterTerm.replaceAll("\\?|\\*", "");
+		for (String token : splitTermsIter) {
 
 			for (String pathTerm : currentPath) {
+				
+				String tempToken = "";
+				
+				if(token.charAt(token.length()-1) == '*' || token.charAt(token.length()-1) == '?')
+					tempToken = token.substring(0, token.length()-1);
+				
+				else
+					tempToken = token;
 
-				if (tempIterTerm.equals(pathTerm)) {
+				if (tempToken.equals(pathTerm)) {
 					
 					found = true;
 					break;
 				}
 			}
 
-			if (found && iterTerm.charAt(iterTerm.length() - 1) == '*')
-				return parseTermsIter;
+			if (found && token.charAt(token.length() - 1) == '*')
+				return tokensToAnalyse;
 
 			if (found) {
 
@@ -963,24 +1124,24 @@ public class Assembler {
 		return newTermsIter;
 	}
 
-	private ArrayList<String> updateTermsIter(
-			ArrayList<String> splitParseTermList,
-			ArrayList<String> parseTermsIter, String parent) {
+	private ArrayList<String> updateExp(
+			ArrayList<String> updateExp,
+			ArrayList<String> expToUpdate, String tokenToChange) {
 
 		ArrayList<String> newTermsIter = new ArrayList<String>();
 
 		String newIterStr = "";
 
-		String termsIter = parseTermsIter.get(0);
+		String termsIter = expToUpdate.get(0);
 		String[] splitTermsIter = termsIter.split("\\s+");
 
 		boolean done = false;
 
 		for (String iterTerm : splitTermsIter) {
 
-			if (iterTerm.equals(parent) && !done) {
+			if (iterTerm.equals(tokenToChange) && !done) {
 
-				for (String str : splitParseTermList) {
+				for (String str : updateExp) {
 					
 					newIterStr += str + " ";
 					done = true;
@@ -997,21 +1158,27 @@ public class Assembler {
 		return newTermsIter;
 	}
 
-	private boolean legitIter(ArrayList<String> parseTermsIter,
-			ArrayList<String> newCurrentPath) {
+	private boolean validWithTokensToAnalyse(ArrayList<String> tokensToAnalyse,
+			ArrayList<String> currentPath) {
 
 		boolean legit = false;
 
-		String termsIter = parseTermsIter.get(0);
+		String termsIter = tokensToAnalyse.get(0);
 		String[] splitTermsIter = termsIter.split("\\s+");
 
 		for (String iterTerm : splitTermsIter) {
 
-			String rawIterTerm = iterTerm.replaceAll("\\?|\\*", "");
+			String rawIterTerm = "";
+			
+			if(iterTerm.charAt(iterTerm.length()-1) == '?' || iterTerm.charAt(iterTerm.length()-1) == '*' || iterTerm.charAt(iterTerm.length()-1) == '+')
+				rawIterTerm = iterTerm.substring(0, iterTerm.length()-1);
+			
+			else
+				rawIterTerm = iterTerm;
 
-			for (String pathTerm : newCurrentPath) {
+			for (String pathTerm : currentPath) {
 
-				if (rawIterTerm.equals(pathTerm)) {
+				if (rawIterTerm.equals(pathTerm) || iterTerm.equals(pathTerm)) {
 					
 					legit = true;
 					break;
@@ -1046,7 +1213,7 @@ public class Assembler {
 		return newList;
 	}
 
-	private boolean legitWithFullTermsIter(
+	private boolean validWithFullExp(
 			ArrayList<String> fullParseTermsIter,
 			ArrayList<ArrayList<String>> newPaths) {
 
@@ -1068,7 +1235,15 @@ public class Assembler {
 			else {
 
 				path = newPaths.get(pathCounter);
-				String tempIterTerm = iterTerm.replaceAll("\\?|\\*", "");
+//				String tempIterTerm = iterTerm.replaceAll("\\?|\\*", "");
+				
+				String tempIterTerm = "";
+				
+				if(iterTerm.charAt(iterTerm.length()-1) == '?' || iterTerm.charAt(iterTerm.length()-1) == '*' || iterTerm.charAt(iterTerm.length()-1) == '+')
+					tempIterTerm = iterTerm.substring(0, iterTerm.length()-1);
+				
+				else
+					tempIterTerm = iterTerm;
 
 				if (iterTerm.charAt(iterTerm.length() - 1) == '*') {
 
@@ -1117,8 +1292,7 @@ public class Assembler {
 		return false;
 	}
 
-	private boolean match(String assemblyOpTreeTerm, String assemblyTerm,
-			ArrayList<String> currentPath) {
+	private boolean match(String assemblyOpTreeTerm, String assemblyTerm) {
 
 		if (assemblyOpTreeTerm.startsWith("\"") && assemblyOpTreeTerm.endsWith("\"")) {
 
@@ -1128,11 +1302,10 @@ public class Assembler {
 		}
 
 		else
-			return nestedMatch(assemblyOpTreeTerm, assemblyTerm, currentPath);
+			return nestedMatch(assemblyOpTreeTerm, assemblyTerm);
 	}
 
-	private boolean nestedMatch(String assemblyOpTreeTerm, String assemblyTerm,
-			ArrayList<String> currentPath) {
+	private boolean nestedMatch(String assemblyOpTreeTerm, String assemblyTerm) {
 
 		String[] splitAssemblyOpTreeTerms = assemblyOpTreeTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 
@@ -1174,11 +1347,7 @@ public class Assembler {
 					return false;
 			}
 
-			else if (term.equals(splitAssemblyTerms[i])) {
-
-			}
-
-			else {
+			else if (!term.equals(splitAssemblyTerms[i])){			
 				
 				ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(term);
 
@@ -1188,7 +1357,7 @@ public class Assembler {
 
 					for (String termFromHash : assemblyOpTreeTerms) {
 
-						if (match(termFromHash, splitAssemblyTerms[i], currentPath)) {
+						if (match(termFromHash, splitAssemblyTerms[i])) {
 
 							legit = true;
 							break;
@@ -1234,7 +1403,7 @@ public class Assembler {
 			i++;
 		}
 
-		currentPath.add(assemblyTerm);
+//		currentPath.add(assemblyTerm);
 
 		return true;
 	}
@@ -1286,7 +1455,7 @@ public class Assembler {
 					found = true;
 				}
 
-				else if ((pathTerm.charAt(pathTerm.length() - 1) == '?')) {
+				else if ((pathTerm.equals("?"))) {
 
 					optional = true;
 				}
@@ -1585,32 +1754,32 @@ public class Assembler {
 		return hexObjCode;
 	}
 
-	private ArrayList<ArrayList<String>> clone2(ArrayList<ArrayList<String>> sourceList) {
-
-		ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
-
-		for (ArrayList<String> list : sourceList) {
-
-			ArrayList<String> temp = new ArrayList<String>();
-
-			for (String str : list)
-				temp.add(str);
-
-			newList.add(temp);
-		}
-
-		return newList;
-	}
-
-	private ArrayList<String> clone(ArrayList<String> sourceList) {
-
-		ArrayList<String> newList = new ArrayList<String>();
-
-		for (String str : sourceList)
-			newList.add(str);
-
-		return newList;
-	}
+//	private ArrayList<ArrayList<String>> clone2(ArrayList<ArrayList<String>> sourceList) {
+//
+//		ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
+//
+//		for (ArrayList<String> list : sourceList) {
+//
+//			ArrayList<String> temp = new ArrayList<String>();
+//
+//			for (String str : list)
+//				temp.add(str);
+//
+//			newList.add(temp);
+//		}
+//
+//		return newList;
+//	}
+//
+//	private ArrayList<String> clone(ArrayList<String> sourceList) {
+//
+//		ArrayList<String> newList = new ArrayList<String>();
+//
+//		for (String str : sourceList)
+//			newList.add(str);
+//
+//		return newList;
+//	}
 
 	public static String binaryFromIntFormatted(String intStr, int bits) throws AssemblerException {
 

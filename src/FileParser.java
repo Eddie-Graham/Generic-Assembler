@@ -36,6 +36,7 @@ public class FileParser {
 	private boolean doneGlobalOpcodes, emptyLine, abortMnem;
 	private boolean foundFormatHeader, atLocalInsLabels, atLocalOpcodes, atLocalInsFormat;
 	private boolean firstAssemblyOpTreeEntry;
+	private String rootOpTreeEntry;
 	private MnemonicData currentMnemonicData;
 	private MnemFormat currentMnemFormat;
 
@@ -80,6 +81,7 @@ public class FileParser {
 		atLocalInsFormat = false;
 
 		firstAssemblyOpTreeEntry = true;
+		rootOpTreeEntry = "";
 
 		currentMnemonicData = null;
 		currentMnemFormat = null;
@@ -186,7 +188,7 @@ public class FileParser {
 			
 			Assembler.writeLinesToFile("spec_error_report.txt", errorReport);
 			Assembler.writeLinesToFile("object_code.txt", empty);
-			System.exit(0);			// TODO make empty object file?
+			System.exit(0);			
 		}
 
 		inputFile.close();
@@ -411,6 +413,59 @@ public class FileParser {
 					"Endian error: Endian not recognised, \"big\" or \"little\" expected.");
 	}
 
+//	private void analyseAssemblyOpTree(String line) throws AssemblerException {
+//
+//		if (line.trim().length() == 0)
+//			return;
+//
+//		foundAssemblyOpTree = true;
+//
+//		line = line.trim();
+//
+//		// Legit assemblyOpTree expression:
+//		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
+//		// (!(space|colon))+)*
+//		boolean legitAssemblyOpTreeExp = Pattern.matches(
+//				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
+//
+//		if (!legitAssemblyOpTreeExp)
+//			throw new AssemblerException("AssemblyOpTree error: Syntax error."); // TODO
+//
+//		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
+//
+//		String[] assemblyOpTreeTokens = line.split("[^A-Za-z0-9]+");
+//
+//		for (String assemblyOpTreeToken : assemblyOpTreeTokens)
+//			assemblyOpTree.getAssemblyOpTreeTokens().add(assemblyOpTreeToken);
+//
+//		String[] colonSplit = line.split("(?=[:])|(?<=[:])");
+//
+//		String label = colonSplit[0].trim();
+//		String terms = colonSplit[2].trim();
+//
+//		// First entry must be root term
+//		if (firstAssemblyOpTreeEntry) {
+//
+//			String rootToken = label;
+//			assemblyOpTree.setRootToken(rootToken);
+//			firstAssemblyOpTreeEntry = false;
+//		}
+//
+//		ArrayList<String> termsList = new ArrayList<String>();
+//		termsList.add(terms);
+//
+//		// If label already exists in hash, then add to existing list, else put
+//		// label in hash
+//		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(
+//				label);
+//
+//		if (list != null)
+//			list.add(terms);
+//
+//		else
+//			assemblyOpTree.getAssemblyOpTreeHash().put(label, termsList);
+//	}
+	
 	private void analyseAssemblyOpTree(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
@@ -418,17 +473,13 @@ public class FileParser {
 
 		foundAssemblyOpTree = true;
 
-		line = line.trim();
-
-		// Legit assemblyOpTree expression:
-		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
-		// (!(space|colon))+)*
-		boolean legitAssemblyOpTreeExp = Pattern.matches(
-				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
+		line = line.trim();		
+		
+		boolean legitAssemblyOpTreeExp = Pattern.matches("[^:]*:[^:]*", line);
 
 		if (!legitAssemblyOpTreeExp)
-			throw new AssemblerException("AssemblyOpTree error: Syntax error."); // TODO
-
+			throw new AssemblerException("AssemblyOpTree error: Line syntax error.");
+		
 		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
 
 		String[] assemblyOpTreeTokens = line.split("[^A-Za-z0-9]+");
@@ -436,17 +487,47 @@ public class FileParser {
 		for (String assemblyOpTreeToken : assemblyOpTreeTokens)
 			assemblyOpTree.getAssemblyOpTreeTokens().add(assemblyOpTreeToken);
 
-		String[] colonSplit = line.split("(?=[:])|(?<=[:])");
+		String[] colonSplit = line.split(":");
 
 		String label = colonSplit[0].trim();
-		String terms = colonSplit[2].trim();
+		
+		boolean legitLabel = Pattern.matches("[a-zA-Z0-9]+", label);
+		
+		if(!legitLabel)
+			throw new AssemblerException("label error");
+		
+		String terms = colonSplit[1].trim();
 
 		// First entry must be root term
-		if (firstAssemblyOpTreeEntry) {
+		if (firstAssemblyOpTreeEntry || label.equals(rootOpTreeEntry)) {
+			
+			// Legit assemblyOpTree expression:
+			// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
+			// (!(space|colon))+)*
+			boolean legitRootExp = Pattern.matches(
+					"[^\\s:]+(\\s*[^\\s:]+)*", terms);
 
-			String rootToken = label;
-			assemblyOpTree.setRootToken(rootToken);
-			firstAssemblyOpTreeEntry = false;
+			if (!legitRootExp)
+				throw new AssemblerException("AssemblyOpTree error: Root exp error."); // TODO
+
+			if(firstAssemblyOpTreeEntry){
+				rootOpTreeEntry = label;
+				assemblyOpTree.setRootToken(label);
+				firstAssemblyOpTreeEntry = false;
+			}
+		}
+		
+		else{
+			boolean legitNonRootExp = Pattern.matches(
+					"[^\\s:]+", terms);
+
+			if (!legitNonRootExp)
+				throw new AssemblerException("AssemblyOpTree error: Non root exp error.");
+			
+			else if (terms.charAt(terms.length() - 1) == '*'
+					|| terms.charAt(terms.length() - 1) == '+'
+					|| terms.charAt(terms.length() - 1) == '?')
+				throw new AssemblerException("AssemblyOpTree error: Wildcards (\"*\" or \"+\") can only be applied to tokens in \"root\" statement.");
 		}
 
 		ArrayList<String> termsList = new ArrayList<String>();
@@ -764,7 +845,7 @@ public class FileParser {
 
 		line = line.trim();
 
-		String[] formatTokens = line.split("[^A-Za-z0-9]+");
+		String[] formatTokens = line.split("[^A-Za-z0-9]+");	//TODO
 
 		ArrayList<String> assemblyOpTreeTokens = data.getAssemblyOpTree().getAssemblyOpTreeTokens();
 
