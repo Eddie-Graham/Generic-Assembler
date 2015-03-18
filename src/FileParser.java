@@ -428,26 +428,54 @@ public class FileParser {
 			setBooleanValues(false, false, false, false, false, false, true);
 		}
 
-		else if (architecture && !ignoreArchitecture)
-			analyseArchitecture(specLine);
+		else if (architecture){
+			
+			if(!ignoreArchitecture)
+				analyseArchitecture(specLine);
+		}
 
-		else if (registers && !ignoreRegisters)
-			analyseRegisters(specLine);
+		else if (registers){
+			
+			if(!ignoreRegisters)
+				analyseRegisters(specLine);
+		}
 
-		else if (mnemonicData && !ignoreMnemonicData)
-			analyseMnemonicData(specLine);
+		else if (mnemonicData){
+			
+			if(!ignoreMnemonicData)
+				analyseMnemonicData(specLine);
+		}
 
-		else if (instructionFormat && !ignoreInstructionFormat)
-			analyseInstructionFormat(specLine);
+		else if (instructionFormat){
+			
+			if(!ignoreInstructionFormat)
+				analyseInstructionFormat(specLine);
+		}
 
-		else if (assemblyOpTree && !ignoreAssemblyOpTree)
-			analyseAssemblyOpTree(specLine);
+		else if (assemblyOpTree){
+			
+			if(!ignoreAssemblyOpTree)
+				analyseAssemblyOpTree(specLine);
+		}
 
-		else if (endian && !ignoreEndian)
-			analyseEndian(specLine);
+		else if (endian){
+			
+			if(!ignoreEndian)
+				analyseEndian(specLine);
+		}
 
-		else if (minAddressableUnit && !ignoreMinAddressableUnit)
-			analyseMinAddressableUnit(specLine);		
+		else if (minAddressableUnit){
+			
+			if(!ignoreMinAddressableUnit)
+				analyseMinAddressableUnit(specLine);	
+		}
+		
+		else{
+			
+			if(specLine.trim().length() != 0)
+				throw new AssemblerException("No section header.");
+		}
+			
 	}
 
 	private void analyseMinAddressableUnit(String line) throws AssemblerException {

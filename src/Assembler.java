@@ -37,6 +37,7 @@ public class Assembler {
 	private HashMap<String, String> assemblyTermTypeHash;
 
 	private boolean atData, atText;
+	private boolean dataDeclared, textDeclared;
 
 	private boolean debug = false;
 
@@ -64,6 +65,8 @@ public class Assembler {
 
 		atData = false;
 		atText = false;
+		dataDeclared = false;
+		textDeclared = false;
 
 		objectCode = new ArrayList<String>();
 
@@ -102,8 +105,10 @@ public class Assembler {
 				
 				assemblyLine = "";
 			}
+			
+			assemblyLine = assemblyLine.trim();
 
-			if (assemblyLine.trim().length() > 0) {
+			if (assemblyLine.length() > 0) {
 
 				try {
 					
@@ -122,15 +127,24 @@ public class Assembler {
 	
 	private void analyseLineFirstPass(String assemblyLine) throws AssemblerException {
 
-		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
 		if (assemblyLine.startsWith(".data")){
+			
+			if(dataDeclared)
+				throw new AssemblerException(".data section already declared.");
+			
+			dataDeclared = true;
 			
 			atData = true;
 			atText = false;
 		}
 
 		else if (assemblyLine.startsWith(".text")) {
+			
+			if(textDeclared)
+				throw new AssemblerException(".text section already declared.");
+			
+			textDeclared = true;
 			
 			atData=false;
 			atText=true;
@@ -143,13 +157,11 @@ public class Assembler {
 			analyseInstructionsFirstPass(assemblyLine);
 		
 		else
-			throw new AssemblerException("Unrecognised.");
+			throw new AssemblerException("No section header (\".data\" or \".text\").");
 		
 	}
 
 	private void analyseDataFirstPass(String assemblyLine) throws AssemblerException {
-
-		assemblyLine = assemblyLine.trim();
 
 		boolean legitIntDataLine = Pattern.matches(
 				"[A-Za-z0-9]+\\s+[0-9]+MAU\\s+[^\\s]+", assemblyLine);
@@ -210,8 +222,6 @@ public class Assembler {
 
 		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
 
-		assemblyLine = assemblyLine.trim();
-
 		analyseWithAssemblyOpTree(assemblyLine);
 		
 		System.out.println(legitAssemblyOpTreePaths);
@@ -222,7 +232,7 @@ public class Assembler {
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
 		if (mnemData == null)
-			throw new AssemblerException("Unable to find mnemonic in mnemonicData.");
+			throw new AssemblerException("Mnemonic not declared in MnemonicData section within specification file.");
 
 		ArrayList<String> operandFormats = mnemData.getMnemFormats();
 
@@ -326,8 +336,10 @@ public class Assembler {
 				
 				assemblyLine = "";
 			}
+			
+			assemblyLine = assemblyLine.trim();
 
-			if (assemblyLine.trim().length() > 0) {
+			if (assemblyLine.length() > 0) {
 
 				try {
 					
@@ -346,8 +358,6 @@ public class Assembler {
 
 	private void analyseLineSecondPass(String assemblyLine) throws AssemblerException {
 
-		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
-
 		if (assemblyLine.startsWith(".data")){
 			
 			atData = true;
@@ -365,16 +375,10 @@ public class Assembler {
 			populateDataSecondPass(assemblyLine);
 
 		else if (atText) 
-			populateInstructionSecondPass(assemblyLine);
-		
-		else
-			throw new AssemblerException("Unrecognised.");
-		
+			populateInstructionSecondPass(assemblyLine);		
 	}
 
 	private void populateDataSecondPass(String assemblyLine) throws AssemblerException {
-
-		assemblyLine = assemblyLine.trim();
 
 		insNumber++;
 
@@ -469,8 +473,6 @@ public class Assembler {
 
 	private void populateInstructionSecondPass(String assemblyLine) throws AssemblerException {
 
-		assemblyLine = assemblyLine.trim();
-
 		System.out.println("*****************************");
 		System.out.println(assemblyLine);
 
@@ -492,16 +494,6 @@ public class Assembler {
 			if (formatMatch(opFormat))
 				legitOpFormats.add(opFormat);
 		}
-
-		if (legitOpFormats.isEmpty()) {
-
-			String error = "Incorrectly formatted operands. Expected:\n";
-
-			for (String opFormat : operandFormats)
-				error += "\n" + opFormat;
-
-			throw new AssemblerException(error);
-		}
 		
 		String foundOpFormat = null;
 
@@ -511,16 +503,6 @@ public class Assembler {
 				foundOpFormat = opFormat;
 				break;
 			}
-		}
-		
-		if(foundOpFormat == null){
-			
-			String error = "Assembly line syntax error. Check use of commas and spaces between operands. Expected syntax:\n";
-			
-			for(String opFormat: legitOpFormats)
-				error += "\n" + opFormat;
-
-			throw new AssemblerException(error);
 		}
 
 		MnemonicFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
@@ -690,197 +672,6 @@ public class Assembler {
 
 		return binary;
 	}
-
-//	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
-//
-//		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
-//		String assemblyOpTreeRoot = assemblyOpTree.getRootToken();
-//
-//		ArrayList<String> rootTerm = new ArrayList<String>();
-//		rootTerm.add(assemblyOpTreeRoot);
-//
-//		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
-//		ArrayList<String> currentPath = new ArrayList<String>();
-//
-//		ArrayList<String> fullTermsIter = new ArrayList<String>();
-//		fullTermsIter.add(assemblyOpTreeRoot);
-//
-//		ArrayList<String> assemblyList = new ArrayList<String>();
-//
-//		String[] assemblySplit = assemblyLine.split("\\s+"); // space
-//
-//		for (String str : assemblySplit) {
-//
-//			if (!str.matches(",+")) {
-//
-//				str = str.replaceAll("^,+", "");
-//				str = str.replaceAll(",+$", "");
-//
-//				assemblyList.add(str);
-//			}
-//		}
-//
-//		analyseOperands(rootTerm, assemblyList, rootTerm, fullTermsIter, paths,
-//				currentPath, assemblyOpTreeRoot);
-//	}
-//
-//	private boolean analyseOperands(ArrayList<String> parseTerms,
-//			ArrayList<String> assemblyListIter,
-//			ArrayList<String> parseTermsIter,
-//			ArrayList<String> fullParseTermsIter,
-//			ArrayList<ArrayList<String>> paths, ArrayList<String> currentPath,
-//			String parent) {
-//
-//		boolean done = false;
-//
-//		if (debug) {
-//			System.out.println("--------------------");
-//			System.out.println("terms: " + parseTerms);
-//			System.out.println("parent: " + parent);
-//			System.out.println("paths: " + paths);
-//			System.out.println("curpath: " + currentPath);
-//			System.out.println("asslist: " + assemblyListIter);
-//			System.out.println("fulltermsIter: " + fullParseTermsIter);
-//			System.out.println("termsIter: " + parseTermsIter);
-//		}
-//
-//		for (String parseTerm : parseTerms) {
-//
-//			if (debug)
-//				System.out.println(parseTerm);
-//
-//			String[] splitParseTerm = parseTerm.split("\\s+");
-//
-//			if (splitParseTerm.length > 1) { // more than one term, update iter
-//
-//				ArrayList<String> splitParseTermList = new ArrayList<String>();
-//
-//				for (String str : splitParseTerm)
-//					splitParseTermList.add(str);
-//
-//				ArrayList<String> newParseTermsIter = updateTermsIter(splitParseTermList, parseTermsIter, parent);
-//				ArrayList<String> newFullParseTermsIter = updateTermsIter(splitParseTermList, fullParseTermsIter, parent);
-//
-//				done = analyseOperands(splitParseTermList, assemblyListIter,
-//						newParseTermsIter, newFullParseTermsIter, paths,
-//						currentPath, parent);
-//
-//				if (done)
-//					return true;
-//			}
-//
-//			else { // one term
-//
-//				String tempParseTerm = parseTerm.replaceAll("\\?|\\*|\\+", "");
-//
-//				if (parseTerm.charAt(parseTerm.length() - 1) == '+') {
-//
-//					ArrayList<String> oneOrMoreParseTerm = new ArrayList<String>();
-//					String oneOrMore = tempParseTerm + " " + tempParseTerm + "*";
-//					oneOrMoreParseTerm.add(oneOrMore);
-//
-//					ArrayList<String> newParseTermsIter = updateTermsIter(oneOrMoreParseTerm, parseTermsIter, parseTerm);
-//					ArrayList<String> newFullParseTermsIter = updateTermsIter(oneOrMoreParseTerm, fullParseTermsIter, parseTerm);
-//
-//					done = analyseOperands(oneOrMoreParseTerm,
-//							assemblyListIter, newParseTermsIter,
-//							newFullParseTermsIter, paths, currentPath, parent);
-//
-//					if (done)
-//						return true;
-//				}
-//				
-//				else{
-//
-//					ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(tempParseTerm);
-//
-//					ArrayList<String> newCurrentPath = clone(currentPath);
-////					newCurrentPath.add(parseTerm);
-//				
-//					if(parseTerm.charAt(parseTerm.length()-1) == '?')
-//						newCurrentPath.add(parseTerm);
-//				
-//					newCurrentPath.add(tempParseTerm);
-//
-//					if (assemblyOpTreeTerms != null) { // not leaf
-//
-//						if (!(parent.charAt(parent.length() - 1) == '*')) {
-//
-//							ArrayList<String> parseTerm1 = new ArrayList<String>();
-//							parseTerm1.add(parseTerm);
-//
-//							ArrayList<String> newParseTermsIter = updateTermsIter(parseTerm1, parseTermsIter, parent);
-//							ArrayList<String> newFullParseTermsIter = updateTermsIter(parseTerm1, fullParseTermsIter, parent);
-//
-//							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
-//									newParseTermsIter, newFullParseTermsIter,
-//									paths, newCurrentPath, parseTerm);
-//						}
-//
-//						else
-//							done = analyseOperands(assemblyOpTreeTerms, assemblyListIter,
-//									parseTermsIter, fullParseTermsIter, paths,
-//									newCurrentPath, parent);
-//
-//						if (done)
-//							return true;
-//					}
-//
-//					else { // leaf
-//
-//						String assemblyTerm = assemblyListIter.get(0);
-//
-//						if (match(parseTerm, assemblyTerm, newCurrentPath)) {
-//
-//							if (debug)
-//								System.out.println("found: " + parseTerm);
-//
-//							if (!legitIter(parseTermsIter, newCurrentPath))
-//								return false;
-//
-//							ArrayList<ArrayList<String>> newPaths = clone2(paths);
-//							newPaths.add(newCurrentPath);
-//
-//							parseTermsIter = updateTermsIter(parseTermsIter,newCurrentPath);
-//							assemblyListIter = removeFirstElement(assemblyListIter);
-//
-//							newCurrentPath = new ArrayList<String>();
-//
-//							if (parseTermsIter.isEmpty() || assemblyListIter.isEmpty()) {
-//
-//								if (parseTermsIter.isEmpty() && !assemblyListIter.isEmpty())
-//									return false;
-//
-//								else if (!parseTermsIter.isEmpty() && assemblyListIter.isEmpty()) {
-//
-//									if (!legitWithFullTermsIter(fullParseTermsIter,	newPaths))
-//										return false;
-//								}
-//
-//								legitAssemblyOpTreePaths = newPaths; // legit
-//
-//								return true;
-//							}
-//
-//							done = analyseOperands(parseTermsIter,
-//									assemblyListIter, parseTermsIter,
-//									fullParseTermsIter, newPaths, newCurrentPath,
-//									data.getAssemblyOpTree().getRootToken());
-//
-//							if (done)
-//								return true;
-//						}
-//
-//						else { // not found
-//
-//						}
-//					}
-//				}
-//			}
-//		}
-//
-//		return done;
-//	}
 	
 	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
 
@@ -997,9 +788,8 @@ public class Assembler {
 
 					ArrayList<String> newCurrentPath = new ArrayList<String>(currentPath);
 
-					if (token.charAt(token.length() - 1) == '?') {
+					if (token.charAt(token.length() - 1) == '?')
 						newCurrentPath.add("?");
-					}
 
 					if (!(token.startsWith("\"") && token.endsWith("\"")))
 						newCurrentPath.add(tempToken);
@@ -1347,16 +1137,19 @@ public class Assembler {
 					return false;
 			}
 
+			// symbol
 			else if (!isAlphaNumeric(term)) {
 
 				if (!term.equals(splitAssemblyTerms[i]))
 					return false;
 			}
 
+			// alphaNumeric
 			else if (!term.equals(splitAssemblyTerms[i])){			
 				
 				ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(term);
 
+				// node
 				if (assemblyOpTreeTerms != null) {
 					
 					boolean legit = false;
@@ -1374,6 +1167,7 @@ public class Assembler {
 						return false;
 				}
 
+				// is register or mnemonic
 				else if (data.getRegisterHash().get(splitAssemblyTerms[i]) != null
 						|| data.getMnemonicTable().get(splitAssemblyTerms[i]) != null)
 					return false;
@@ -1409,8 +1203,6 @@ public class Assembler {
 			i++;
 		}
 
-//		currentPath.add(assemblyTerm);
-
 		return true;
 	}
 
@@ -1443,7 +1235,16 @@ public class Assembler {
 	
 	private boolean formatMatch(String mnemFormat) {
 
-		String[] splitFormat = mnemFormat.split("[,\\s]+");
+		String[] mnemFormatSplit = mnemFormat.split("\\s+"); // space
+		ArrayList<String> mnemFormatList = new ArrayList<String>();
+
+		for (String formatTerm : mnemFormatSplit) {
+
+			formatTerm = formatTerm.replaceAll("^,+", "");
+			formatTerm = formatTerm.replaceAll(",+$", "");
+
+			mnemFormatList.add(formatTerm);
+		}
 
 		int i = 0;
 		boolean found = false;
@@ -1453,18 +1254,15 @@ public class Assembler {
 
 			for (String pathTerm : path) {
 
-				if (i >= splitFormat.length)
+				if (i >= mnemFormatList.size())
 					return false;
 
-				if (pathTerm.equals(splitFormat[i])) {
-
+				if (pathTerm.equals(mnemFormatList.get(i)))
 					found = true;
-				}
 
-				else if ((pathTerm.equals("?"))) {
-
+				else if ((pathTerm.equals("?")))
 					optional = true;
-				}
+				
 			}
 			
 			if(found && !optional)	// assumes operands in opformat are not optional
@@ -1477,7 +1275,7 @@ public class Assembler {
 			optional = false;
 		}
 
-		if (i != splitFormat.length)
+		if (i != mnemFormatList.size())
 			return false;
 
 		return true;
@@ -1496,6 +1294,7 @@ public class Assembler {
 			if (str.matches("\\s+")) {
 
 				if (!inSpaces) {
+					
 					regex += "\\s+";
 					inSpaces = true;
 				}
@@ -1556,29 +1355,6 @@ public class Assembler {
 
 		return binary;
 	}
-
-//	private String getRelevantOperands(String format) {
-//
-//		String operands = "";
-//		String[] formatSplit = format.split("[,\\s]+");
-//
-//		int i = 0;
-//
-//		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
-//
-//			for (String pathTerm : path) {
-//
-//				if (pathTerm.equals(formatSplit[i])) {
-//
-//					operands += getAssemblyOperand(path) + " ";
-//					i++;
-//					break;
-//				}
-//			}
-//		}
-//
-//		return operands.trim();
-//	}
 	
 	private ArrayList<String> getRelevantOperands(String format) {
 
@@ -1613,7 +1389,7 @@ public class Assembler {
 		return operand;
 	}
 
-	private HashMap<String, String> mapInsFieldLabels(
+	private HashMap<String, String> mapInsFieldLabels(	//TODO
 			ArrayList<String> relevantOperands, String insFieldLine)
 			throws AssemblerException {
 
@@ -1760,33 +1536,6 @@ public class Assembler {
 		return hexObjCode;
 	}
 
-//	private ArrayList<ArrayList<String>> clone2(ArrayList<ArrayList<String>> sourceList) {
-//
-//		ArrayList<ArrayList<String>> newList = new ArrayList<ArrayList<String>>();
-//
-//		for (ArrayList<String> list : sourceList) {
-//
-//			ArrayList<String> temp = new ArrayList<String>();
-//
-//			for (String str : list)
-//				temp.add(str);
-//
-//			newList.add(temp);
-//		}
-//
-//		return newList;
-//	}
-//
-//	private ArrayList<String> clone(ArrayList<String> sourceList) {
-//
-//		ArrayList<String> newList = new ArrayList<String>();
-//
-//		for (String str : sourceList)
-//			newList.add(str);
-//
-//		return newList;
-//	}
-
 	public static String binaryFromIntFormatted(String intStr, int bits) throws AssemblerException {
 
 		String binary = intToBinary(intStr);
@@ -1836,17 +1585,6 @@ public class Assembler {
 
 		return finalString;
 	}
-
-//	public static String hexToBinary(String hex) {
-//
-//		int i = 0;
-//
-//		i = Integer.parseInt(hex, 16);
-//
-//		String binary = Integer.toBinaryString(i);
-//
-//		return binary;
-//	}
 	
 	public static String hexToBinary(String s) {
 
@@ -1869,15 +1607,6 @@ public class Assembler {
 
 		return binary;
 	}
-	
-//	public static String intToBinary(String intStr) throws AssemblerException {
-//
-//		BigInteger bigInt =  new BigInteger(intStr, 16);		
-//
-//		String binary = bigInt.toString(2);
-//
-//		return binary;
-//	}
 
 	private boolean isAlphaNumeric(String s) {
 
