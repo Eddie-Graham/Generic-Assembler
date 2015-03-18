@@ -124,13 +124,13 @@ public class Assembler {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
-		if (assemblyLine.startsWith("section .data")){
+		if (assemblyLine.startsWith(".data")){
 			
 			atData = true;
 			atText = false;
 		}
 
-		else if (assemblyLine.startsWith("section .text")) {
+		else if (assemblyLine.startsWith(".text")) {
 			
 			atData=false;
 			atText=true;
@@ -141,6 +141,9 @@ public class Assembler {
 
 		else if (atText) 
 			analyseInstructionsFirstPass(assemblyLine);
+		
+		else
+			throw new AssemblerException("Unrecognised.");
 		
 	}
 
@@ -263,7 +266,7 @@ public class Assembler {
 			throw new AssemblerException(error);
 		}
 
-		MnemFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
+		MnemonicFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
 
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
@@ -345,14 +348,14 @@ public class Assembler {
 
 		assemblyLine.replaceAll("\\s+$", ""); // remove end whitespace
 
-		if (assemblyLine.startsWith("section .data")){
+		if (assemblyLine.startsWith(".data")){
 			
 			atData = true;
 			atText = false;
 		}
 			
 
-		else if (assemblyLine.startsWith("section .text")) {
+		else if (assemblyLine.startsWith(".text")) {
 			
 			atData = false;
 			atText = true;
@@ -363,6 +366,9 @@ public class Assembler {
 
 		else if (atText) 
 			populateInstructionSecondPass(assemblyLine);
+		
+		else
+			throw new AssemblerException("Unrecognised.");
 		
 	}
 
@@ -517,7 +523,7 @@ public class Assembler {
 			throw new AssemblerException(error);
 		}
 
-		MnemFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
+		MnemonicFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
 
 		String insFieldLabels = format.getInsFieldLabels();
 

@@ -38,7 +38,7 @@ public class FileParser {
 	private boolean firstAssemblyOpTreeEntry;
 	private String rootOpTreeEntry;
 	private MnemonicData currentMnemonicData;
-	private MnemFormat currentMnemFormat;
+	private MnemonicFormat currentMnemFormat;
 
 	/**
 	 * <pre>
@@ -181,6 +181,43 @@ public class FileParser {
 			}
 		}
 		
+		if (!(foundArchitecture && foundRegisters && foundInsFormat
+				&& foundAssemblyOpTree && foundEndian && foundMinAdrUnit)) {
+
+			String missingSections = "";
+
+			if (!foundArchitecture)
+				missingSections += "\"architecture\" ";
+
+			if (!foundRegisters)
+				missingSections += "\"registers\" ";
+
+			if (!foundInsFormat)
+				missingSections += "\"instructionFormat\" ";
+
+			if (!foundAssemblyOpTree)
+				missingSections += "\"assemblyOpTree\" ";
+
+			if (!foundEndian)
+				missingSections += "\"endian\" ";
+
+			if (!foundMinAdrUnit)
+				missingSections += "\"minAddressableUnit\" ";
+
+			missingSections = missingSections.trim();
+
+			try {
+				
+				throw new AssemblerException("Section/s " + missingSections		// TODO newline?
+						+ " missing from specification file.");
+				
+			} catch (AssemblerException e) {
+				
+				String error = e.getMessage();
+				errorReport.add(error);
+			}
+		}		
+		
 		if(!errorReport.isEmpty()){
 			
 			ArrayList<String> empty = new ArrayList<String>();
@@ -253,38 +290,13 @@ public class FileParser {
 		}
 
 		// If missing sections in specification file
-		if (!(foundArchitecture && foundRegisters && foundMnemData
-				&& foundInsFormat && foundAssemblyOpTree && foundEndian
-				&& foundMinAdrUnit)) {
+		if (!foundMnemData) {
 
-			String missingSections = "";
-
-			if (!foundArchitecture)
-				missingSections += "\"architecture\" ";
-
-			if (!foundRegisters)
-				missingSections += "\"registers\" ";
-
-			if (!foundMnemData)
-				missingSections += "\"mnemonicData\" ";
-
-			if (!foundInsFormat)
-				missingSections += "\"instructionFormat\" ";
-
-			if (!foundAssemblyOpTree)
-				missingSections += "\"assemblyOpTree\" ";
-
-			if (!foundEndian)
-				missingSections += "\"endian\" ";
-
-			if (!foundMinAdrUnit)
-				missingSections += "\"minAddressableUnit\" ";
-
-			missingSections = missingSections.trim();
+			String missingSections = "\"mnemonicData\"";
 
 			try {
 				
-				throw new AssemblerException("Section/s " + missingSections		// TODO newline?
+				throw new AssemblerException("Section/s " + missingSections		
 						+ " missing from specification file.");
 				
 			} catch (AssemblerException e) {
@@ -478,7 +490,7 @@ public class FileParser {
 		boolean legitAssemblyOpTreeExp = Pattern.matches("[^:]*:[^:]*", line);
 
 		if (!legitAssemblyOpTreeExp)
-			throw new AssemblerException("AssemblyOpTree error: Line syntax error.");
+			throw new AssemblerException("AssemblyOpTree error: Line syntax error, expected format <node> : <expression>");
 		
 		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
 
@@ -489,9 +501,12 @@ public class FileParser {
 
 		String[] colonSplit = line.split(":");
 
-		String label = colonSplit[0].trim();
+		String node = colonSplit[0].trim();
 		
-		boolean legitLabel = Pattern.matches("[a-zA-Z0-9]+", label);
+		if(node.equals("LABEL") || node.equals("INT") || node.equals("HEX"))
+			throw new AssemblerException("AssemblyOpTree error: Node can not be keyword \"LABEL\", \"INT\" or \"HEX\".");
+		
+		boolean legitLabel = Pattern.matches("[a-zA-Z0-9]+", node);
 		
 		if(!legitLabel)
 			throw new AssemblerException("label error");
@@ -499,7 +514,7 @@ public class FileParser {
 		String terms = colonSplit[1].trim();
 
 		// First entry must be root term
-		if (firstAssemblyOpTreeEntry || label.equals(rootOpTreeEntry)) {
+		if (firstAssemblyOpTreeEntry || node.equals(rootOpTreeEntry)) {
 			
 			// Legit assemblyOpTree expression:
 			// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
@@ -511,8 +526,8 @@ public class FileParser {
 				throw new AssemblerException("AssemblyOpTree error: Root exp error."); // TODO
 
 			if(firstAssemblyOpTreeEntry){
-				rootOpTreeEntry = label;
-				assemblyOpTree.setRootToken(label);
+				rootOpTreeEntry = node;
+				assemblyOpTree.setRootToken(node);
 				firstAssemblyOpTreeEntry = false;
 			}
 		}
@@ -522,12 +537,12 @@ public class FileParser {
 					"[^\\s:]+", terms);
 
 			if (!legitNonRootExp)
-				throw new AssemblerException("AssemblyOpTree error: Non root exp error.");
+				throw new AssemblerException("AssemblyOpTree error: Non root expressions should only consist of a single token.");
 			
 			else if (terms.charAt(terms.length() - 1) == '*'
 					|| terms.charAt(terms.length() - 1) == '+'
 					|| terms.charAt(terms.length() - 1) == '?')
-				throw new AssemblerException("AssemblyOpTree error: Wildcards (\"*\" or \"+\") can only be applied to tokens in \"root\" statement.");
+				throw new AssemblerException("AssemblyOpTree error: Wildcards (\"*\", \"+\" or \"?\") can only be applied to tokens in \"root\" statement.");
 		}
 
 		ArrayList<String> termsList = new ArrayList<String>();
@@ -536,13 +551,13 @@ public class FileParser {
 		// If label already exists in hash, then add to existing list, else put
 		// label in hash
 		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(
-				label);
+				node);
 
 		if (list != null)
 			list.add(terms);
 
 		else
-			assemblyOpTree.getAssemblyOpTreeHash().put(label, termsList);
+			assemblyOpTree.getAssemblyOpTreeHash().put(node, termsList);
 	}
 
 	private void setBooleanValues(boolean architecture, boolean registers,
@@ -558,14 +573,6 @@ public class FileParser {
 		this.minAddressableUnit = minAddressableUnit;
 	}
 
-	/**
-	 * <pre>
-	 * Sets architecture name.
-	 * </pre>
-	 * 
-	 * @param line
-	 * @throws AssemblerException 
-	 */
 	private void analyseArchitecture(String line) throws AssemblerException {
 
 		if (line.trim().length() == 0)
@@ -862,7 +869,7 @@ public class FileParser {
 			}
 		}
 
-		currentMnemFormat = new MnemFormat();
+		currentMnemFormat = new MnemonicFormat();
 		currentMnemFormat.setMnemFormat(line);
 		currentMnemonicData.getMnemFormats().add(line);
 		currentMnemonicData.getMnemFormatHash().put(line, currentMnemFormat);
@@ -1184,7 +1191,7 @@ public class FileParser {
 
 			abortMnem = true;
 			throw new AssemblerException(
-					"Instruction format syntax error, <instructionName> : <fieldName>(<bitLength>) expected. For example:\n"
+					"InstructionFormat error: Syntax error, <instructionName> : <fieldName>(<bitLength>) expected. For example:\n"
 							+ "\nopcode : op(6) d(1) s(1)");
 		}
 
@@ -1203,6 +1210,10 @@ public class FileParser {
 
 			String op = tokenTerms[0];
 			int bitSize = Integer.parseInt(tokenTerms[1]);
+			
+			if(bitSize == 0)
+				throw new AssemblerException(
+						"InstructionFormat error: Can not have 0 bit field value.");
 
 			insF.getOperands().add(op);
 			insF.getOperandBitHash().put(op, bitSize);
