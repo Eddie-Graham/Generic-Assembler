@@ -8,10 +8,8 @@
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -40,6 +38,7 @@ public class Assembler {
 	private boolean dataDeclared, textDeclared;
 
 	private boolean debug = false;
+	private boolean debugTree = false;
 
 	private ArrayList<String> objectCode;
 
@@ -128,7 +127,7 @@ public class Assembler {
 	private void analyseLineFirstPass(String assemblyLine) throws AssemblerException {
 
 
-		if (assemblyLine.startsWith(".data")){
+		if (assemblyLine.equals(".data")){
 			
 			if(dataDeclared)
 				throw new AssemblerException(".data section already declared.");
@@ -139,7 +138,7 @@ public class Assembler {
 			atText = false;
 		}
 
-		else if (assemblyLine.startsWith(".text")) {
+		else if (assemblyLine.equals(".text")) {
 			
 			if(textDeclared)
 				throw new AssemblerException(".text section already declared.");
@@ -224,7 +223,8 @@ public class Assembler {
 
 		analyseWithAssemblyOpTree(assemblyLine);
 		
-		System.out.println(legitAssemblyOpTreePaths);
+		if(debug)
+			System.out.println(legitAssemblyOpTreePaths);
 
 		if (legitAssemblyOpTreePaths.isEmpty())
 			throw new AssemblerException("Assembly line not consistent with assemblyOpTree. Please check tree.");
@@ -256,11 +256,13 @@ public class Assembler {
 			throw new AssemblerException(error);
 		}
 		
+		ArrayList<String> relevantOperands = getRelevantOperands(legitOpFormats.get(0));
+		
 		String foundOpFormat = null;
 
 		for(String opFormat: legitOpFormats){
 			
-			if(correctSyntax(opFormat, assemblyLine)){
+			if(correctSyntax(opFormat, assemblyLine, relevantOperands)){
 				foundOpFormat = opFormat;
 				break;
 			}
@@ -358,14 +360,14 @@ public class Assembler {
 
 	private void analyseLineSecondPass(String assemblyLine) throws AssemblerException {
 
-		if (assemblyLine.startsWith(".data")){
+		if (assemblyLine.equals(".data")){
 			
 			atData = true;
 			atText = false;
 		}
 			
 
-		else if (assemblyLine.startsWith(".text")) {
+		else if (assemblyLine.equals(".text")) {
 			
 			atData = false;
 			atText = true;
@@ -468,20 +470,24 @@ public class Assembler {
 		String objectCodeLine = String.format("%-10s %s", address, hexObjCode);
 		objectCode.add(objectCodeLine);
 		
-		System.out.println(objectCodeLine);
+		if(debug)
+			System.out.println(objectCodeLine);
 	}
 
 	private void populateInstructionSecondPass(String assemblyLine) throws AssemblerException {
 
-		System.out.println("*****************************");
-		System.out.println(assemblyLine);
+		if(debug){
+			System.out.println("*****************************");
+			System.out.println(assemblyLine);
+		}
 
 		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
 		assemblyTermTypeHash = new HashMap<String, String>();
 
 		analyseWithAssemblyOpTree(assemblyLine);
 
-		System.out.println(legitAssemblyOpTreePaths);
+		if(debug)
+			System.out.println(legitAssemblyOpTreePaths);
 
 		MnemonicData mnemData = getMnemData(assemblyLine);
 
@@ -495,11 +501,13 @@ public class Assembler {
 				legitOpFormats.add(opFormat);
 		}
 		
+		ArrayList<String> relevantOperands = getRelevantOperands(legitOpFormats.get(0));
+		
 		String foundOpFormat = null;
 
 		for(String opFormat: legitOpFormats){
 			
-			if(correctSyntax(opFormat, assemblyLine)){
+			if(correctSyntax(opFormat, assemblyLine, relevantOperands)){
 				foundOpFormat = opFormat;
 				break;
 			}
@@ -510,21 +518,20 @@ public class Assembler {
 		String insFieldLabels = format.getInsFieldLabels();
 
 		HashMap<String, String> insFieldHash = null;		
-		ArrayList<String> relevantOperands = null;
 
-		if (insFieldLabels != "") {
-
-			relevantOperands = getRelevantOperands(foundOpFormat);
+		if (insFieldLabels != "") 
 			insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);
-		}
 
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
 		String binary = "";
 		insNumber++;
 
-		System.out.println("insFieldHash: " + insFieldHash);
-		System.out.println("assTypeHash: " + assemblyTermTypeHash);
+		if(debug){
+			
+			System.out.println("insFieldHash: " + insFieldHash);
+			System.out.println("assTypeHash: " + assemblyTermTypeHash);
+		}
 
 		for (String instruction : instructionFormat) {
 
@@ -616,7 +623,8 @@ public class Assembler {
 		String objectCodeLine = String.format("%-10s %s", address, hexObjCode);
 		objectCode.add(objectCodeLine);
 		
-		System.out.println(objectCodeLine);
+		if(debug)
+			System.out.println(objectCodeLine);
 	}
 
 	static public void writeLinesToFile(String filename, ArrayList<String> lines) {
@@ -719,7 +727,7 @@ public class Assembler {
 
 		boolean done = false;
 
-		if (debug) {
+		if (debugTree) {
 			System.out.println("--------------------");
 			System.out.println("terms: " + tokens);
 			System.out.println("paths: " + paths);
@@ -731,7 +739,7 @@ public class Assembler {
 
 		for (String token : tokens) {
 
-			if (debug)
+			if (debugTree)
 				System.out.println(token);
 
 			String[] furtherTokenSplit = token.split("\\s+");
@@ -1235,7 +1243,7 @@ public class Assembler {
 	
 	private boolean formatMatch(String mnemFormat) {
 
-		String[] mnemFormatSplit = mnemFormat.split("\\s+"); // space
+		String[] mnemFormatSplit = mnemFormat.split("\\s+"); 
 		ArrayList<String> mnemFormatList = new ArrayList<String>();
 
 		for (String formatTerm : mnemFormatSplit) {
@@ -1243,7 +1251,8 @@ public class Assembler {
 			formatTerm = formatTerm.replaceAll("^,+", "");
 			formatTerm = formatTerm.replaceAll(",+$", "");
 
-			mnemFormatList.add(formatTerm);
+			if(!formatTerm.isEmpty())
+				mnemFormatList.add(formatTerm);
 		}
 
 		int i = 0;
@@ -1280,39 +1289,42 @@ public class Assembler {
 
 		return true;
 	}
+	
+	private boolean correctSyntax(String format, String assemblyLine, ArrayList<String> relevantOperands) {
 
-	private boolean correctSyntax(String format, String assemblyLine) {
-
-		String[] formatSplit = format.split("(?=[,\\s]+)|(?<=[,\\s]+)");
+		String[] formatSplit = format.split("\\s+");
+		int noOfTokens = formatSplit.length;
 
 		String regex = ".*";
 
-		boolean inSpaces = false;
+		int i = 1;
+		int i2 = 0;
 
 		for (String str : formatSplit) {
-
-			if (str.matches("\\s+")) {
-
-				if (!inSpaces) {
+			
+			if(i > 1 && i <= noOfTokens)
+				regex += "\\s+";
+			
+			String[] strSplit = str.split("((?=^[,]*)|(?<=^[,]*))|((?=[,]*$)|(?<=[,]*$))");
+			
+			for(String str2: strSplit){
+				
+				if(!str2.isEmpty()){
 					
-					regex += "\\s+";
-					inSpaces = true;
+					if(str2.equals(","))
+						regex += ",";
+				
+					else{		
+						
+						regex += "("+ Pattern.quote(relevantOperands.get(i2))+")";
+						i2++;
+					}
+					
 				}
 			}
-
-			else {
-
-				inSpaces = false;
-
-				if (str.equals(","))
-					regex += ",";
-
-				else
-					regex += "[^\\s,]+";
-			}
-		}
-
-		regex += ".*";
+			
+			i++;
+		}	
 
 		boolean legitSyntax = Pattern.matches(regex, assemblyLine);
 
@@ -1356,28 +1368,83 @@ public class Assembler {
 		return binary;
 	}
 	
+//	private ArrayList<String> getRelevantOperands(String format) {
+//
+//		ArrayList<String> relevantOperands = new ArrayList<String>();
+//
+//		String[] mnemFormatSplit = format.split("\\s+"); // space
+//		ArrayList<String> mnemFormatList = new ArrayList<String>();
+//
+//		for (String formatTerm : mnemFormatSplit) {
+//
+//			formatTerm = formatTerm.replaceAll("^,+", "");
+//			formatTerm = formatTerm.replaceAll(",+$", "");
+//
+//			if(!formatTerm.isEmpty())
+//				mnemFormatList.add(formatTerm);
+//		}
+//
+//		int i = 0;
+//
+//		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
+//
+//			for (String pathTerm : path) {
+//
+//				if (pathTerm.equals(mnemFormatList.get(i))) {
+//
+//					relevantOperands.add(getAssemblyOperand(path));
+//					i++;
+//					break;
+//				}
+//			}
+//		}
+//
+//		return relevantOperands;
+//	}
+	
 	private ArrayList<String> getRelevantOperands(String format) {
+		
+		ArrayList<String> relevantOps = new ArrayList<String>();
 
-		ArrayList<String> relevantOperands = new ArrayList<String>();
+		String[] mnemFormatSplit = format.split("\\s+"); // space
+		ArrayList<String> mnemFormatList = new ArrayList<String>();
 
-		String[] formatSplit = format.split("[,\\s]+");
+		for (String formatTerm : mnemFormatSplit) {
+
+			formatTerm = formatTerm.replaceAll("^,+", "");
+			formatTerm = formatTerm.replaceAll(",+$", "");
+
+			if(!formatTerm.isEmpty())
+				mnemFormatList.add(formatTerm);
+		}
 
 		int i = 0;
+		boolean found = false;
+		boolean optional = false;
 
 		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
 
 			for (String pathTerm : path) {
 
-				if (pathTerm.equals(formatSplit[i])) {
+				if (pathTerm.equals(mnemFormatList.get(i)))
+					found = true;
 
-					relevantOperands.add(getAssemblyOperand(path));
-					i++;
-					break;
-				}
+				else if ((pathTerm.equals("?")))
+					optional = true;
+				
 			}
+			
+			if(found && !optional){	// assumes operands in opformat are not optional
+				
+				i++;
+				relevantOps.add(getAssemblyOperand(path));
+			}
+
+			found = false;
+			optional = false;
 		}
 
-		return relevantOperands;
+		return relevantOps;
 	}
 
 	private String getAssemblyOperand(ArrayList<String> path) {
@@ -1395,7 +1462,7 @@ public class Assembler {
 
 		HashMap<String, String> insHash = new HashMap<String, String>();
 
-		String[] instructionLabels = insFieldLine.split("[\\s]+");
+		String[] instructionLabels = insFieldLine.split("\\s+");
 
 		if (relevantOperands.size() != instructionLabels.length) {
 

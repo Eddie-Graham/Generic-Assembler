@@ -5,11 +5,8 @@
  * Supervisor: John T O'Donnell
  */
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -609,9 +606,9 @@ public class FileParser {
 		if(node.equals("LABEL") || node.equals("INT") || node.equals("HEX"))
 			throw new AssemblerException("AssemblyOpTree error: Node can not be keyword \"LABEL\", \"INT\" or \"HEX\".");
 		
-		boolean legitLabel = Pattern.matches("[a-zA-Z0-9]+", node);
+		boolean legitNode = Pattern.matches("[a-zA-Z0-9]+", node);
 		
-		if(!legitLabel)
+		if(!legitNode)
 			throw new AssemblerException("label error");
 		
 		String terms = colonSplit[1].trim();
@@ -648,19 +645,22 @@ public class FileParser {
 				throw new AssemblerException("AssemblyOpTree error: Wildcards (\"*\", \"+\" or \"?\") can only be applied to tokens in root node (\"" + data.getAssemblyOpTree().getRootToken() + "\").");
 		}
 
-		ArrayList<String> termsList = new ArrayList<String>();
-		termsList.add(terms);
+		assemblyOpTree.getAssemblyOpTreeTokens().add(node);
+		assemblyOpTree.getAssemblyOpTreeTokens().add(terms);
 
 		// If label already exists in hash, then add to existing list, else put
 		// label in hash
-		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(
-				node);
+		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(node);
 
 		if (list != null)
 			list.add(terms);
 
-		else
+		else{
+			
+			ArrayList<String> termsList = new ArrayList<String>();
+			termsList.add(terms);
 			assemblyOpTree.getAssemblyOpTreeHash().put(node, termsList);
+		}
 	}
 
 	private void setBooleanValues(boolean architecture, boolean registers,
@@ -963,11 +963,21 @@ public class FileParser {
 
 		line = line.trim();
 
-		String[] formatTokens = line.split("[^A-Za-z0-9]+");	//TODO
+		String[] mnemFormatSplit = line.split("\\s+"); // space
+		ArrayList<String> mnemFormatList = new ArrayList<String>();
+
+		for (String formatTerm : mnemFormatSplit) {
+
+			formatTerm = formatTerm.replaceAll("^,+", "");
+			formatTerm = formatTerm.replaceAll(",+$", "");
+			
+			if(!formatTerm.isEmpty())
+				mnemFormatList.add(formatTerm);
+		}
 
 		ArrayList<String> assemblyOpTreeTokens = data.getAssemblyOpTree().getAssemblyOpTreeTokens();
 
-		for (String formatToken : formatTokens) {
+		for (String formatToken : mnemFormatList) {
 
 			if (!assemblyOpTreeTokens.contains(formatToken)) {
 				
