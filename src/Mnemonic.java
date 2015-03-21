@@ -8,21 +8,21 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class MnemonicData {
+public class Mnemonic {
 	
 	private String mnemonic;
 	private HashMap<String,String> globalOpCodes;
-	private HashMap<String,MnemonicFormat> mnemFormatHash;
+	private HashMap<String,OperandFormat> mnemFormatHash;
 	private ArrayList<String> mnemFormats;
 	private ArrayList<String> rawLines;
 	private String rawGlobalOpcodesString;
 	private String rawLinesString;
 	
-	public MnemonicData(){
+	public Mnemonic(){
 		
 		mnemonic = "";
 		globalOpCodes = new HashMap<String, String>();
-		mnemFormatHash = new HashMap<String, MnemonicFormat>();
+		mnemFormatHash = new HashMap<String, OperandFormat>();
 		mnemFormats = new ArrayList<String>();
 		rawGlobalOpcodesString = "";
 		rawLinesString = "";
@@ -45,11 +45,11 @@ public class MnemonicData {
 		this.globalOpCodes = globalOpCodes;
 	}
 
-	public HashMap<String, MnemonicFormat> getMnemFormatHash() {
+	public HashMap<String, OperandFormat> getMnemFormatHash() {
 		return mnemFormatHash;
 	}
 
-	public void setMnemFormatHash(HashMap<String, MnemonicFormat> mnemFormatHash) {
+	public void setMnemFormatHash(HashMap<String, OperandFormat> mnemFormatHash) {
 		this.mnemFormatHash = mnemFormatHash;
 	}
 

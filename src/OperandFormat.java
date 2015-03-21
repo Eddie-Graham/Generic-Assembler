@@ -8,7 +8,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class MnemonicFormat {
+public class OperandFormat {
 	
 	private String mnemFormat;
 	private String insFieldLabels;
@@ -16,7 +16,7 @@ public class MnemonicFormat {
 	private ArrayList<String> instructionFormat;
 	private String rawLinesString;
 	
-	public MnemonicFormat(){
+	public OperandFormat(){
 		
 		mnemFormat = "";
 		insFieldLabels = "";

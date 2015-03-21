@@ -9,18 +9,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-public class InstructionFormatData {
+public class InstructionFormat {
 	
 	private String instructionName;
-	private HashMap<String, Integer> operandBitHash;
-	private ArrayList<String> operands;
+	private HashMap<String, Integer> fieldBitHash;
+	private ArrayList<String> fields;
 	private String rawLineString;
 	
-	public InstructionFormatData(){
+	public InstructionFormat(){
 		
 		instructionName = null;
-		operandBitHash = new HashMap<String, Integer>();
-		operands = new ArrayList<String>();	
+		fieldBitHash = new HashMap<String, Integer>();
+		fields = new ArrayList<String>();	
 		rawLineString = null;
 	}
 
@@ -32,20 +32,20 @@ public class InstructionFormatData {
 		this.instructionName = instructionName;
 	}
 
-	public HashMap<String, Integer> getOperandBitHash() {
-		return operandBitHash;
+	public HashMap<String, Integer> getFieldBitHash() {
+		return fieldBitHash;
 	}
 
-	public void setOperandBitHash(HashMap<String, Integer> operandBitHash) {
-		this.operandBitHash = operandBitHash;
+	public void setFieldBitHash(HashMap<String, Integer> fieldBitHash) {
+		this.fieldBitHash = fieldBitHash;
 	}
 
-	public ArrayList<String> getOperands() {
-		return operands;
+	public ArrayList<String> getFields() {
+		return fields;
 	}
 
-	public void setOperands(ArrayList<String> operands) {
-		this.operands = operands;
+	public void setFields(ArrayList<String> fields) {
+		this.fields = fields;
 	}
 
 	public String getRawLineString() {
@@ -54,5 +54,5 @@ public class InstructionFormatData {
 
 	public void setRawLineString(String rawLineString) {
 		this.rawLineString = rawLineString;
-	}		
+	}			
 }

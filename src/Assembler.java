@@ -229,7 +229,7 @@ public class Assembler {
 		if (legitAssemblyOpTreePaths.isEmpty())
 			throw new AssemblerException("Assembly line not consistent with assemblyOpTree. Please check tree.");
 
-		MnemonicData mnemData = getMnemData(assemblyLine);
+		Mnemonic mnemData = getMnemData(assemblyLine);
 
 		if (mnemData == null)
 			throw new AssemblerException("Mnemonic not declared in MnemonicData section within specification file.");
@@ -278,7 +278,7 @@ public class Assembler {
 			throw new AssemblerException(error);
 		}
 
-		MnemonicFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
+		OperandFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
 
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
@@ -286,13 +286,13 @@ public class Assembler {
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
+			InstructionFormat insFormat = data.getInstructionFormat().get(instruction);
 
-			ArrayList<String> instructions = insFormat.getOperands();
+			ArrayList<String> instructions = insFormat.getFields();
 
 			for (String field : instructions) {
 
-				int bits = insFormat.getOperandBitHash().get(field);
+				int bits = insFormat.getFieldBitHash().get(field);
 
 				insSize += bits;
 			}
@@ -489,7 +489,7 @@ public class Assembler {
 		if(debug)
 			System.out.println(legitAssemblyOpTreePaths);
 
-		MnemonicData mnemData = getMnemData(assemblyLine);
+		Mnemonic mnemData = getMnemData(assemblyLine);
 
 		ArrayList<String> operandFormats = mnemData.getMnemFormats();
 
@@ -513,7 +513,7 @@ public class Assembler {
 			}
 		}
 
-		MnemonicFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
+		OperandFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
 
 		String insFieldLabels = format.getInsFieldLabels();
 
@@ -535,15 +535,15 @@ public class Assembler {
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
+			InstructionFormat insFormat = data.getInstructionFormat().get(instruction);
 
-			ArrayList<String> instructions = insFormat.getOperands();
+			ArrayList<String> instructions = insFormat.getFields();
 
 			for (String field : instructions) {
 
 				String binaryTemp = "";
 
-				int bits = insFormat.getOperandBitHash().get(field);
+				int bits = insFormat.getFieldBitHash().get(field);
 
 				if (mnemData.getGlobalOpCodes().get(field) != null) // global
 					binaryTemp = mnemData.getGlobalOpCodes().get(field);
@@ -1214,7 +1214,7 @@ public class Assembler {
 		return true;
 	}
 
-	private MnemonicData getMnemData(String assemblyLine) throws AssemblerException {
+	private Mnemonic getMnemData(String assemblyLine) throws AssemblerException {
 
 		String[] assemblyLineSplit = assemblyLine.split("\\s+"); // space
 		ArrayList<String> assemblyTermList = new ArrayList<String>();
@@ -1227,7 +1227,7 @@ public class Assembler {
 			assemblyTermList.add(assemblyTerm);
 		}
 
-		MnemonicData mnemData = null;
+		Mnemonic mnemData = null;
 
 		for (String assemblyTerm : assemblyTermList) {
 

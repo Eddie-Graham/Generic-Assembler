@@ -38,8 +38,8 @@ public class FileParser {
 			atLocalInsFormat;
 	private boolean firstAssemblyOpTreeEntry;
 	private String rootOpTreeEntry;
-	private MnemonicData currentMnemonicData;
-	private MnemonicFormat currentMnemFormat;
+	private Mnemonic currentMnemonicData;
+	private OperandFormat currentMnemFormat;
 
 	/**
 	 * <pre>
@@ -948,7 +948,7 @@ public class FileParser {
 					"MnemonicData error: Mnemonic name syntax error, should only be single token (no spaces).");
 		}
 
-		currentMnemonicData = new MnemonicData();
+		currentMnemonicData = new Mnemonic();
 		currentMnemonicData.setMnemonic(mnem);
 		
 		if(data.getMnemonicTable().get(mnem) != null)
@@ -990,7 +990,7 @@ public class FileParser {
 			}
 		}
 
-		currentMnemFormat = new MnemonicFormat();
+		currentMnemFormat = new OperandFormat();
 		currentMnemFormat.setMnemFormat(line);
 		currentMnemonicData.getMnemFormats().add(line);
 		
@@ -1120,7 +1120,7 @@ public class FileParser {
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormatData insFormat = data.getInstructionFormat().get(instruction);
+			InstructionFormat insFormat = data.getInstructionFormat().get(instruction);
 
 			if (insFormat == null) {
 
@@ -1133,11 +1133,11 @@ public class FileParser {
 								+ "\" not defined in instructionFormat section.");
 			}
 
-			ArrayList<String> instructions = insFormat.getOperands();
+			ArrayList<String> instructions = insFormat.getFields();
 
 			for (String field : instructions) {
 
-				int bits = insFormat.getOperandBitHash().get(field);
+				int bits = insFormat.getFieldBitHash().get(field);
 				totalBits += bits;
 
 				if (currentMnemonicData.getGlobalOpCodes().get(field) != null) {
@@ -1315,34 +1315,34 @@ public class FileParser {
 
 		if (!legitInsFormat) {
 
-			abortMnem = true;
+//			abortMnem = true;
 			throw new AssemblerException(
 					"InstructionFormat error: Syntax error, <instructionName> : <fieldName>(<bitLength>) expected. For example:\n"
 							+ "\nopcode : op(6) d(1) s(1)");
 		}
 
-		InstructionFormatData insF = new InstructionFormatData();
+		InstructionFormat insF = new InstructionFormat();
 
 		String[] tokens = line.split(":");
 
 		String insName = tokens[0].trim();
-		String operands = tokens[1].trim();
+		String fields = tokens[1].trim();
 
-		String[] operandTokens = operands.split("\\s+");
+		String[] fieldTokens = fields.split("\\s+");
 
-		for (String operand : operandTokens) {
+		for (String field : fieldTokens) {
 
-			String[] tokenTerms = operand.split("\\(|\\)");
+			String[] fieldAndSize = field.split("\\(|\\)");
 
-			String op = tokenTerms[0];
-			int bitSize = Integer.parseInt(tokenTerms[1]);
+			String fieldName = fieldAndSize[0];
+			int bitSize = Integer.parseInt(fieldAndSize[1]);
 			
 			if(bitSize == 0)
 				throw new AssemblerException(
 						"InstructionFormat error: Can not have 0 bit field length.");
 
-			insF.getOperands().add(op);
-			insF.getOperandBitHash().put(op, bitSize);
+			insF.getFields().add(fieldName);
+			insF.getFieldBitHash().put(fieldName, bitSize);
 		} 
 
 		insF.setInstructionName(insName);

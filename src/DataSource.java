@@ -13,8 +13,8 @@ public class DataSource {
 	private ArrayList<String> assemblyCode;	
 	
 	private String architecture;
-	private HashMap<String, MnemonicData> mnemonicTable;
-	private HashMap<String, InstructionFormatData> instructionFormat;	
+	private HashMap<String, Mnemonic> mnemonicTable;
+	private HashMap<String, InstructionFormat> instructionFormat;	
 	private HashMap<String, String> registerHash;
 	private AssemblyOpTree assemblyOpTree;
 	private String endian;
@@ -26,8 +26,8 @@ public class DataSource {
 		assemblyCode = new ArrayList<String>();	
 		
 		architecture = null;
-		mnemonicTable = new HashMap<String, MnemonicData>();
-		instructionFormat = new HashMap<String, InstructionFormatData>();		
+		mnemonicTable = new HashMap<String, Mnemonic>();
+		instructionFormat = new HashMap<String, InstructionFormat>();		
 		registerHash = new HashMap<String, String>();
 		assemblyOpTree = new AssemblyOpTree();
 		endian = null;
@@ -49,19 +49,19 @@ public class DataSource {
 		this.architecture = architecture;
 	}
 
-	public HashMap<String, MnemonicData> getMnemonicTable() {
+	public HashMap<String, Mnemonic> getMnemonicTable() {
 		return mnemonicTable;
 	}
 
-	public void setMnemonicTable(HashMap<String, MnemonicData> mnemonicTable) {
+	public void setMnemonicTable(HashMap<String, Mnemonic> mnemonicTable) {
 		this.mnemonicTable = mnemonicTable;
 	}
 
-	public HashMap<String, InstructionFormatData> getInstructionFormat() {
+	public HashMap<String, InstructionFormat> getInstructionFormat() {
 		return instructionFormat;
 	}
 
-	public void setInstructionFormat(HashMap<String, InstructionFormatData> instructionFormat) {
+	public void setInstructionFormat(HashMap<String, InstructionFormat> instructionFormat) {
 		this.instructionFormat = instructionFormat;
 	}
 
