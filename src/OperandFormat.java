@@ -11,18 +11,22 @@ import java.util.HashMap;
 public class OperandFormat {
 	
 	private String mnemFormat;
-	private String insFieldLabels;
-	private HashMap<String,String> opcodes;
+	private String operandFieldEncodings;
+	private HashMap<String,String> fieldBitHash;
 	private ArrayList<String> instructionFormat;
 	private String rawLinesString;
 	
 	public OperandFormat(){
 		
 		mnemFormat = "";
-		insFieldLabels = "";
-		opcodes = new HashMap<String, String>();
+		operandFieldEncodings = "";
+		fieldBitHash = new HashMap<String, String>();
 		instructionFormat = new ArrayList<String>();	
 		rawLinesString = "";
+	}
+
+	public void addToRawLineString(String str){		
+		rawLinesString += str + "\n";
 	}
 
 	public String getMnemFormat() {
@@ -33,20 +37,20 @@ public class OperandFormat {
 		this.mnemFormat = mnemFormat;
 	}
 
-	public String getInsFieldLabels() {
-		return insFieldLabels;
+	public String getOperandFieldEncodings() {
+		return operandFieldEncodings;
 	}
 
-	public void setInsFieldLabels(String insFieldLabels) {
-		this.insFieldLabels = insFieldLabels;
+	public void setOperandFieldEncodings(String operandFieldEncodings) {
+		this.operandFieldEncodings = operandFieldEncodings;
 	}
 
-	public HashMap<String, String> getOpcodes() {
-		return opcodes;
+	public HashMap<String, String> getFieldBitHash() {
+		return fieldBitHash;
 	}
 
-	public void setOpcodes(HashMap<String, String> opCodes) {
-		this.opcodes = opCodes;
+	public void setFieldBitHash(HashMap<String, String> fieldBitHash) {
+		this.fieldBitHash = fieldBitHash;
 	}
 
 	public ArrayList<String> getInstructionFormat() {
@@ -56,17 +60,12 @@ public class OperandFormat {
 	public void setInstructionFormat(ArrayList<String> instructionFormat) {
 		this.instructionFormat = instructionFormat;
 	}
-	
+
 	public String getRawLinesString() {
 		return rawLinesString;
 	}
 
 	public void setRawLinesString(String rawLinesString) {
 		this.rawLinesString = rawLinesString;
-	}
-
-	public void addToRawLineString(String str){
-		
-		rawLinesString += str + "\n";
-	}
+	}	
 }

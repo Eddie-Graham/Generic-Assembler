@@ -234,7 +234,7 @@ public class Assembler {
 		if (mnemData == null)
 			throw new AssemblerException("Mnemonic not declared in MnemonicData section within specification file.");
 
-		ArrayList<String> operandFormats = mnemData.getMnemFormats();
+		ArrayList<String> operandFormats = mnemData.getOperandsFormats();
 
 		ArrayList<String> legitOpFormats = new ArrayList<String>();
 
@@ -278,7 +278,7 @@ public class Assembler {
 			throw new AssemblerException(error);
 		}
 
-		OperandFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
+		OperandFormat format = mnemData.getOperandFormatHash().get(foundOpFormat);
 
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
 
@@ -286,7 +286,7 @@ public class Assembler {
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormat insFormat = data.getInstructionFormat().get(instruction);
+			InstructionFormat insFormat = data.getInstructionFormatHash().get(instruction);
 
 			ArrayList<String> instructions = insFormat.getFields();
 
@@ -491,7 +491,7 @@ public class Assembler {
 
 		Mnemonic mnemData = getMnemData(assemblyLine);
 
-		ArrayList<String> operandFormats = mnemData.getMnemFormats();
+		ArrayList<String> operandFormats = mnemData.getOperandsFormats();
 
 		ArrayList<String> legitOpFormats = new ArrayList<String>();
 
@@ -513,9 +513,9 @@ public class Assembler {
 			}
 		}
 
-		OperandFormat format = mnemData.getMnemFormatHash().get(foundOpFormat);
+		OperandFormat format = mnemData.getOperandFormatHash().get(foundOpFormat);
 
-		String insFieldLabels = format.getInsFieldLabels();
+		String insFieldLabels = format.getOperandFieldEncodings();
 
 		HashMap<String, String> insFieldHash = null;		
 
@@ -535,7 +535,7 @@ public class Assembler {
 
 		for (String instruction : instructionFormat) {
 
-			InstructionFormat insFormat = data.getInstructionFormat().get(instruction);
+			InstructionFormat insFormat = data.getInstructionFormatHash().get(instruction);
 
 			ArrayList<String> instructions = insFormat.getFields();
 
@@ -545,11 +545,11 @@ public class Assembler {
 
 				int bits = insFormat.getFieldBitHash().get(field);
 
-				if (mnemData.getGlobalOpCodes().get(field) != null) // global
-					binaryTemp = mnemData.getGlobalOpCodes().get(field);
+				if (mnemData.getGlobalFieldEncodingHash().get(field) != null) // global
+					binaryTemp = mnemData.getGlobalFieldEncodingHash().get(field);
 
-				else if (format.getOpcodes().get(field) != null) // local
-					binaryTemp = format.getOpcodes().get(field);
+				else if (format.getFieldBitHash().get(field) != null) // local
+					binaryTemp = format.getFieldBitHash().get(field);
 
 				else if (insFieldHash.get(field) != null) {
 

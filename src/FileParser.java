@@ -34,11 +34,11 @@ public class FileParser {
 			insFormatDeclared, assemblyOpTreeDeclared, endianDeclared,
 			minAdrUnitDeclared;
 	private boolean doneGlobalOpcodes, emptyLine, abortMnem;
-	private boolean foundFormatHeader, atLocalInsLabels, atLocalOpcodes,
-			atLocalInsFormat;
+	private boolean foundFormatHeader, atOperandFieldEncodings, atLocalFieldEncodings,
+			atInsFormat;
 	private boolean firstAssemblyOpTreeEntry;
 	private String rootOpTreeEntry;
-	private Mnemonic currentMnemonicData;
+	private Mnemonic currentMnemonic;
 	private OperandFormat currentMnemFormat;
 
 	/**
@@ -85,14 +85,14 @@ public class FileParser {
 		abortMnem = false;
 
 		foundFormatHeader = true;
-		atLocalInsLabels = false;
-		atLocalOpcodes = false;
-		atLocalInsFormat = false;
+		atOperandFieldEncodings = false;
+		atLocalFieldEncodings = false;
+		atInsFormat = false;
 
 		firstAssemblyOpTreeEntry = true;
 		rootOpTreeEntry = "";
 
-		currentMnemonicData = null;
+		currentMnemonic = null;
 		currentMnemFormat = null;
 
 		scan(assemblyFile, specFile);
@@ -100,24 +100,19 @@ public class FileParser {
 
 	private void scan(String assemblyFile, String specFile) {
 
-		scanAssemblyFile(assemblyFile);
-		
+		scanAssemblyFile(assemblyFile);		
 		scanSpecFile(specFile);
 		
-		if(!errorReport.isEmpty()){
-			
+		if(!errorReport.isEmpty()){			
 			ArrayList<String> empty = new ArrayList<String>();
-			empty.add("Error in specification file, see \"spec_error_report.text\".");
-			
+			empty.add("Error in specification file, see \"spec_error_report.text\".");			
 			Assembler.writeLinesToFile("object_code.txt", empty);
-			Assembler.writeLinesToFile("spec_error_report.txt", errorReport);
-			
+			Assembler.writeLinesToFile("spec_error_report.txt", errorReport);			
 			System.exit(0);
 		}
 		
-		else{
+		else
 			errorReport.add("No errors found within specification file.");
-		}
 		
 		Assembler.writeLinesToFile("spec_error_report.txt", errorReport);
 	}
@@ -127,17 +122,13 @@ public class FileParser {
 		Scanner inputFile = null;
 
 		try {
-
 			inputFile = new Scanner(new FileInputStream(fileName));
-
 		} catch (FileNotFoundException e) {
-
 			System.out.println("Assembly file \"" + fileName + "\" not found.");
 			System.exit(0);
 		}
 
 		while (inputFile.hasNextLine()) {
-
 			String line = inputFile.nextLine();
 			data.getAssemblyCode().add(line);
 		}
@@ -147,16 +138,15 @@ public class FileParser {
 
 	private void scanSpecFile(String fileName) {
 
+		// Two scanners as file is parsed twice. MnemonicData is analysed last for
+		// error checking
 		Scanner inputFile = null;
 		Scanner inputFile2 = null;
 
 		try {
-
 			inputFile = new Scanner(new FileInputStream(fileName));
 			inputFile2 = new Scanner(new FileInputStream(fileName));
-
 		} catch (FileNotFoundException e) {
-
 			System.out.println("Specification file \"" + fileName + "\" not found.");
 			System.exit(0);
 		}
@@ -164,21 +154,16 @@ public class FileParser {
 		int lineCounter = 0;
 
 		while (inputFile.hasNextLine()) {
-
 			String fullSpecLine = inputFile.nextLine();
 			String specLine = fullSpecLine;
-
 			lineCounter++;
 
 			// Comments (;...) omitted
 			String[] commentSplit = specLine.split(";");
 
 			try {
-
 				specLine = commentSplit[0];
-
 			} catch (ArrayIndexOutOfBoundsException e) {
-
 				specLine = "";
 			}
 
@@ -186,11 +171,8 @@ public class FileParser {
 			specLine = specLine.replaceAll("\\s+$", "");
 
 			try {
-
 				scanLine(specLine, false, false, true, false, false, false, false, false);
-
 			} catch (AssemblerException e) {
-
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
 			}
@@ -198,46 +180,32 @@ public class FileParser {
 		
 		if (!(foundArchitecture && foundRegisters && foundInsFormat
 				&& foundAssemblyOpTree && foundEndian && foundMinAdrUnit)) {
-
 			String missingSections = "";
-
 			if (!foundArchitecture)
 				missingSections += "\"architecture\" ";
-
 			if (!foundRegisters)
 				missingSections += "\"registers\" ";
-
 			if (!foundInsFormat)
 				missingSections += "\"instructionFormat\" ";
-
 			if (!foundAssemblyOpTree)
 				missingSections += "\"assemblyOpTree\" ";
-
 			if (!foundEndian)
 				missingSections += "\"endian\" ";
-
 			if (!foundMinAdrUnit)
 				missingSections += "\"minAddressableUnit\" ";
-
 			missingSections = missingSections.trim();
-
-			try {
-				
+			try {				
 				throw new AssemblerException("Section/s " + missingSections	
-						+ " missing from specification file.");
-				
-			} catch (AssemblerException e) {
-				
+						+ " missing from specification file.");				
+			} catch (AssemblerException e) {				
 				String error = e.getMessage();
 				errorReport.add(error);
 			}
 		}		
 		
-		if(!errorReport.isEmpty()){
-			
+		if(!errorReport.isEmpty()){			
 			ArrayList<String> empty = new ArrayList<String>();
-			empty.add("Error in specification file, see \"spec_error_report.text\".");
-			
+			empty.add("Error in specification file, see \"spec_error_report.text\".");			
 			Assembler.writeLinesToFile("spec_error_report.txt", errorReport);
 			Assembler.writeLinesToFile("object_code.txt", empty);
 			System.exit(0);			
@@ -246,41 +214,28 @@ public class FileParser {
 		inputFile.close();
 
 		lineCounter = 0;
-		String fullSpecLine = null;
-		
+		String fullSpecLine = null;		
 		resetDeclarationBooleans();
 
 		while (inputFile2.hasNextLine()) {
-
 			fullSpecLine = inputFile2.nextLine();
 			String specLine = fullSpecLine;
-
 			lineCounter++;
-
-			// Comments (;...) omitted
 			String[] commentSplit = specLine.split(";");
 
 			try {
-
 				specLine = commentSplit[0];
-
 			} catch (ArrayIndexOutOfBoundsException e) {
-
 				specLine = "";
 			}
 
-			// Remove end whitespace
 			specLine = specLine.replaceAll("\\s+$", "");
 
 			try {
-
 				scanLine(specLine, true, true, false, true, true, true, true, true);
-
 			} catch (AssemblerException e) {
-
 				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 				errorReport.add(error);
-
 				resetBooleanValues();
 				abortMnem = true;
 				foundFormatHeader = true;
@@ -289,16 +244,13 @@ public class FileParser {
 		
 		inputFile2.close();
 		
-		// run one last time with empty line to catch any error at end of mnemonic data section
+		// Run one last time with empty line to catch any error at end of mnemonic data section
 		try {
-
 			scanLine("", true, true, false, true, true, true, true, true);
 
 		} catch (AssemblerException e) {
-
 			String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
 			errorReport.add(error);
-
 			resetBooleanValues();
 			abortMnem = true;
 			foundFormatHeader = true;
@@ -306,16 +258,11 @@ public class FileParser {
 
 		// If missing sections in specification file
 		if (!foundMnemData) {
-
 			String missingSections = "\"mnemonicData\"";
-
-			try {
-				
+			try {				
 				throw new AssemblerException("Section/s " + missingSections		
-						+ " missing from specification file.");
-				
-			} catch (AssemblerException e) {
-				
+						+ " missing from specification file.");				
+			} catch (AssemblerException e) {				
 				String error = e.getMessage();
 				errorReport.add(error);
 			}
@@ -355,124 +302,94 @@ public class FileParser {
 		// Section labels in specification file not case sensitive
 		String lowerCaseLine = specLine.toLowerCase();
 
-		if (lowerCaseLine.startsWith("architecture:")){
-			
+		if (lowerCaseLine.startsWith("architecture:")){			
 			if(architectureDeclared)
-				throw new AssemblerException("Architecture section already declared.");
-			
-			architectureDeclared = true;
-			
+				throw new AssemblerException("Architecture section already declared.");			
+			architectureDeclared = true;			
 			setBooleanValues(true, false, false, false, false, false, false);
 		}
 
-		else if (lowerCaseLine.startsWith("registers:")){
-			
+		else if (lowerCaseLine.startsWith("registers:")){			
 			if(registersDeclared)
-				throw new AssemblerException("Registers section already declared.");
-			
-			registersDeclared = true;
-			
+				throw new AssemblerException("Registers section already declared.");			
+			registersDeclared = true;			
 			setBooleanValues(false, true, false, false, false, false, false);
 		}
 
-		else if (lowerCaseLine.startsWith("mnemonicdata:")){
-			
+		else if (lowerCaseLine.startsWith("mnemonicdata:")){			
 			if(mnemDataDeclared)
-				throw new AssemblerException("MnemonicData section already declared.");
-			
-			mnemDataDeclared = true;
-			
+				throw new AssemblerException("MnemonicData section already declared.");			
+			mnemDataDeclared = true;			
 			setBooleanValues(false, false, true, false, false, false, false);
 		}
 
-		else if (lowerCaseLine.startsWith("instructionformat:")){
-			
+		else if (lowerCaseLine.startsWith("instructionformat:")){			
 			if(insFormatDeclared)
-				throw new AssemblerException("Architecture section already declared.");
-			
-			insFormatDeclared = true;
-		
+				throw new AssemblerException("Architecture section already declared.");			
+			insFormatDeclared = true;		
 			setBooleanValues(false, false, false, true, false, false, false);
 		}
 
-		else if (lowerCaseLine.startsWith("assemblyoptree:")){
-			
+		else if (lowerCaseLine.startsWith("assemblyoptree:")){			
 			if(assemblyOpTreeDeclared)
-				throw new AssemblerException("AssemblyOpTree section already declared.");
-			
-			assemblyOpTreeDeclared = true;
-		
+				throw new AssemblerException("AssemblyOpTree section already declared.");			
+			assemblyOpTreeDeclared = true;		
 			setBooleanValues(false, false, false, false, true, false, false);
 		}
 
-		else if (lowerCaseLine.startsWith("endian:")){
-			
+		else if (lowerCaseLine.startsWith("endian:")){			
 			if(endianDeclared)
-				throw new AssemblerException("Endian section already declared.");
-			
-			endianDeclared = true;
-		
+				throw new AssemblerException("Endian section already declared.");			
+			endianDeclared = true;		
 			setBooleanValues(false, false, false, false, false, true, false);
 		}
 
-		else if (lowerCaseLine.startsWith("minaddressableunit:")){
-			
+		else if (lowerCaseLine.startsWith("minaddressableunit:")){			
 			if(minAdrUnitDeclared)
-				throw new AssemblerException("Architecture section already declared.");
-			
-			minAdrUnitDeclared = true;
-			
+				throw new AssemblerException("Architecture section already declared.");			
+			minAdrUnitDeclared = true;			
 			setBooleanValues(false, false, false, false, false, false, true);
 		}
 
-		else if (architecture){
-			
+		else if (architecture){			
 			if(!ignoreArchitecture)
 				analyseArchitecture(specLine);
 		}
 
-		else if (registers){
-			
+		else if (registers){			
 			if(!ignoreRegisters)
 				analyseRegisters(specLine);
 		}
 
-		else if (mnemonicData){
-			
+		else if (mnemonicData){			
 			if(!ignoreMnemonicData)
 				analyseMnemonicData(specLine);
 		}
 
-		else if (instructionFormat){
-			
+		else if (instructionFormat){			
 			if(!ignoreInstructionFormat)
 				analyseInstructionFormat(specLine);
 		}
 
-		else if (assemblyOpTree){
-			
+		else if (assemblyOpTree){			
 			if(!ignoreAssemblyOpTree)
 				analyseAssemblyOpTree(specLine);
 		}
 
-		else if (endian){
-			
+		else if (endian){			
 			if(!ignoreEndian)
 				analyseEndian(specLine);
 		}
 
-		else if (minAddressableUnit){
-			
+		else if (minAddressableUnit){			
 			if(!ignoreMinAddressableUnit)
 				analyseMinAddressableUnit(specLine);	
 		}
 		
-		else{
-			
+		else{			
 			if(specLine.trim().length() != 0)
 				throw new AssemblerException("No section header.");
-		}
-			
+		}			
 	}
 
 	private void analyseMinAddressableUnit(String line) throws AssemblerException {
@@ -484,7 +401,6 @@ public class FileParser {
 			throw new AssemblerException("MinAddressableUnit error: Minimum addressable unit already specified.");
 
 		foundMinAdrUnit = true;
-
 		line = line.trim();
 
 		boolean legitMinAdrUnit = Pattern.matches("[0-9]+", line);
@@ -510,7 +426,6 @@ public class FileParser {
 			throw new AssemblerException("Endian error: Endian already specified.");
 		
 		foundEndian = true;
-
 		line = line.trim();
 		line = line.toLowerCase();
 
@@ -524,59 +439,6 @@ public class FileParser {
 			throw new AssemblerException(
 					"Endian error: Endian not recognised, \"big\" or \"little\" expected.");
 	}
-
-//	private void analyseAssemblyOpTree(String line) throws AssemblerException {
-//
-//		if (line.trim().length() == 0)
-//			return;
-//
-//		foundAssemblyOpTree = true;
-//
-//		line = line.trim();
-//
-//		// Legit assemblyOpTree expression:
-//		// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
-//		// (!(space|colon))+)*
-//		boolean legitAssemblyOpTreeExp = Pattern.matches(
-//				"[a-zA-Z0-9]+\\s*:\\s*[^\\s:]+(\\s*[^\\s:]+)*", line);
-//
-//		if (!legitAssemblyOpTreeExp)
-//			throw new AssemblerException("AssemblyOpTree error: Syntax error."); // TODO
-//
-//		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
-//
-//		String[] assemblyOpTreeTokens = line.split("[^A-Za-z0-9]+");
-//
-//		for (String assemblyOpTreeToken : assemblyOpTreeTokens)
-//			assemblyOpTree.getAssemblyOpTreeTokens().add(assemblyOpTreeToken);
-//
-//		String[] colonSplit = line.split("(?=[:])|(?<=[:])");
-//
-//		String label = colonSplit[0].trim();
-//		String terms = colonSplit[2].trim();
-//
-//		// First entry must be root term
-//		if (firstAssemblyOpTreeEntry) {
-//
-//			String rootToken = label;
-//			assemblyOpTree.setRootToken(rootToken);
-//			firstAssemblyOpTreeEntry = false;
-//		}
-//
-//		ArrayList<String> termsList = new ArrayList<String>();
-//		termsList.add(terms);
-//
-//		// If label already exists in hash, then add to existing list, else put
-//		// label in hash
-//		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(
-//				label);
-//
-//		if (list != null)
-//			list.add(terms);
-//
-//		else
-//			assemblyOpTree.getAssemblyOpTreeHash().put(label, termsList);
-//	}
 	
 	private void analyseAssemblyOpTree(String line) throws AssemblerException {
 
@@ -584,23 +446,20 @@ public class FileParser {
 			return;
 
 		foundAssemblyOpTree = true;
-
 		line = line.trim();		
 		
-		boolean legitAssemblyOpTreeExp = Pattern.matches("[^:]*:[^:]*", line);
+		boolean legitAssemblyOpTreeExp = Pattern.matches("[^:]+:[^:]+", line);
 
 		if (!legitAssemblyOpTreeExp)
 			throw new AssemblerException("AssemblyOpTree error: Line syntax error, expected format <node> : <expression>");
 		
 		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
-
 		String[] assemblyOpTreeTokens = line.split("[^A-Za-z0-9]+");
 
 		for (String assemblyOpTreeToken : assemblyOpTreeTokens)
 			assemblyOpTree.getAssemblyOpTreeTokens().add(assemblyOpTreeToken);
 
 		String[] colonSplit = line.split(":");
-
 		String node = colonSplit[0].trim();
 		
 		if(node.equals("LABEL") || node.equals("INT") || node.equals("HEX"))
@@ -609,9 +468,9 @@ public class FileParser {
 		boolean legitNode = Pattern.matches("[a-zA-Z0-9]+", node);
 		
 		if(!legitNode)
-			throw new AssemblerException("label error");
+			throw new AssemblerException("AssemblyOpTree error: Node error, should be alphanumeric token, expected format <node> : <expression>");
 		
-		String terms = colonSplit[1].trim();
+		String expression = colonSplit[1].trim();
 
 		// First entry must be root term
 		if (firstAssemblyOpTreeEntry || node.equals(rootOpTreeEntry)) {
@@ -620,7 +479,7 @@ public class FileParser {
 			// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
 			// (!(space|colon))+)*
 			boolean legitRootExp = Pattern.matches(
-					"[^\\s:]+(\\s*[^\\s:]+)*", terms);
+					"[^\\s:]+(\\s*[^\\s:]+)*", expression);
 
 			if (!legitRootExp)
 				throw new AssemblerException("AssemblyOpTree error: Root expression syntax error.");
@@ -633,32 +492,34 @@ public class FileParser {
 		}
 		
 		else{
-			boolean legitNonRootExp = Pattern.matches(
-					"[^\\s:]+", terms);
+			// Single token
+			boolean legitNonRootExp = Pattern.matches("[^\\s:]+", expression);
 
 			if (!legitNonRootExp)
 				throw new AssemblerException("AssemblyOpTree error: Non root expressions should only consist of a single token.");
 			
-			else if (terms.charAt(terms.length() - 1) == '*'
-					|| terms.charAt(terms.length() - 1) == '+'
-					|| terms.charAt(terms.length() - 1) == '?')
-				throw new AssemblerException("AssemblyOpTree error: Wildcards (\"*\", \"+\" or \"?\") can only be applied to tokens in root node (\"" + data.getAssemblyOpTree().getRootToken() + "\").");
+			else if (expression.charAt(expression.length() - 1) == '*'
+					|| expression.charAt(expression.length() - 1) == '+'
+					|| expression.charAt(expression.length() - 1) == '?')
+				throw new AssemblerException(
+						"AssemblyOpTree error: Wildcards (\"*\", \"+\" or \"?\") can only be applied to tokens in root node expression (\""
+								+ data.getAssemblyOpTree().getRootToken()
+								+ "\").");
 		}
 
 		assemblyOpTree.getAssemblyOpTreeTokens().add(node);
-		assemblyOpTree.getAssemblyOpTreeTokens().add(terms);
+		assemblyOpTree.getAssemblyOpTreeTokens().add(expression);
 
-		// If label already exists in hash, then add to existing list, else put
-		// label in hash
+		// If node already exists in tree, then add to existing node list, else put
+		// node in hash
 		ArrayList<String> list = assemblyOpTree.getAssemblyOpTreeHash().get(node);
 
 		if (list != null)
-			list.add(terms);
+			list.add(expression);
 
-		else{
-			
+		else{			
 			ArrayList<String> termsList = new ArrayList<String>();
-			termsList.add(terms);
+			termsList.add(expression);
 			assemblyOpTree.getAssemblyOpTreeHash().put(node, termsList);
 		}
 	}
@@ -685,7 +546,6 @@ public class FileParser {
 			throw new AssemblerException("Architecture error: Architecture name already specified.");
 
 		foundArchitecture = true;
-
 		data.setArchitecture(line.trim());
 	}
 
@@ -695,10 +555,9 @@ public class FileParser {
 			return;
 
 		foundRegisters = true;
-
 		line = line.trim();
 
-		// Legit register expression:
+		// Valid register expression:
 		// (!space)+ space+ (!space)+
 		boolean legitRegExp = Pattern.matches("[^\\s]+\\s+[^\\s]+", line);
 
@@ -710,15 +569,14 @@ public class FileParser {
 
 		String[] tokens = line.split("\\s+");
 
-		String regLabel = tokens[0];
-		String valueAndBase = tokens[1];
-		
+		String regName = tokens[0];
+		String valueAndBase = tokens[1];		
 		String regValue = getBinaryFromBase(valueAndBase);
 		
-		if(data.getRegisterHash().get(regLabel) != null)
-			throw new AssemblerException("Registers error: Register \"" + regLabel + "\" already defined.");
+		if(data.getRegisterHash().get(regName) != null)
+			throw new AssemblerException("Registers error: Register \"" + regName + "\" already defined.");
 		
-		data.getRegisterHash().put(regLabel, regValue);
+		data.getRegisterHash().put(regName, regValue);
 	}
 	
 	private String getBinaryFromBase(String valueAndBase) throws AssemblerException{
@@ -728,12 +586,10 @@ public class FileParser {
 
 		// Binary
 		if (base == 'B') {
-
 			if (value.isEmpty())
 				throw new AssemblerException(
 						"Value error: Syntax error, <value><B/H/I> expected.\n"
 								+ "Binary value missing.");
-
 			if (!isBinary(value))
 				throw new AssemblerException("Value error: \"" + value
 						+ "\" is not a valid binary value.");
@@ -741,18 +597,14 @@ public class FileParser {
 
 		// Hex
 		else if (base == 'H') {
-
 			if (value.isEmpty())
 				throw new AssemblerException(
 						"Value error: Syntax error, <value><B/H/I> expected.\n"
 								+ "Hex value missing.");
 
-			try {
-				
-				value = Assembler.hexToBinary(value);
-				
-			} catch (NumberFormatException e) {
-				
+			try {				
+				value = Assembler.hexToBinary(value);				
+			} catch (NumberFormatException e) {				
 				throw new AssemblerException("Value error: \"" + value
 						+ "\" is not a valid hex value.");
 			}
@@ -760,18 +612,14 @@ public class FileParser {
 
 		// Integer
 		else if (base == 'I') {
-
 			if (value.isEmpty())
 				throw new AssemblerException(
 						"Value error: Syntax error, <value><B/H/I> expected.\n"
 								+ "Integer value missing.");
 
-			try {
-				
-				value = Assembler.intToBinary(value);
-				
-			} catch (NumberFormatException e) {
-				
+			try {				
+				value = Assembler.intToBinary(value);				
+			} catch (NumberFormatException e) {				
 				throw new AssemblerException("Value error: \"" + value
 						+ "\" is not a valid integer.");
 			}
@@ -790,22 +638,18 @@ public class FileParser {
 
 	private void analyseMnemonicData(String line) throws AssemblerException {
 
-		try {
-			
-			currentMnemonicData.addToRawLines(line);
-			
+		try {			
+			currentMnemonic.addToRawLines(line);			
 		} catch (NullPointerException e) {}
 
 		if (line.trim().length() == 0) {
-
 			emptyLine = true;
-
+			
 			if (abortMnem)
 				return;
-
-			if (atLocalInsLabels || atLocalOpcodes || atLocalInsFormat)
+			
+			if (atOperandFieldEncodings || atLocalFieldEncodings || atInsFormat)
 				checkWhatLineExpected();
-
 			return;
 		}
 
@@ -813,64 +657,50 @@ public class FileParser {
 
 		// New mnemonic (no whitespace at beginning)
 		if (Pattern.matches("[^\t\\s].*", line) && emptyLine
-				&& foundFormatHeader && !atLocalInsLabels && !atLocalOpcodes
-				&& !atLocalInsFormat) {
-
+				&& foundFormatHeader && !atOperandFieldEncodings && !atLocalFieldEncodings
+				&& !atInsFormat) {
 			emptyLine = false;
-
 			analyseMnemName(line);
-
-			currentMnemonicData.addToRawLines(line);
+			currentMnemonic.addToRawLines(line);
 		}
 
 		else if (abortMnem)
 			return;
 
-		else if (currentMnemonicData == null) {
-
+		else if (currentMnemonic == null) {
 			abortMnem = true;
-
 			throw new AssemblerException(
 					"MnemonicData error: Mnemonic name not declared.");
 		}
 
-		// Global opcodes (starts with tab and not passed an empty line)
+		// Global field encodings (starts with tab and not passed an empty line)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine
 				&& !doneGlobalOpcodes) {
-
-			analyseGlobalOpcodes(line);
-
+			analyseGlobalFieldEncodings(line);
 			doneGlobalOpcodes = true;
 		}
 
-		// Mnemonic format header (starts with tab and empty line passed)
+		// Operand format (starts with tab and empty line passed)
 		else if (Pattern.matches("\t[^\t\\s].*", line)) {
 
 			if(!emptyLine)
-				checkWhatLineExpected();
-				
+				checkWhatLineExpected();				
 			emptyLine = false;
-
 			analyseOperandFormat(line);
-
-			atLocalInsLabels = true;
+			atOperandFieldEncodings = true;
 			foundFormatHeader = true;
 
-			try {
-				
-				currentMnemFormat.addToRawLineString(line);
-				
+			try {				
+				currentMnemFormat.addToRawLineString(line);				
 			} catch (NullPointerException e) {}
 		}
 
-		// Mnemonic format data (starts with double tab and empty line passed)
+		// Operand format data (starts with double tab and empty line passed)
 		else if (Pattern.matches("\t\t[^\t\\s].*", line)
-				&& (atLocalInsLabels || atLocalOpcodes || atLocalInsFormat)) {
+				&& (atOperandFieldEncodings || atLocalFieldEncodings || atInsFormat)) {
 
-			try {
-				
-				currentMnemFormat.addToRawLineString(line);
-				
+			try {				
+				currentMnemFormat.addToRawLineString(line);				
 			} catch (NullPointerException e) {}
 
 			analyseOperandFormatData(line);
@@ -885,47 +715,40 @@ public class FileParser {
 
 		abortMnem = true;
 
-		if (atLocalInsLabels) {
-
+		if (atOperandFieldEncodings) {
 			abortMnem = true;
-
 			throw new AssemblerException(
 					"MnemonicData error: Line format or indentation error, instruction field labels line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 
-		else if (atLocalOpcodes) {
-
+		else if (atLocalFieldEncodings) {
 			throw new AssemblerException(
 					"MnemonicData error: Line format or indentation error, local opcodes line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 
-		else if (atLocalInsFormat) {
-
+		else if (atInsFormat) {
 			throw new AssemblerException(
 					"MnemonicData error: Line format or indentation error, instruction format line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 		
 		if (!emptyLine){
-
 			throw new AssemblerException(
 					"MnemonicData error: Line format error, empty line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 		
 		if (!foundFormatHeader) {
-
 			throw new AssemblerException(
 					"MnemonicData error: Line format or indentation error, operand format line expected.\nOperand format missing for mnemonic \""
-							+ currentMnemonicData.getMnemonic()
+							+ currentMnemonic.getMnemonic()
 							+ "\".\n"
 							+ getMnemDataErrorMessage());
 		}
 		
 		else{
-			throw new AssemblerException("HEEEEEEREEEEEE");	//TODO
 		}
 	}
 
@@ -933,7 +756,6 @@ public class FileParser {
 
 		// Reset boolean values for new mnemonic
 		resetBooleanValues();
-
 		String mnem = line.trim();
 
 		// Legit mnemonic name expression:
@@ -941,33 +763,30 @@ public class FileParser {
 		boolean legitMnemName = Pattern.matches("[^\\s]+", mnem);
 
 		if (!legitMnemName) {
-
-			abortMnem = true;
-			
+			abortMnem = true;			
 			throw new AssemblerException(
 					"MnemonicData error: Mnemonic name syntax error, should only be single token (no spaces).");
 		}
 
-		currentMnemonicData = new Mnemonic();
-		currentMnemonicData.setMnemonic(mnem);
+		currentMnemonic = new Mnemonic();
+		currentMnemonic.setMnemonic(mnem);
 		
 		if(data.getMnemonicTable().get(mnem) != null)
 			throw new AssemblerException(
 					"MnemonicData error: Mnemonic name \"" + mnem + "\" already defined.");
 
 		// Put mnemonic data in mnemonic hash table
-		data.getMnemonicTable().put(mnem, currentMnemonicData);
+		data.getMnemonicTable().put(mnem, currentMnemonic);
 	}
 
 	private void analyseOperandFormat(String line) throws AssemblerException {
 
 		line = line.trim();
 
-		String[] mnemFormatSplit = line.split("\\s+"); // space
+		String[] mnemFormatSplit = line.split("\\s+"); 
 		ArrayList<String> mnemFormatList = new ArrayList<String>();
 
 		for (String formatTerm : mnemFormatSplit) {
-
 			formatTerm = formatTerm.replaceAll("^,+", "");
 			formatTerm = formatTerm.replaceAll(",+$", "");
 			
@@ -975,14 +794,12 @@ public class FileParser {
 				mnemFormatList.add(formatTerm);
 		}
 
+		// Check format token has been defined somewhere in tree
 		ArrayList<String> assemblyOpTreeTokens = data.getAssemblyOpTree().getAssemblyOpTreeTokens();
 
 		for (String formatToken : mnemFormatList) {
-
-			if (!assemblyOpTreeTokens.contains(formatToken)) {
-				
-				abortMnem = true;
-				
+			if (!assemblyOpTreeTokens.contains(formatToken)) {				
+				abortMnem = true;				
 				throw new AssemblerException(
 						"MnemonicData error: Operand format token \""
 								+ formatToken
@@ -992,32 +809,30 @@ public class FileParser {
 
 		currentMnemFormat = new OperandFormat();
 		currentMnemFormat.setMnemFormat(line);
-		currentMnemonicData.getMnemFormats().add(line);
+		currentMnemonic.getOperandsFormats().add(line);
 		
-		if(currentMnemonicData.getMnemFormatHash().get(line) != null)
+		if(currentMnemonic.getOperandFormatHash().get(line) != null)
 			throw new AssemblerException(
-					"MnemonicData error: Operand format \"" + line + "\" already defined for mnemonic \"" + currentMnemonicData.getMnemonic() + "\".");
+					"MnemonicData error: Operand format \"" + line + "\" already defined for mnemonic \"" + currentMnemonic.getMnemonic() + "\".");
 		
-		currentMnemonicData.getMnemFormatHash().put(line, currentMnemFormat);
+		currentMnemonic.getOperandFormatHash().put(line, currentMnemFormat);
 	}
 
 	private void analyseOperandFormatData(String line) throws AssemblerException {
 
-		if (atLocalInsLabels) {
+		if (atOperandFieldEncodings) {			
+			line = line.trim();	
 			
-			line = line.trim();
-			
+			// If line is "--" then there are no operand field encodings
 			if (!line.equals("--"))
-				currentMnemFormat.setInsFieldLabels(line);
-			
-			atLocalInsLabels = false;
-			atLocalOpcodes = true;
+				currentMnemFormat.setOperandFieldEncodings(line);			
+			atOperandFieldEncodings = false;
+			atLocalFieldEncodings = true;
 		}
 
-		else if (atLocalOpcodes) {
-
+		else if (atLocalFieldEncodings) {
 			line = line.trim();
-
+			
 			// If line is "--" then there are no local opcodes
 			if (!line.equals("--")) {
 
@@ -1031,67 +846,49 @@ public class FileParser {
 								line);
 
 				if (!legitLocalOpcodes) {
-
-					abortMnem = true;
-					
+					abortMnem = true;					
 					throw new AssemblerException(
 							"MnemonicData error: Local opcodes syntax error,"
 									+ "\n<fieldName>=<value><B/H/I> or \"--\" (if no local opcodes) expected.");
 				}
 
-				// Legit local opcodes so omit unnecessary spaces
+				// Legit local field encodings so omit unnecessary spaces
 				line = line.replaceAll("\\s+", "");
-
 				String[] tokens = line.split(",");
 
 				for (String token : tokens) {
-
-					String[] elements = token.split("=");
-					
-					String opcode = elements[0];
-					
+					String[] elements = token.split("=");					
+					String field = elements[0];					
 					String valueAndBase = elements[1];
-					String binary = getBinaryFromBase(valueAndBase);
-					
-					currentMnemFormat.getOpcodes().put(opcode, binary);
+					String binary = getBinaryFromBase(valueAndBase);					
+					currentMnemFormat.getFieldBitHash().put(field, binary);
 				}
 			}
-
-			atLocalOpcodes = false;
-			atLocalInsFormat = true;
+			atLocalFieldEncodings = false;
+			atInsFormat = true;
 		}
 
-		else if (atLocalInsFormat) {
-
+		else if (atInsFormat) {
 			line = line.trim();
-
 			String[] tokens = line.split("\\s+");
-
-			for (String str : tokens)
-				currentMnemFormat.getInstructionFormat().add(str);
-
-			endOfFormatBlockErrorCheck();
-
-			atLocalInsFormat = false;
+			for (String ins : tokens)
+				currentMnemFormat.getInstructionFormat().add(ins);
+			endOfOperandFormatBlockErrorCheck();
+			atInsFormat = false;
 		}
 	}
 	
 	private String getMnemDataErrorMessage() {
 
-		ArrayList<String> rawLines = currentMnemonicData.getRawLines();
-
+		ArrayList<String> rawLines = currentMnemonic.getRawLines();
 		int noOfLines = rawLines.size();
 		int maxLineLength = 0;
-
 		String msg = "";
 
 		for (String str : rawLines) {
-
 			str = str.replaceAll("\\s+$", "");
-
 			if (str.length() > maxLineLength)
 				maxLineLength = str.length();
-
 			msg += "\n" + str;
 		}
 
@@ -1101,7 +898,7 @@ public class FileParser {
 
 		if (lastLineLength == 0)
 			noOfSpaces = maxLineLength;
-
+		
 		else
 			noOfSpaces = maxLineLength - lastLineLength;
 
@@ -1113,19 +910,16 @@ public class FileParser {
 		return msg;
 	}
 
-	private void endOfFormatBlockErrorCheck() throws AssemblerException {
+	private void endOfOperandFormatBlockErrorCheck() throws AssemblerException {
 
 		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();
 		int totalBits = 0;
 
 		for (String instruction : instructionFormat) {
-
-			InstructionFormat insFormat = data.getInstructionFormat().get(instruction);
+			InstructionFormat insFormat = data.getInstructionFormatHash().get(instruction);
 
 			if (insFormat == null) {
-
 				abortMnem = true;
-
 				throw new AssemblerException(
 						currentMnemFormat.getRawLinesString()
 								+ "\nMnemonicData error: Instruction \""
@@ -1136,27 +930,23 @@ public class FileParser {
 			ArrayList<String> instructions = insFormat.getFields();
 
 			for (String field : instructions) {
-
 				int bits = insFormat.getFieldBitHash().get(field);
 				totalBits += bits;
 
-				if (currentMnemonicData.getGlobalOpCodes().get(field) != null) {
-
-					String opcode = currentMnemonicData.getGlobalOpCodes().get(field);					
-					int noOfBits = opcode.length();
+				if (currentMnemonic.getGlobalFieldEncodingHash().get(field) != null) {
+					String field1 = currentMnemonic.getGlobalFieldEncodingHash().get(field);					
+					int noOfBits = field1.length();
 
 					if (noOfBits > bits) {
-
 						abortMnem = true;
-
 						throw new AssemblerException(
-								currentMnemonicData.getRawLinesString()
+								currentMnemonic.getRawLinesString()
 										+ "\nMnemonicData error: Encoding for field \""
 										+ field
 										+ "\" in \""
-										+ currentMnemonicData.getMnemonic()
+										+ currentMnemonic.getMnemonic()
 										+ "\" global opcodes ("
-										+ currentMnemonicData.getRawGlobalOpcodesString()
+										+ currentMnemonic.getRawGlobalFieldEncodingString()
 										+ ")\nexceeds expected " 
 										+ bits
 										+ " bits in instruction format \""
@@ -1166,21 +956,18 @@ public class FileParser {
 					}
 				}
 
-				else if (currentMnemFormat.getOpcodes().get(field) != null) {
-
-					String opcode = currentMnemFormat.getOpcodes().get(field);
-					int noOfBits = opcode.length();
-
+				else if (currentMnemFormat.getFieldBitHash().get(field) != null) {
+					String field1 = currentMnemFormat.getFieldBitHash().get(field);
+					int noOfBits = field1.length();
+					
 					if (noOfBits > bits) {
-
 						abortMnem = true;
-
 						throw new AssemblerException(
 								currentMnemFormat.getRawLinesString()
 										+ "\nMnemonicData error: Encoding for field \""
 										+ field 
 										+ "\" in local opcodes for \""
-										+ currentMnemonicData.getMnemonic()
+										+ currentMnemonic.getMnemonic()
 										+ "\" format \""
 										+ currentMnemFormat.getMnemFormat()
 										+ "\"\nexceeds expected " 
@@ -1192,24 +979,22 @@ public class FileParser {
 					}
 				}
 
-				else if (existsInInsFieldLabels(currentMnemFormat.getInsFieldLabels(), field));
+				else if (existsInInsFieldLabels(currentMnemFormat.getOperandFieldEncodings(), field));
 
 				else {
-
 					abortMnem = true;
-
-					throw new AssemblerException(currentMnemonicData.getRawLinesString()
+					throw new AssemblerException(currentMnemonic.getRawLinesString()
 							+ "\nMnemonicData error: Field \"" 
 							+ field
 							+ "\" in instruction format \"" 
 							+ instruction
 							+ "\" (" + insFormat.getRawLineString()
 							+ ")\nnot found within global \""
-							+ currentMnemonicData.getMnemonic()
+							+ currentMnemonic.getMnemonic()
 							+ "\" opcodes ("
-							+ currentMnemonicData.getRawGlobalOpcodesString()
+							+ currentMnemonic.getRawGlobalFieldEncodingString()
 							+ ") or in \"" 
-							+ currentMnemonicData.getMnemonic()
+							+ currentMnemonic.getMnemonic()
 							+ "\" format \""
 							+ currentMnemFormat.getMnemFormat() 
 							+ "\".");
@@ -1219,6 +1004,7 @@ public class FileParser {
 		
 		int minAdrUnit = data.getMinAdrUnit();
 
+		// If total instruction size is not divisible by minimum addressable unit
 		if (totalBits % minAdrUnit != 0)
 			throw new AssemblerException(currentMnemFormat.getRawLinesString()
 					+ "\nMnemonicData error: Total instruction size ("
@@ -1227,16 +1013,14 @@ public class FileParser {
 							+ minAdrUnit + ")");
 	}
 
-	private boolean existsInInsFieldLabels(String insFieldLabels, String field) {
+	private boolean existsInInsFieldLabels(String operandFieldEncodings, String field) {
 
-		String[] insFieldLabelTokens = insFieldLabels.split("[^a-zA-Z0-9]+");
+		String[] operandFieldEncodingTokens = operandFieldEncodings.split("[^a-zA-Z0-9]+");
 
-		for (String insFieldLabel : insFieldLabelTokens) {
-
-			if (insFieldLabel.equals(field))
+		for (String field1 : operandFieldEncodingTokens) {
+			if (field1.equals(field))
 				return true;
 		}
-
 		return false;
 	}
 
@@ -1248,52 +1032,44 @@ public class FileParser {
 		emptyLine = false;
 
 		foundFormatHeader = false;
-		atLocalInsLabels = false;
-		atLocalOpcodes = false;
-		atLocalInsFormat = false;
+		atOperandFieldEncodings = false;
+		atLocalFieldEncodings = false;
+		atInsFormat = false;
 
-		currentMnemonicData = null;
+		currentMnemonic = null;
 	}
 
-	private void analyseGlobalOpcodes(String line) throws AssemblerException {
+	private void analyseGlobalFieldEncodings(String line) throws AssemblerException {
 
 		line = line.trim();
 
 		// Legit global opcode expression:
-		// (!(space|equals|comma))+ space* equals space*
-		// (!(space|equals|comma))+
-		// (space* comma space* (!(space|equals|comma))+ space* equals space*
-		// (!(space|equals|comma))+)*
+		// alphanumeric+ space* equals space* alphanumeric+
+		// (space* comma space* alphanumeric+ space* equals space*
+		// alphanumeric+)*
 		boolean legitGlobalOpcodes = Pattern
-				.matches("[^\\s=,]+\\s*=\\s*[^\\s=,]+(\\s*,\\s*[^\\s=,]+\\s*=\\s*[^\\s=,]+)*",
+				.matches("[a-zA-Z0-9]+\\s*=\\s*[a-zA-Z0-9]+(\\s*,\\s*[a-zA-Z0-9]+\\s*=\\s*[a-zA-Z0-9]+)*",
 						line);
 
 		if (!legitGlobalOpcodes) {
-
-			abortMnem = true;
-			
+			abortMnem = true;			
 			throw new AssemblerException(
 					"MnemonicData error: Global opcodes syntax error, <fieldName>=<value><B/H/I> expected.");
 		}
 
 		// Legit global opcodes so omit unnecessary spaces
 		line = line.replaceAll("\\s+", "");
-
 		String[] tokens = line.split(",");
 
 		for (String token : tokens) {
-
-			String[] elements = token.split("=");
-			
-			String opcode = elements[0];
-			
+			String[] elements = token.split("=");			
+			String opcode = elements[0];			
 			String valueAndBase = elements[1];
-			String binary = getBinaryFromBase(valueAndBase);
-			
-			currentMnemonicData.getGlobalOpCodes().put(opcode, binary);
+			String binary = getBinaryFromBase(valueAndBase);			
+			currentMnemonic.getGlobalFieldEncodingHash().put(opcode, binary);
 		}
 
-		currentMnemonicData.setRawGlobalOpcodesString(line);
+		currentMnemonic.setRawGlobalFieldEncodingString(line);
 	}
 
 	private void analyseInstructionFormat(String line) throws AssemblerException {
@@ -1302,57 +1078,47 @@ public class FileParser {
 			return;
 
 		foundInsFormat = true;
-
 		line = line.trim();
 
 		// Legit instruction format:
 		// (!(space|colon))+ space* colon space* (letters|numbers)+ openBracket
 		// 0-9+ closeBracket
 		// (space* (letter|numbers)+ openBracket 0-9+ closeBracket)*
-		boolean legitInsFormat = Pattern
+		boolean validInsFormat = Pattern
 				.matches("[^\\s:]+\\s*:\\s*[a-zA-Z0-9]+\\([0-9]+\\)(\\s*[a-zA-Z0-9]+\\([0-9]+\\))*",
 						line);
 
-		if (!legitInsFormat) {
-
-//			abortMnem = true;
+		if (!validInsFormat) {
 			throw new AssemblerException(
 					"InstructionFormat error: Syntax error, <instructionName> : <fieldName>(<bitLength>) expected. For example:\n"
 							+ "\nopcode : op(6) d(1) s(1)");
 		}
 
 		InstructionFormat insF = new InstructionFormat();
-
 		String[] tokens = line.split(":");
-
 		String insName = tokens[0].trim();
-		String fields = tokens[1].trim();
-
-		String[] fieldTokens = fields.split("\\s+");
+		String fieldsAndValues = tokens[1].trim();
+		String[] fieldTokens = fieldsAndValues.split("\\s+");
 
 		for (String field : fieldTokens) {
-
 			String[] fieldAndSize = field.split("\\(|\\)");
-
 			String fieldName = fieldAndSize[0];
-			int bitSize = Integer.parseInt(fieldAndSize[1]);
-			
+			int bitSize = Integer.parseInt(fieldAndSize[1]);			
 			if(bitSize == 0)
 				throw new AssemblerException(
 						"InstructionFormat error: Can not have 0 bit field length.");
-
 			insF.getFields().add(fieldName);
 			insF.getFieldBitHash().put(fieldName, bitSize);
 		} 
-
+		
 		insF.setInstructionName(insName);
 		insF.setRawLineString(line.trim());
 		
-		if(data.getInstructionFormat().get(insName) != null)
+		if(data.getInstructionFormatHash().get(insName) != null)
 			throw new AssemblerException(
 					"InstructionFormat error: Instruction \""+ insName + "\" already defined");
 		
-		data.getInstructionFormat().put(insName, insF);
+		data.getInstructionFormatHash().put(insName, insF);
 	}
 	
 	private boolean isBinary(String s) {

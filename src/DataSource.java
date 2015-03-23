@@ -14,7 +14,7 @@ public class DataSource {
 	
 	private String architecture;
 	private HashMap<String, Mnemonic> mnemonicTable;
-	private HashMap<String, InstructionFormat> instructionFormat;	
+	private HashMap<String, InstructionFormat> instructionFormatHash;	
 	private HashMap<String, String> registerHash;
 	private AssemblyOpTree assemblyOpTree;
 	private String endian;
@@ -27,73 +27,90 @@ public class DataSource {
 		
 		architecture = null;
 		mnemonicTable = new HashMap<String, Mnemonic>();
-		instructionFormat = new HashMap<String, InstructionFormat>();		
+		instructionFormatHash = new HashMap<String, InstructionFormat>();		
 		registerHash = new HashMap<String, String>();
 		assemblyOpTree = new AssemblyOpTree();
 		endian = null;
 	}
 
+
 	public ArrayList<String> getAssemblyCode() {
 		return assemblyCode;
 	}
+
 
 	public void setAssemblyCode(ArrayList<String> assemblyCode) {
 		this.assemblyCode = assemblyCode;
 	}
 
+
 	public String getArchitecture() {
 		return architecture;
 	}
+
 
 	public void setArchitecture(String architecture) {
 		this.architecture = architecture;
 	}
 
+
 	public HashMap<String, Mnemonic> getMnemonicTable() {
 		return mnemonicTable;
 	}
+
 
 	public void setMnemonicTable(HashMap<String, Mnemonic> mnemonicTable) {
 		this.mnemonicTable = mnemonicTable;
 	}
 
-	public HashMap<String, InstructionFormat> getInstructionFormat() {
-		return instructionFormat;
+
+	public HashMap<String, InstructionFormat> getInstructionFormatHash() {
+		return instructionFormatHash;
 	}
 
-	public void setInstructionFormat(HashMap<String, InstructionFormat> instructionFormat) {
-		this.instructionFormat = instructionFormat;
+
+	public void setInstructionFormatHash(
+			HashMap<String, InstructionFormat> instructionFormatHash) {
+		this.instructionFormatHash = instructionFormatHash;
 	}
+
 
 	public HashMap<String, String> getRegisterHash() {
 		return registerHash;
 	}
 
+
 	public void setRegisterHash(HashMap<String, String> registerHash) {
 		this.registerHash = registerHash;
 	}
+
 
 	public AssemblyOpTree getAssemblyOpTree() {
 		return assemblyOpTree;
 	}
 
+
 	public void setAssemblyOpTree(AssemblyOpTree assemblyOpTree) {
 		this.assemblyOpTree = assemblyOpTree;
 	}
+
 
 	public String getEndian() {
 		return endian;
 	}
 
+
 	public void setEndian(String endian) {
 		this.endian = endian;
 	}
+
 
 	public int getMinAdrUnit() {
 		return minAdrUnit;
 	}
 
+
 	public void setMinAdrUnit(int minAdrUnit) {
 		this.minAdrUnit = minAdrUnit;
-	}
+	}	
 }

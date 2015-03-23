@@ -11,22 +11,28 @@ import java.util.HashMap;
 public class Mnemonic {
 	
 	private String mnemonic;
-	private HashMap<String,String> globalOpCodes;
-	private HashMap<String,OperandFormat> mnemFormatHash;
-	private ArrayList<String> mnemFormats;
+	private HashMap<String,String> globalFieldEncodingHash;
+	private HashMap<String,OperandFormat> operandFormatHash;
+	private ArrayList<String> operandsFormats;
 	private ArrayList<String> rawLines;
-	private String rawGlobalOpcodesString;
+	private String rawGlobalFieldEncodingString;
 	private String rawLinesString;
 	
 	public Mnemonic(){
 		
 		mnemonic = "";
-		globalOpCodes = new HashMap<String, String>();
-		mnemFormatHash = new HashMap<String, OperandFormat>();
-		mnemFormats = new ArrayList<String>();
-		rawGlobalOpcodesString = "";
+		globalFieldEncodingHash = new HashMap<String, String>();
+		operandFormatHash = new HashMap<String, OperandFormat>();
+		operandsFormats = new ArrayList<String>();
+		rawGlobalFieldEncodingString = "";
 		rawLinesString = "";
 		rawLines = new ArrayList<String>();
+	}
+	
+	public void addToRawLines(String str){
+		
+		this.rawLines.add(str);
+		this.rawLinesString += str + "\n";
 	}
 
 	public String getMnemonic() {
@@ -37,36 +43,30 @@ public class Mnemonic {
 		this.mnemonic = mnemonic;
 	}
 
-	public HashMap<String, String> getGlobalOpCodes() {
-		return globalOpCodes;
+	public HashMap<String, String> getGlobalFieldEncodingHash() {
+		return globalFieldEncodingHash;
 	}
 
-	public void setGlobalOpCodes(HashMap<String, String> globalOpCodes) {
-		this.globalOpCodes = globalOpCodes;
+	public void setGlobalFieldEncodingHash(
+			HashMap<String, String> globalFieldEncodingHash) {
+		this.globalFieldEncodingHash = globalFieldEncodingHash;
 	}
 
-	public HashMap<String, OperandFormat> getMnemFormatHash() {
-		return mnemFormatHash;
+	public HashMap<String, OperandFormat> getOperandFormatHash() {
+		return operandFormatHash;
 	}
 
-	public void setMnemFormatHash(HashMap<String, OperandFormat> mnemFormatHash) {
-		this.mnemFormatHash = mnemFormatHash;
+	public void setOperandFormatHash(
+			HashMap<String, OperandFormat> operandFormatHash) {
+		this.operandFormatHash = operandFormatHash;
 	}
 
-	public ArrayList<String> getMnemFormats() {
-		return mnemFormats;
+	public ArrayList<String> getOperandsFormats() {
+		return operandsFormats;
 	}
 
-	public void setMnemFormats(ArrayList<String> mnemFormats) {
-		this.mnemFormats = mnemFormats;
-	}
-
-	public String getRawGlobalOpcodesString() {
-		return rawGlobalOpcodesString;
-	}
-
-	public void setRawGlobalOpcodesString(String rawGlobalOpcodesString) {
-		this.rawGlobalOpcodesString = rawGlobalOpcodesString;
+	public void setOperandsFormats(ArrayList<String> operandsFormats) {
+		this.operandsFormats = operandsFormats;
 	}
 
 	public ArrayList<String> getRawLines() {
@@ -76,11 +76,13 @@ public class Mnemonic {
 	public void setRawLines(ArrayList<String> rawLines) {
 		this.rawLines = rawLines;
 	}
-	
-	public void addToRawLines(String str){
-		
-		this.rawLines.add(str);
-		this.rawLinesString += str + "\n";
+
+	public String getRawGlobalFieldEncodingString() {
+		return rawGlobalFieldEncodingString;
+	}
+
+	public void setRawGlobalFieldEncodingString(String rawGlobalFieldEncodingString) {
+		this.rawGlobalFieldEncodingString = rawGlobalFieldEncodingString;
 	}
 
 	public String getRawLinesString() {
@@ -89,5 +91,5 @@ public class Mnemonic {
 
 	public void setRawLinesString(String rawLinesString) {
 		this.rawLinesString = rawLinesString;
-	}
+	}	
 }
