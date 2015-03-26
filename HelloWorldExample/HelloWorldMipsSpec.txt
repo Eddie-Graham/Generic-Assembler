@@ -1,0 +1,101 @@
+Architecture: 
+ 
+MIPS 
+
+
+
+
+Registers: 
+ 
+$1 	0H
+$at 	1H  
+$v0 	2H 
+$a0 	4H 
+
+
+
+
+InstructionFormat: 
+ 
+I­-type:  opcode(6) rs(5) rt(5) immediate(16) 
+
+syscall: call(32) 
+
+
+
+
+AssemblyOpTree: 
+ 
+statement : mnem op* 
+ 
+op : reg 
+op : imm 
+op : LABEL 
+ 
+imm : HEX 
+ 
+reg : "$1" 
+reg : "$at" 
+reg : "$a0" 
+reg : "$v0" 
+ 
+mnem : "ADDIU" 
+mnem : "LUI" 
+mnem : "ORI" 
+mnem : "SYSCALL" 
+
+
+
+
+MnemonicData: 
+
+
+ADDIU 
+	opcode = 001001B 
+ 
+	mnem reg, reg, imm 
+		mnem rt rs immediate 
+		--
+		I­-type 
+
+
+LUI 
+	opcode =001111B 
+   
+ 
+	mnem reg, imm 
+		mnem rt immediate 
+		rs=00000B 
+		I­-type 
+
+
+ORI 
+	opcode = 001101B 
+ 
+	mnem reg, reg, LABEL 
+		mnem rt rs immediate 
+		-- 
+		I­-type
+
+
+SYSCALL 
+	call = 1100B 
+   
+	mnem  
+		--
+		--
+		syscall 
+
+
+
+
+Endian: 
+ 
+big 
+
+
+
+
+Minaddressableunit: 
+ 
+8 
