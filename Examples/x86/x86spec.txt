@@ -1,0 +1,179 @@
+
+architecture:
+
+x86 
+
+instructionformat:
+
+opcode : op(6) d(1) s(1) 
+
+jmp : op(8) adr(8) 
+
+mod-r/m : mod(2) reg(3) rm(3)
+
+sib : ss(2) index(3) base(3)
+
+displacement : dis(32)
+
+
+registers:	
+
+al  000B
+cl  001B 
+dl  010B 
+bl  011B
+ah  100B 
+ch  101B
+dh	110B
+bh  111B			
+
+ax 	000B
+cx	001B
+dx	010B
+bx	011B
+sp	100B
+bp  101B
+si	110B
+di 	111B
+
+eax	000B
+ecx	001B
+edx	010B
+ebx	011B
+esp	100B
+ebp	101B
+esi	110B
+edi	111B
+
+
+assemblyoptree:	
+
+statement : label? mnem operands*
+
+operands : adrMode
+
+adrMode : reg
+adrMode : imm
+adrMode : dirMem
+adrMode : dirReg
+adrMode : baseInd
+adrMode : baseIndDisp
+adrMode : scale
+adrMode : baseIndScale
+adrMode : adrLabel
+
+reg : reg8
+reg : reg16
+reg : reg32
+
+reg8 : "al"
+reg8 : "cl"
+reg8 : "dl"
+reg8 : "bl"
+reg8 : "ah"
+reg8 : "ch"
+reg8 : "dh"
+reg8 : "bh"
+
+reg16 : "ax"
+reg16 : "cx"
+reg16 : "dx"
+reg16 : "bx"
+reg16 : "sp"
+reg16 : "bp"
+reg16 : "si"
+reg16 : "di"
+
+reg32 : "eax"
+reg32 : "ecx"
+reg32 : "edx"
+reg32 : "ebx"
+reg32 : "esp"
+reg32 : "ebp"
+reg32 : "esi"
+reg32 : "edi"
+
+imm : INT
+
+dirMem : [HEX]
+
+dirReg : [reg]
+
+baseInd : [reg+reg]
+
+baseIndDisp : [reg+imm]
+
+baseIndScale : [reg+reg*4]
+
+scale : scaleOne
+scale : scaleTwo
+
+scaleOne : [imm+reg*1]
+scaleTwo : [imm+reg*2]
+
+mnem : "DIV"
+mnem : "ADD"
+mnem : "JMP"
+
+adrLabel : LABEL
+
+label : LABEL
+
+
+
+mnemonicdata:	
+	
+ADD 
+	op=000000B	
+				
+	mnem reg8, reg8 
+		mnem reg rm 				
+		d=1B, s=0B, mod=11B
+		opcode mod-r/m	
+		
+	mnem reg32, reg32
+		mnem reg rm 
+		d=0B, s=0B, mod=11B		
+		opcode mod-r/m
+		
+	mnem reg32, dirReg
+		mnem reg [rm]
+		d=1B, s=1B, mod=00B
+		opcode mod-r/m
+		
+	mnem reg32, baseIndDisp
+		mnem reg [rm+dis]
+		d=1B, s=1B, mod=10B
+		opcode mod-r/m displacement
+		
+	mnem reg32, scaleOne	
+		mnem reg [dis+index*1]
+		d=1B, s=1B, mod=00B, rm=100B, base=101B, ss=00B
+		opcode mod-r/m sib displacement
+		
+	mnem reg32, imm
+		mnem reg dis
+		d=1B, s=1B, mod=00B, rm=101B
+		opcode mod-r/m displacement
+		
+	mnem reg32, baseIndScale
+		mnem reg [base+index*4]
+		d=1B, s=1B, ss=10B, mod=00B, rm=100B
+		opcode mod-r/m sib
+						
+JMP
+	op=11101011B
+		
+	mnem adrLabel
+		mnem adr
+		--
+		jmp	
+		
+
+endian:
+
+big
+
+minaddressableunit:
+
+8

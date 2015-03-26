@@ -1,0 +1,38 @@
+Architecture: 
+ 
+; architecture data here 
+ 
+Registers:  
+ 
+; registers data here 
+ 
+InstructionFormat: 
+ 
+; instruction format data here 
+ 
+AssemblyOpTree:  
+ 
+; assemblyoptree data here 
+ 
+MnemonicData:  
+ 
+; mnemonic data here 
+ 
+Endian: 
+ 
+; endian data here 
+ 
+MinAddressableUnit: 
+ 
+; minimum addressable unit data here 
+
+
+
+
+
+
+
+
+
+
+

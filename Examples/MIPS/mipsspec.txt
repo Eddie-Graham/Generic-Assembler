@@ -1,0 +1,197 @@
+architecture:
+
+MIPS
+
+
+registers:
+
+zero 0H
+
+$at	1H
+
+$v0 2H
+$v1 3H
+
+$a0 4H
+$a1 5H
+$a2 6H
+$a3 7H
+
+$t0 8H
+$t1 9H
+$t2 10H
+$t3 11H
+$t4 12H
+$t5 13H
+$t6 14H
+$t7 15H
+
+$s0 16H
+$s1 17H
+$s2 18H
+$s3 19H
+$s4 20H
+$s5 21H
+$s6 22H
+$s7 23H
+
+$t8 24H
+$t9 25H
+
+
+instructionformat:
+
+R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) func(6)
+
+I-type: opcode(6) rs(5) rt(5) immediate(16)
+
+J-type: opcode(6) address(26)
+
+syscall: call(32)
+
+lw:	generic(32)
+
+
+assemblyoptree:
+
+statement : label? mnem op* label?
+
+
+op : imm 
+op : reg
+op : mem
+op : LABEL 
+
+imm : HEX
+
+mem : 0xHEX ;fix
+
+mem : imm(reg)
+
+reg : "zero"
+
+reg : "$at"
+reg : "$a0"
+
+reg : "$t0"
+reg : "$t1"
+reg : "$t2"
+reg : "$t3"
+reg : "$t4"
+reg : "$t5"
+reg : "$t6"
+reg : "$t7"
+reg : "$v0"
+
+mnem : "ADD"
+mnem : "SB"
+mnem : "LUI"
+mnem : "LW"
+mnem : "ANDI"
+mnem : "ADDI"
+mnem : "AND"
+mnem : "LB"
+mnem : "LI"
+mnem : "ADDIU"
+mnem : "ORI"
+mnem : "syscall"
+
+label: LABEL
+
+
+mnemonicdata:
+
+ADD
+	opcode=000000B, func=100000B, shamt=00000B
+
+	mnem reg, reg, reg
+		mnem rd rs rt
+		-- 
+		R-type
+		
+ADDI
+	opcode=001000B
+
+	mnem reg, reg, imm
+		mnem rt rs immediate
+		-- 
+		I-type
+		
+AND
+	opcode=000000B, shamt=00000B, func=100100B
+	
+	mnem reg, reg, reg
+		mnem rd rs rt
+		-- 
+		R-type
+		
+		
+LB
+	opcode=100000B
+	
+	mnem reg, mem
+		mnem rt immediate(rs)
+		-- 
+		I-type
+		
+LW	
+	opcode=100011B
+
+	mnem reg, LABEL
+		mnem rt immediate
+		generic = 00111100000000010001000000000001B, rs =1B
+		lw I-type
+		
+LI	
+
+	mnem reg, imm
+		mnem rt immediate
+		opcode = 001001B, rs=0B
+		I-type
+		
+ADDIU
+	opcode = 001001B
+
+	mnem reg, reg, imm
+		mnem rt rs immediate
+		--
+		I-type
+		
+LUI
+	opcode =001111B
+	
+	mnem reg, imm
+		mnem rt immediate
+		rs=0B
+		I-type
+		
+ORI
+	opcode = 001101B
+	
+	mnem reg, reg, LABEL
+		mnem rt rs immediate
+		--
+		I-type
+		
+syscall
+	call = 1100B
+	
+	mnem
+		--
+		--
+		syscall
+		
+		
+endian:
+
+big
+
+
+minaddressableunit:
+
+8
+
+
+
+
+
