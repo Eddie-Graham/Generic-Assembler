@@ -105,7 +105,7 @@ public class FileParser {
 		
 		if(!errorReport.isEmpty()){			
 			ArrayList<String> empty = new ArrayList<String>();
-			empty.add("Error in specification file, see \"spec_error_report.text\".");			
+			empty.add("Error in specification file, see \"spec_error_report.txt\".");			
 			Assembler.writeLinesToFile("object_code.txt", empty);
 			Assembler.writeLinesToFile("spec_error_report.txt", errorReport);			
 			System.exit(0);
@@ -448,7 +448,7 @@ public class FileParser {
 		foundAssemblyOpTree = true;
 		line = line.trim();		
 		
-		boolean legitAssemblyOpTreeExp = Pattern.matches("[^:]+:[^:]+", line);
+		boolean legitAssemblyOpTreeExp = Pattern.matches("[^:]+:.+", line);
 
 		if (!legitAssemblyOpTreeExp)
 			throw new AssemblerException("AssemblyOpTree error: Line syntax error, expected format <node> : <expression>");
@@ -459,7 +459,7 @@ public class FileParser {
 		for (String assemblyOpTreeToken : assemblyOpTreeTokens)
 			assemblyOpTree.getAssemblyOpTreeTokens().add(assemblyOpTreeToken);
 
-		String[] colonSplit = line.split(":");
+		String[] colonSplit = line.split(":", 2);
 		String node = colonSplit[0].trim();
 		
 		if(node.equals("LABEL") || node.equals("INT") || node.equals("HEX"))
@@ -493,7 +493,7 @@ public class FileParser {
 		
 		else{
 			// Single token
-			boolean legitNonRootExp = Pattern.matches("[^\\s:]+", expression);
+			boolean legitNonRootExp = Pattern.matches("[^\\s]+", expression);
 
 			if (!legitNonRootExp)
 				throw new AssemblerException("AssemblyOpTree error: Non root expressions should only consist of a single token.");
@@ -825,7 +825,11 @@ public class FileParser {
 			
 			// If line is "--" then there are no operand field encodings
 			if (!line.equals("--"))
-				currentMnemFormat.setOperandFieldEncodings(line);			
+				currentMnemFormat.setOperandFieldEncodings(line);
+			
+			if(duplicateFieldDefined(line))
+				throw new AssemblerException("Duplicate field defined.");
+			
 			atOperandFieldEncodings = false;
 			atLocalFieldEncodings = true;
 		}
@@ -878,6 +882,25 @@ public class FileParser {
 		}
 	}
 	
+	private boolean duplicateFieldDefined(String line) {
+		
+		String[] splitLine = line.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
+		ArrayList<String> test = new ArrayList<String>();
+		
+		for(String str : splitLine)
+			if(Assembler.isAlphaNumeric(str))
+				test.add(str);
+		
+		for (int j=0;j<test.size();j++) {
+		    for (int k=j+1;k<test.size();k++) {
+		        if (test.get(k).equals(test.get(j))){ 
+		            return true;
+		        }
+		    }
+		}
+		return false;
+	}
+
 	private String getMnemDataErrorMessage() {
 
 		ArrayList<String> rawLines = currentMnemonic.getRawLines();
@@ -912,6 +935,8 @@ public class FileParser {
 
 	private void endOfOperandFormatBlockErrorCheck() throws AssemblerException {
 
+		// Error checking after all lines of an operandFormat declaration have been read
+		
 		ArrayList<String> instructionFormat = currentMnemFormat.getInstructionFormat();
 		int totalBits = 0;
 
@@ -933,6 +958,7 @@ public class FileParser {
 				int bits = insFormat.getFieldBitHash().get(field);
 				totalBits += bits;
 
+				// Field defined in global encodings
 				if (currentMnemonic.getGlobalFieldEncodingHash().get(field) != null) {
 					String field1 = currentMnemonic.getGlobalFieldEncodingHash().get(field);					
 					int noOfBits = field1.length();
@@ -956,6 +982,7 @@ public class FileParser {
 					}
 				}
 
+				// Field defined in local encodings
 				else if (currentMnemFormat.getFieldBitHash().get(field) != null) {
 					String field1 = currentMnemFormat.getFieldBitHash().get(field);
 					int noOfBits = field1.length();
@@ -979,7 +1006,8 @@ public class FileParser {
 					}
 				}
 
-				else if (existsInInsFieldLabels(currentMnemFormat.getOperandFieldEncodings(), field));
+				// Field defined in operand encodings
+				else if (existsInOperandFieldEncodings(currentMnemFormat.getOperandFieldEncodings(), field));
 
 				else {
 					abortMnem = true;
@@ -1013,7 +1041,7 @@ public class FileParser {
 							+ minAdrUnit + ")");
 	}
 
-	private boolean existsInInsFieldLabels(String operandFieldEncodings, String field) {
+	private boolean existsInOperandFieldEncodings(String operandFieldEncodings, String field) {
 
 		String[] operandFieldEncodingTokens = operandFieldEncodings.split("[^a-zA-Z0-9]+");
 
@@ -1107,6 +1135,9 @@ public class FileParser {
 			if(bitSize == 0)
 				throw new AssemblerException(
 						"InstructionFormat error: Can not have 0 bit field length.");
+			if(insF.getFields().contains(fieldName))
+				throw new AssemblerException(
+						"InstructionFormat error: Field \""+fieldName+"\" defined multiple times in instruction.");
 			insF.getFields().add(fieldName);
 			insF.getFieldBitHash().put(fieldName, bitSize);
 		} 

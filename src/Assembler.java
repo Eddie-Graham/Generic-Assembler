@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 /**
  * <pre>
- * This class assembles each instruction using the data source.
+ * A two pass assembler.
  * </pre>
  * 
  * @author Eddie Graham
@@ -76,11 +76,11 @@ public class Assembler {
 
 		firstPass();
 
+		// to account for last line
 		insNumber++;
-		insAdrTable.put(insNumber, locationCounter); // to account for last line
+		insAdrTable.put(insNumber, locationCounter); 
 
 		insNumber = 0;
-
 		secondPass();
 
 		writeLinesToFile("object_code.txt", objectCode);
@@ -91,30 +91,20 @@ public class Assembler {
 		int lineCounter = 0;
 
 		for (String assemblyLine : data.getAssemblyCode()) {
-
 			lineCounter++;
-
-			String[] commentSplit = assemblyLine.split(";");
-			
-			try {
-				
-				assemblyLine = commentSplit[0];
-				
-			} catch (ArrayIndexOutOfBoundsException e) {
-				
+			String[] commentSplit = assemblyLine.split(";");			
+			try {				
+				assemblyLine = commentSplit[0];				
+			} catch (ArrayIndexOutOfBoundsException e) {				
 				assemblyLine = "";
 			}
 			
 			assemblyLine = assemblyLine.trim();
 
 			if (assemblyLine.length() > 0) {
-
-				try {
-					
-					analyseLineFirstPass(assemblyLine);
-					
-				} catch (AssemblerException e) {
-					
+				try {					
+					analyseLineFirstPass(assemblyLine);					
+				} catch (AssemblerException e) {					
 					String error = getErrorMessage(lineCounter, assemblyLine, e.getMessage());
 					objectCode.add(error);
 					writeLinesToFile("object_code.txt", objectCode);
@@ -127,24 +117,18 @@ public class Assembler {
 	private void analyseLineFirstPass(String assemblyLine) throws AssemblerException {
 
 
-		if (assemblyLine.equals(".data")){
-			
+		if (assemblyLine.equals(".data")){			
 			if(dataDeclared)
-				throw new AssemblerException(".data section already declared.");
-			
-			dataDeclared = true;
-			
+				throw new AssemblerException(".data section already declared.");			
+			dataDeclared = true;			
 			atData = true;
 			atText = false;
 		}
 
-		else if (assemblyLine.equals(".text")) {
-			
+		else if (assemblyLine.equals(".text")) {			
 			if(textDeclared)
-				throw new AssemblerException(".text section already declared.");
-			
-			textDeclared = true;
-			
+				throw new AssemblerException(".text section already declared.");			
+			textDeclared = true;			
 			atData=false;
 			atText=true;
 		}
@@ -176,28 +160,20 @@ public class Assembler {
 		
 		String[] splitDataLine = assemblyLine.split("\\s+");
 		String label = splitDataLine[0];
-
 		int noOfMinAdrUnits = 0;
 
 		if (legitAsciiDataLine) {
-
 			String[] splitByQuotation = assemblyLine.split("\"", 2);
-
 			String asciiData = splitByQuotation[1].substring(0,	splitByQuotation[1].length() - 1);
-
 			int noOfBits = 0;
-
 			for (int i = 0; i < asciiData.length(); i++)
 				noOfBits += 8;
-
 			int minAdrUnit = data.getMinAdrUnit();
 			noOfMinAdrUnits = noOfBits / minAdrUnit;
 		}
 
 		else if (legitIntDataLine || legitUninitializedDataLine) {
-
 			String[] splitDataTerm = assemblyLine.split("\\s+");
-
 			String minUnitTerm = splitDataTerm[1];
 			String[] splitMinUnitTerm = minUnitTerm.split("MAU");
 			String noOfMinAdrUnitsStr = splitMinUnitTerm[0];
@@ -213,14 +189,12 @@ public class Assembler {
 
 		insNumber++;
 		insAdrTable.put(insNumber, locationCounter);
-
 		locationCounter += noOfMinAdrUnits;
 	}
 
 	private void analyseInstructionsFirstPass(String assemblyLine) throws AssemblerException {
 
 		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
-
 		analyseWithAssemblyOpTree(assemblyLine);
 		
 		if(debug)
@@ -235,80 +209,64 @@ public class Assembler {
 			throw new AssemblerException("Mnemonic not declared in MnemonicData section within specification file.");
 
 		ArrayList<String> operandFormats = mnemData.getOperandsFormats();
-
 		ArrayList<String> legitOpFormats = new ArrayList<String>();
 
+		// Find operand format matches 
 		for (String opFormat : operandFormats) {
-
 			if (formatMatch(opFormat))
 				legitOpFormats.add(opFormat);
 		}
 
 		if (legitOpFormats.isEmpty()) {
-
-			String error = "Incorrectly formatted operands. Expected formats for mnemonic \""+ mnemData.getMnemonic()+"\":\n";
-
+			String error = "Incorrectly formatted operands. Expected formats for mnemonic \""
+					+ mnemData.getMnemonic() + "\":\n";
 			for (String opFormat : operandFormats)
-				error += "\n" + opFormat;
-			
+				error += "\n" + opFormat;			
 			error += "\n\nOperand tree built from assembly line:\n\n" + legitAssemblyOpTreePaths;
-
 			throw new AssemblerException(error);
 		}
 		
-		ArrayList<String> relevantOperands = getRelevantOperands(legitOpFormats.get(0));
-		
+		ArrayList<String> relevantOperands = getRelevantOperands(legitOpFormats.get(0));		
 		String foundOpFormat = null;
 
-		for(String opFormat: legitOpFormats){
-			
+		// Match syntax of line (separator commas match)
+		for(String opFormat: legitOpFormats){			
 			if(correctSyntax(opFormat, assemblyLine, relevantOperands)){
 				foundOpFormat = opFormat;
 				break;
 			}
 		}
 		
-		if(foundOpFormat == null){
-			
+		if(foundOpFormat == null){			
 			String error = "Assembly line syntax error. Check use of commas and spaces between operands. Expected syntax:\n";
-			
 			for(String opFormat: legitOpFormats)
 				error += "\n" + opFormat;
-
 			throw new AssemblerException(error);
 		}
 
 		OperandFormat format = mnemData.getOperandFormatHash().get(foundOpFormat);
-
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
-
 		int insSize = 0;
 
 		for (String instruction : instructionFormat) {
-
 			InstructionFormat insFormat = data.getInstructionFormatHash().get(instruction);
-
 			ArrayList<String> instructions = insFormat.getFields();
 
 			for (String field : instructions) {
-
 				int bits = insFormat.getFieldBitHash().get(field);
-
 				insSize += bits;
 			}
 		}
 
 		int minAdrUnit = data.getMinAdrUnit();
-
 		int noOfAdrUnits = insSize / minAdrUnit;
-
 		insNumber++;
 		insAdrTable.put(insNumber, locationCounter);
-
+		
+		// Find any relocation point labels
 		String label = getLabelString();
 
 		if (label != null) {
-
 			if (symbolTable.get(label) == null && dataTable.get(label) == null)
 				symbolTable.put(label, locationCounter);
 
@@ -325,30 +283,21 @@ public class Assembler {
 		int lineCounter = 0;
 
 		for (String assemblyLine : data.getAssemblyCode()) {
-
 			lineCounter++;
-
 			String[] commentSplit = assemblyLine.split(";");
 			
-			try {
-				
-				assemblyLine = commentSplit[0];
-				
-			} catch (ArrayIndexOutOfBoundsException e) {
-				
+			try {				
+				assemblyLine = commentSplit[0];				
+			} catch (ArrayIndexOutOfBoundsException e) {				
 				assemblyLine = "";
 			}
 			
 			assemblyLine = assemblyLine.trim();
 
 			if (assemblyLine.length() > 0) {
-
-				try {
-					
-					analyseLineSecondPass(assemblyLine);
-					
-				} catch (AssemblerException e) {
-					
+				try {					
+					analyseLineSecondPass(assemblyLine);					
+				} catch (AssemblerException e) {					
 					String error = getErrorMessage(lineCounter, assemblyLine, e.getMessage());
 					objectCode.add(error);
 					writeLinesToFile("object_code.txt", objectCode);
@@ -360,15 +309,13 @@ public class Assembler {
 
 	private void analyseLineSecondPass(String assemblyLine) throws AssemblerException {
 
-		if (assemblyLine.equals(".data")){
-			
+		if (assemblyLine.equals(".data")){			
 			atData = true;
 			atText = false;
 		}
 			
 
-		else if (assemblyLine.equals(".text")) {
-			
+		else if (assemblyLine.equals(".text")) {			
 			atData = false;
 			atText = true;
 		}
@@ -397,15 +344,11 @@ public class Assembler {
 		ArrayList<String> binaryArray = null;
 
 		if (legitAsciiDataLine) {
-
 			String[] splitByQuotation = assemblyLine.split("\"", 2);
-
 			String asciiData = splitByQuotation[1].substring(0, splitByQuotation[1].length() - 1);
-
 			binary = "";
 
 			for (int i = 0; i < asciiData.length(); i++) {
-
 				char character = asciiData.charAt(i);
 				int ascii = (int) character;
 				String asciiBinary = Integer.toBinaryString(ascii);
@@ -416,17 +359,12 @@ public class Assembler {
 		}
 
 		else if (legitIntDataLine) {
-
 			String[] splitDataLine = assemblyLine.split("\\s+");
-
 			String integer = splitDataLine[2];
 
 			try {
-
 				binary = intToBinary(integer);
-
 			} catch (NumberFormatException e) {
-
 				throw new AssemblerException("\"" + integer
 						+ "\" is not a valid integer.");
 			}
@@ -436,8 +374,7 @@ public class Assembler {
 			String noOfMinAdrUnitsStr = splitMinUnitTerm[0];
 			int noOfMinAdrUnits = Integer.parseInt(noOfMinAdrUnitsStr);
 			int minAdrUnit = data.getMinAdrUnit();
-			int noOfBits = noOfMinAdrUnits * minAdrUnit;
-			
+			int noOfBits = noOfMinAdrUnits * minAdrUnit;			
 			binary = binaryFormatted(binary, noOfBits);
 			binaryArray = splitToMinAdrUnits(binary);
 
@@ -447,26 +384,20 @@ public class Assembler {
 		}
 
 		else if (legitUninitializedDataLine) {
-
 			String[] splitDataLine = assemblyLine.split("\\s+");
-
 			String minUnitTerm = splitDataLine[1];
 			String[] splitMinUnitTerm = minUnitTerm.split("MAU");
 			String noOfMinAdrUnitsStr = splitMinUnitTerm[0];
 			int noOfMinAdrUnits = Integer.parseInt(noOfMinAdrUnitsStr);
 			int minAdrUnit = data.getMinAdrUnit();
 			int numberOfzeros = minAdrUnit * noOfMinAdrUnits;
-
 			binary = binaryFormatted(binary, numberOfzeros);
-
 			binaryArray = splitToMinAdrUnits(binary);
 		}
 
 		int adr = insAdrTable.get(insNumber);
-
 		String address = Integer.toHexString(adr) + ":";
-		String hexObjCode = getHexObjCode(binaryArray);		
-
+		String hexObjCode = getHexObjCode(binaryArray);
 		String objectCodeLine = String.format("%-10s %s", address, hexObjCode);
 		objectCode.add(objectCodeLine);
 		
@@ -483,30 +414,26 @@ public class Assembler {
 
 		legitAssemblyOpTreePaths = new ArrayList<ArrayList<String>>();
 		assemblyTermTypeHash = new HashMap<String, String>();
-
 		analyseWithAssemblyOpTree(assemblyLine);
 
 		if(debug)
 			System.out.println(legitAssemblyOpTreePaths);
 
 		Mnemonic mnemData = getMnemData(assemblyLine);
-
 		ArrayList<String> operandFormats = mnemData.getOperandsFormats();
-
 		ArrayList<String> legitOpFormats = new ArrayList<String>();
 
+		// Find operand format matches
 		for (String opFormat : operandFormats) {
-
 			if (formatMatch(opFormat))
 				legitOpFormats.add(opFormat);
 		}
 		
 		ArrayList<String> relevantOperands = getRelevantOperands(legitOpFormats.get(0));
-		
 		String foundOpFormat = null;
 
-		for(String opFormat: legitOpFormats){
-			
+		// Match syntax of line (separator commas match)
+		for(String opFormat: legitOpFormats){			
 			if(correctSyntax(opFormat, assemblyLine, relevantOperands)){
 				foundOpFormat = opFormat;
 				break;
@@ -514,33 +441,26 @@ public class Assembler {
 		}
 
 		OperandFormat format = mnemData.getOperandFormatHash().get(foundOpFormat);
-
-		String insFieldLabels = format.getOperandFieldEncodings();
-
+		String opFieldEncodings = format.getOperandFieldEncodings();
 		HashMap<String, String> insFieldHash = null;		
 
-		if (insFieldLabels != "") 
-			insFieldHash = mapInsFieldLabels(relevantOperands, insFieldLabels);
+		if (opFieldEncodings != "") 
+			insFieldHash = mapInsFieldLabels(relevantOperands, opFieldEncodings);
 
 		ArrayList<String> instructionFormat = format.getInstructionFormat();
-
 		String binary = "";
 		insNumber++;
 
-		if(debug){
-			
-			System.out.println("insFieldHash: " + insFieldHash);
+		if(debug){			
+			System.out.println("opFieldHash: " + insFieldHash);
 			System.out.println("assTypeHash: " + assemblyTermTypeHash);
 		}
 
 		for (String instruction : instructionFormat) {
-
 			InstructionFormat insFormat = data.getInstructionFormatHash().get(instruction);
-
 			ArrayList<String> instructions = insFormat.getFields();
 
 			for (String field : instructions) {
-
 				String binaryTemp = "";
 
 				int bits = insFormat.getFieldBitHash().get(field);
@@ -614,12 +534,9 @@ public class Assembler {
 		}
 
 		ArrayList<String> binaryArray = splitToMinAdrUnits(binary);
-
 		int adr = insAdrTable.get(insNumber);
-
 		String address = Integer.toHexString(adr) + ":";
 		String hexObjCode = getHexObjCode(binaryArray);		
-
 		String objectCodeLine = String.format("%-10s %s", address, hexObjCode);
 		objectCode.add(objectCodeLine);
 		
@@ -631,27 +548,19 @@ public class Assembler {
 
 		File file = null;
 
-		try {
-			
+		try {			
 			file = new File(filename);
-			file.createNewFile();
-			
-		} catch (Exception e) {
-			
+			file.createNewFile();			
+		} catch (Exception e) {			
 			e.printStackTrace();
 		}
 
-		try {
-			
+		try {			
 			FileWriter writer = new FileWriter(file);
-
 			for (String line : lines)
 				writer.write(line + "\n");
-
 			writer.close();
-
-		} catch (IOException e) {
-			
+		} catch (IOException e) {			
 			e.printStackTrace();
 		}
 	}
@@ -672,7 +581,6 @@ public class Assembler {
 	private String dataOffset(String assemblyTerm, int bits) {
 
 		int dataOffset = dataTable.get(assemblyTerm);
-
 		String binary = Integer.toBinaryString(dataOffset);
 
 		if (binary.length() > bits)
@@ -684,29 +592,18 @@ public class Assembler {
 	private void analyseWithAssemblyOpTree(String assemblyLine) throws AssemblerException {
 
 		AssemblyOpTree assemblyOpTree = data.getAssemblyOpTree();
-		String assemblyOpTreeRoot = assemblyOpTree.getRootToken();
-
-		
-		ArrayList<String> roots = assemblyOpTree.getAssemblyOpTreeHash().get(assemblyOpTreeRoot);
-
+		String rootNode = assemblyOpTree.getRootToken();		
+		ArrayList<String> roots = assemblyOpTree.getAssemblyOpTreeHash().get(rootNode);
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		ArrayList<String> currentPath = new ArrayList<String>();
-
-		ArrayList<String> fullTermsIter = new ArrayList<String>();
-		fullTermsIter.add(assemblyOpTreeRoot);
-
-		ArrayList<String> assemblyList = new ArrayList<String>();
-
+		ArrayList<String> assemblyTokens = new ArrayList<String>();
 		String[] assemblySplit = assemblyLine.split("\\s+"); // space
 
 		for (String str : assemblySplit) {
-
 			if (!str.matches(",+")) {
-
 				str = str.replaceAll("^,+", "");
 				str = str.replaceAll(",+$", "");
-
-				assemblyList.add(str);
+				assemblyTokens.add(str);
 			}
 		}
 
@@ -714,7 +611,7 @@ public class Assembler {
 			ArrayList<String> rootTerm = new ArrayList<String>();
 			rootTerm.add(rootTokens);
 			
-			if(analyseOperands(rootTerm, assemblyList, rootTerm, rootTerm, paths,
+			if(analyseOperands(rootTerm, assemblyTokens, rootTerm, rootTerm, paths,
 				currentPath))
 				break;
 		}
@@ -744,10 +641,9 @@ public class Assembler {
 
 			String[] furtherTokenSplit = token.split("\\s+");
 
-			if (furtherTokenSplit.length > 1) { 
-				
+			// If root expression
+			if (furtherTokenSplit.length > 1) { 				
 				ArrayList<String> furtherTokens = new ArrayList<String>();
-
 				for (String str : furtherTokenSplit)
 					furtherTokens.add(str);
 
@@ -756,12 +652,12 @@ public class Assembler {
 
 				if (done)
 					return true;
-
 				else
 					return false;
 			}
 
-			else { // one term
+			// Single token
+			else { 
 
 				String tempToken = "";
 				
@@ -776,7 +672,6 @@ public class Assembler {
 					ArrayList<String> oneOrMoreExp = new ArrayList<String>();
 					String oneOrMore = tempToken + " " + tempToken + "*";
 					oneOrMoreExp.add(oneOrMore);
-
 					ArrayList<String> newTokensToAnalyse = updateExp(oneOrMoreExp, tokensToAnalyse, token);
 					ArrayList<String> newFullExp = updateExp(oneOrMoreExp, fullExp, token);
 
@@ -791,9 +686,7 @@ public class Assembler {
 				}
 
 				else {
-
 					ArrayList<String> assemblyOpTreeToken = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(tempToken);
-
 					ArrayList<String> newCurrentPath = new ArrayList<String>(currentPath);
 
 					if (token.charAt(token.length() - 1) == '?')
@@ -802,7 +695,8 @@ public class Assembler {
 					if (!(token.startsWith("\"") && token.endsWith("\"")))
 						newCurrentPath.add(tempToken);
 
-					if (assemblyOpTreeToken != null) { // not leaf
+					// Not leaf expression
+					if (assemblyOpTreeToken != null) { 
 
 						done = analyseOperands(assemblyOpTreeToken,
 								assemblyTokens, tokensToAnalyse, fullExp,
@@ -812,8 +706,8 @@ public class Assembler {
 							return true;
 					}
 
-					else { // leaf
-
+					// Leaf expression
+					else { 
 						String assemblyTerm = assemblyTokens.get(0);
 
 						if (match(tempToken, assemblyTerm)) {
@@ -829,25 +723,20 @@ public class Assembler {
 
 							ArrayList<ArrayList<String>> newPaths = new ArrayList<ArrayList<String>>(paths);
 							newPaths.add(newCurrentPath);
-
-							tokensToAnalyse = updateTokensToAnalyse(tokensToAnalyse, newCurrentPath);
-							assemblyTokens = removeFirstElement(assemblyTokens);
-
+							tokensToAnalyse = removeFirstToken(tokensToAnalyse, newCurrentPath);
+							assemblyTokens = removeFirstToken(assemblyTokens);
 							newCurrentPath = new ArrayList<String>();
 
 							if (tokensToAnalyse.isEmpty() || assemblyTokens.isEmpty()) {
-
 								if (tokensToAnalyse.isEmpty() && !assemblyTokens.isEmpty())
 									return false;
-
 								else if (!tokensToAnalyse.isEmpty()	&& assemblyTokens.isEmpty()) {
-
 									if (!validWithFullExp(fullExp, newPaths))
 										return false;
 								}
 
-								legitAssemblyOpTreePaths = newPaths; // legit
-
+								// Valid with tree
+								legitAssemblyOpTreePaths = newPaths; 
 								return true;
 							}
 
@@ -858,10 +747,6 @@ public class Assembler {
 							if (done)
 								return true;
 						}
-
-						else { // not found
-
-						}
 					}
 				}
 			}
@@ -870,60 +755,50 @@ public class Assembler {
 		return done;
 	}
 
-	private ArrayList<String> updateTokensToAnalyse(ArrayList<String> tokensToAnalyse, ArrayList<String> currentPath) {
+	private ArrayList<String> removeFirstToken(ArrayList<String> tokensToAnalyseArray, ArrayList<String> currentPath) {
 
 		ArrayList<String> newTermsIter = new ArrayList<String>();
-		String newIterStr = "";
-
-		String termsIter = tokensToAnalyse.get(0);
-		String[] splitTermsIter = termsIter.split("\\s+");
-
+		String newTokensToAnalyse = "";
+		String tokensToAnalyse = tokensToAnalyseArray.get(0);
+		String[] splitTokensToAnalyse = tokensToAnalyse.split("\\s+");
 		boolean found = false;
 		int index = 0;
 
-		for (String token : splitTermsIter) {
-
-			for (String pathTerm : currentPath) {
-				
+		for (String token : splitTokensToAnalyse) {
+			for (String pathTerm : currentPath) {				
 				String tempToken = "";
 				
 				if(token.charAt(token.length()-1) == '*' || token.charAt(token.length()-1) == '?')
-					tempToken = token.substring(0, token.length()-1);
-				
+					tempToken = token.substring(0, token.length()-1);				
 				else
 					tempToken = token;
 
-				if (tempToken.equals(pathTerm)) {
-					
+				if (tempToken.equals(pathTerm)) {					
 					found = true;
 					break;
 				}
 			}
 
 			if (found && token.charAt(token.length() - 1) == '*')
-				return tokensToAnalyse;
+				return tokensToAnalyseArray;
 
 			if (found) {
-
 				index++;
 				break;
 			}
-
 			index++;
 		}
 
-		for (String iterTerm : splitTermsIter) {
-
+		for (String token : splitTokensToAnalyse) {
 			if (index <= 0)
-				newIterStr += iterTerm + " ";
-
+				newTokensToAnalyse += token + " ";
 			index--;
 		}
 
-		newIterStr = newIterStr.trim();
+		newTokensToAnalyse = newTokensToAnalyse.trim();
 
-		if (newIterStr != "")
-			newTermsIter.add(newIterStr);
+		if (newTokensToAnalyse != "")
+			newTermsIter.add(newTokensToAnalyse);
 
 		return newTermsIter;
 	}
@@ -933,57 +808,45 @@ public class Assembler {
 			ArrayList<String> expToUpdate, String tokenToChange) {
 
 		ArrayList<String> newTermsIter = new ArrayList<String>();
-
-		String newIterStr = "";
-
-		String termsIter = expToUpdate.get(0);
-		String[] splitTermsIter = termsIter.split("\\s+");
-
+		String newExpStr = "";
+		String exp = expToUpdate.get(0);
+		String[] splitExp = exp.split("\\s+");
 		boolean done = false;
 
-		for (String iterTerm : splitTermsIter) {
-
-			if (iterTerm.equals(tokenToChange) && !done) {
-
-				for (String str : updateExp) {
-					
-					newIterStr += str + " ";
+		for (String token : splitExp) {
+			if (token.equals(tokenToChange) && !done) {
+				for (String str : updateExp) {					
+					newExpStr += str + " ";
 					done = true;
 				}
 			}
-
 			else
-				newIterStr += iterTerm + " ";
+				newExpStr += token + " ";
 		}
 
-		newIterStr = newIterStr.trim();
-		newTermsIter.add(newIterStr);
+		newExpStr = newExpStr.trim();
+		newTermsIter.add(newExpStr);
 
 		return newTermsIter;
 	}
 
-	private boolean validWithTokensToAnalyse(ArrayList<String> tokensToAnalyse,
+	private boolean validWithTokensToAnalyse(ArrayList<String> tokensToAnalyseArray,
 			ArrayList<String> currentPath) {
 
 		boolean legit = false;
+		String tokensToAnalyse = tokensToAnalyseArray.get(0);
+		String[] splitTokensToAnalyse = tokensToAnalyse.split("\\s+");
 
-		String termsIter = tokensToAnalyse.get(0);
-		String[] splitTermsIter = termsIter.split("\\s+");
-
-		for (String iterTerm : splitTermsIter) {
-
-			String rawIterTerm = "";
+		for (String token : splitTokensToAnalyse) {
+			String tempToken = "";
 			
-			if(iterTerm.charAt(iterTerm.length()-1) == '?' || iterTerm.charAt(iterTerm.length()-1) == '*' || iterTerm.charAt(iterTerm.length()-1) == '+')
-				rawIterTerm = iterTerm.substring(0, iterTerm.length()-1);
-			
+			if(token.charAt(token.length()-1) == '?' || token.charAt(token.length()-1) == '*' || token.charAt(token.length()-1) == '+')
+				tempToken = token.substring(0, token.length()-1);			
 			else
-				rawIterTerm = iterTerm;
+				tempToken = token;
 
 			for (String pathTerm : currentPath) {
-
-				if (rawIterTerm.equals(pathTerm) || iterTerm.equals(pathTerm)) {
-					
+				if (tempToken.equals(pathTerm) || token.equals(pathTerm)) {					
 					legit = true;
 					break;
 				}
@@ -992,24 +855,22 @@ public class Assembler {
 			if (legit)
 				return true;
 
-			else if (!(iterTerm.charAt(iterTerm.length() - 1) == '?')
-					&& !(iterTerm.charAt(iterTerm.length() - 1) == '*'))
+			else if (!(token.charAt(token.length() - 1) == '?')
+					&& !(token.charAt(token.length() - 1) == '*'))
 				return false;
 		}
 
 		return false;
 	}
 
-	private ArrayList<String> removeFirstElement(ArrayList<String> list) {
+	private ArrayList<String> removeFirstToken(ArrayList<String> list) {
 
 		boolean first = true;
 		ArrayList<String> newList = new ArrayList<String>();
 
 		for (String str : list) {
-
 			if (first)
 				first = false;
-
 			else
 				newList.add(str);
 		}
@@ -1018,65 +879,52 @@ public class Assembler {
 	}
 
 	private boolean validWithFullExp(
-			ArrayList<String> fullParseTermsIter,
+			ArrayList<String> fullExp,
 			ArrayList<ArrayList<String>> newPaths) {
 
-		String str = fullParseTermsIter.get(0);
-		String[] splitFullTermsIter = str.split("\\s+");
-
+		String exp = fullExp.get(0);
+		String[] splitExp = exp.split("\\s+");
 		boolean pathsFinished = false;
-		int pathCounter = 0;
+		int i = 0;
 		ArrayList<String> path = null;
 
-		for (String iterTerm : splitFullTermsIter) {
+		for (String token : splitExp) {
 
 			if (pathsFinished) {
-
-				if (!(iterTerm.charAt(iterTerm.length() - 1) == '?' || iterTerm.charAt(iterTerm.length() - 1) == '*'))
+				if (!(token.charAt(token.length() - 1) == '?' || token.charAt(token.length() - 1) == '*'))
 					return false;
 			}
 
 			else {
-
-				path = newPaths.get(pathCounter);
-//				String tempIterTerm = iterTerm.replaceAll("\\?|\\*", "");
+				path = newPaths.get(i);				
+				String tempToken = "";
 				
-				String tempIterTerm = "";
-				
-				if(iterTerm.charAt(iterTerm.length()-1) == '?' || iterTerm.charAt(iterTerm.length()-1) == '*' || iterTerm.charAt(iterTerm.length()-1) == '+')
-					tempIterTerm = iterTerm.substring(0, iterTerm.length()-1);
-				
+				if(token.charAt(token.length()-1) == '?' || token.charAt(token.length()-1) == '*' || token.charAt(token.length()-1) == '+')
+					tempToken = token.substring(0, token.length()-1);				
 				else
-					tempIterTerm = iterTerm;
+					tempToken = token;
 
-				if (iterTerm.charAt(iterTerm.length() - 1) == '*') {
-
-					while (legitPath(path, tempIterTerm)) {
-
-						pathCounter++;
-
-						if (pathCounter > newPaths.size() - 1) {
-
+				if (token.charAt(token.length() - 1) == '*') {
+					
+					while (legitPath(path, tempToken)) {
+						i++;
+						if (i > newPaths.size() - 1) {
 							pathsFinished = true;
 							break;
 						}
-
 						else
-							path = newPaths.get(pathCounter);
+							path = newPaths.get(i);
 					}
 				}
 
-				else if (!legitPath(path, tempIterTerm)) {
-
-					if (!(iterTerm.charAt(iterTerm.length() - 1) == '?' || iterTerm.charAt(iterTerm.length() - 1) == '*'))
+				else if (!legitPath(path, tempToken)) {
+					if (!(token.charAt(token.length() - 1) == '?' || token.charAt(token.length() - 1) == '*'))
 						return false;
 				}
 
 				else {
-
-					pathCounter++;
-
-					if (pathCounter > newPaths.size() - 1)
+					i++;
+					if (i > newPaths.size() - 1)
 						pathsFinished = true;
 				}
 			}
@@ -1088,7 +936,6 @@ public class Assembler {
 	private boolean legitPath(ArrayList<String> path, String iterTerm) {
 
 		for (String pathTerm : path) {
-
 			if (iterTerm.equals(pathTerm))
 				return true;
 		}
@@ -1099,7 +946,6 @@ public class Assembler {
 	private boolean match(String assemblyOpTreeTerm, String assemblyTerm) {
 
 		if (assemblyOpTreeTerm.startsWith("\"") && assemblyOpTreeTerm.endsWith("\"")) {
-
 			assemblyOpTreeTerm = assemblyOpTreeTerm.replaceAll("\"", "");
 
 			return assemblyOpTreeTerm.equals(assemblyTerm);
@@ -1112,11 +958,9 @@ public class Assembler {
 	private boolean nestedMatch(String assemblyOpTreeTerm, String assemblyTerm) {
 
 		String[] splitAssemblyOpTreeTerms = assemblyOpTreeTerm.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-
 		String prefixes = "";
 
 		for (String str : splitAssemblyOpTreeTerms) {
-
 			if (!isAlphaNumeric(str))
 				prefixes += "\\" + str;
 		}
@@ -1124,11 +968,9 @@ public class Assembler {
 		String[] splitAssemblyTerms;
 
 		if (prefixes.isEmpty()) {
-
 			splitAssemblyTerms = new String[1];
 			splitAssemblyTerms[0] = assemblyTerm;
 		}
-
 		else
 			splitAssemblyTerms = assemblyTerm.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
 
@@ -1138,34 +980,30 @@ public class Assembler {
 		int i = 0;
 
 		for (String term : splitAssemblyOpTreeTerms) {
-
+			
 			if (term.isEmpty() || splitAssemblyTerms[i].isEmpty()) {
-
 				if (!(term.isEmpty() && splitAssemblyTerms[i].isEmpty()))
 					return false;
 			}
 
-			// symbol
+			// Symbol
 			else if (!isAlphaNumeric(term)) {
-
 				if (!term.equals(splitAssemblyTerms[i]))
 					return false;
 			}
 
-			// alphaNumeric
+			// AlphaNumeric
 			else if (!term.equals(splitAssemblyTerms[i])){			
 				
 				ArrayList<String> assemblyOpTreeTerms = data.getAssemblyOpTree().getAssemblyOpTreeHash().get(term);
 
-				// node
+				// Node
 				if (assemblyOpTreeTerms != null) {
 					
 					boolean legit = false;
 
 					for (String termFromHash : assemblyOpTreeTerms) {
-
 						if (match(termFromHash, splitAssemblyTerms[i])) {
-
 							legit = true;
 							break;
 						}
@@ -1175,32 +1013,26 @@ public class Assembler {
 						return false;
 				}
 
-				// is register or mnemonic
+				// Is register or mnemonic
 				else if (data.getRegisterHash().get(splitAssemblyTerms[i]) != null
 						|| data.getMnemonicTable().get(splitAssemblyTerms[i]) != null)
 					return false;
 
 				else if (term.equals("HEX")) {
-
 					if (!isHexNumber(splitAssemblyTerms[i]))
 						return false;
-
 					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);
 				}
 
 				else if (term.equals("INT")) {
-
 					if (!isNumeric(splitAssemblyTerms[i]))
 						return false;
-
 					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);
 				}
 
 				else if (term.equals("LABEL")) {
-
 					if (!isAlpha(splitAssemblyTerms[i]))
 						return false;
-
 					assemblyTermTypeHash.put(splitAssemblyTerms[i], term);
 				}
 
@@ -1216,23 +1048,19 @@ public class Assembler {
 
 	private Mnemonic getMnemData(String assemblyLine) throws AssemblerException {
 
-		String[] assemblyLineSplit = assemblyLine.split("\\s+"); // space
+		String[] assemblyLineSplit = assemblyLine.split("\\s+"); 
 		ArrayList<String> assemblyTermList = new ArrayList<String>();
 
 		for (String assemblyTerm : assemblyLineSplit) {
-
 			assemblyTerm = assemblyTerm.replaceAll("^,+", "");
 			assemblyTerm = assemblyTerm.replaceAll(",+$", "");
-
 			assemblyTermList.add(assemblyTerm);
 		}
 
 		Mnemonic mnemData = null;
 
 		for (String assemblyTerm : assemblyTermList) {
-
 			if (data.getMnemonicTable().get(assemblyTerm) != null) {
-
 				mnemData = data.getMnemonicTable().get(assemblyTerm);
 				break;
 			}
@@ -1244,15 +1072,13 @@ public class Assembler {
 	private boolean formatMatch(String mnemFormat) {
 
 		String[] mnemFormatSplit = mnemFormat.split("\\s+"); 
-		ArrayList<String> mnemFormatList = new ArrayList<String>();
+		ArrayList<String> mnemFormatTokens = new ArrayList<String>();
 
-		for (String formatTerm : mnemFormatSplit) {
-
-			formatTerm = formatTerm.replaceAll("^,+", "");
-			formatTerm = formatTerm.replaceAll(",+$", "");
-
-			if(!formatTerm.isEmpty())
-				mnemFormatList.add(formatTerm);
+		for (String token : mnemFormatSplit) {
+			token = token.replaceAll("^,+", "");
+			token = token.replaceAll(",+$", "");
+			if(!token.isEmpty())
+				mnemFormatTokens.add(token);
 		}
 
 		int i = 0;
@@ -1263,18 +1089,18 @@ public class Assembler {
 
 			for (String pathTerm : path) {
 
-				if (i >= mnemFormatList.size())
+				if (i >= mnemFormatTokens.size())
 					return false;
 
-				if (pathTerm.equals(mnemFormatList.get(i)))
+				if (pathTerm.equals(mnemFormatTokens.get(i)))
 					found = true;
 
 				else if ((pathTerm.equals("?")))
-					optional = true;
-				
+					optional = true;				
 			}
 			
-			if(found && !optional)	// assumes operands in opformat are not optional
+			// Assumes nodes specified in operand format are not optional
+			if(found && !optional)	
 				i++;
 			
 			else if (!found && !optional)
@@ -1284,7 +1110,7 @@ public class Assembler {
 			optional = false;
 		}
 
-		if (i != mnemFormatList.size())
+		if (i != mnemFormatTokens.size())
 			return false;
 
 		return true;
@@ -1307,22 +1133,16 @@ public class Assembler {
 			
 			String[] strSplit = str.split("((?=^[,]*)|(?<=^[,]*))|((?=[,]*$)|(?<=[,]*$))");
 			
-			for(String str2: strSplit){
-				
-				if(!str2.isEmpty()){
-					
+			for(String str2: strSplit){				
+				if(!str2.isEmpty()){					
 					if(str2.equals(","))
-						regex += ",";
-				
-					else{		
-						
+						regex += ",";				
+					else{								
 						regex += "("+ Pattern.quote(relevantOperands.get(i2))+")";
 						i2++;
-					}
-					
+					}					
 				}
-			}
-			
+			}			
 			i++;
 		}	
 
@@ -1331,13 +1151,14 @@ public class Assembler {
 		return legitSyntax;
 	}
 
-	private String getLabelString() { // assumes label in first path
+	private String getLabelString() { 
+		
+		// Assumes relocation labels at beginning of instruction (in first path)
 
 		String label = null;
 		boolean foundLabel = false;
 
 		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
-
 			for (String term : path) {
 
 				if (term.equals("LABEL"))
@@ -1346,7 +1167,6 @@ public class Assembler {
 				if (foundLabel)
 					label = term;
 			}
-
 			break;
 		}
 
@@ -1357,9 +1177,7 @@ public class Assembler {
 
 		int locationCounter = insAdrTable.get(insNumber + 1);
 		int destination = symbolTable.get(insHashTerm);
-
 		int jump = destination - locationCounter;
-
 		String binary = Integer.toBinaryString(jump);
 
 		if (binary.length() > bits)
@@ -1368,54 +1186,17 @@ public class Assembler {
 		return binary;
 	}
 	
-//	private ArrayList<String> getRelevantOperands(String format) {
-//
-//		ArrayList<String> relevantOperands = new ArrayList<String>();
-//
-//		String[] mnemFormatSplit = format.split("\\s+"); // space
-//		ArrayList<String> mnemFormatList = new ArrayList<String>();
-//
-//		for (String formatTerm : mnemFormatSplit) {
-//
-//			formatTerm = formatTerm.replaceAll("^,+", "");
-//			formatTerm = formatTerm.replaceAll(",+$", "");
-//
-//			if(!formatTerm.isEmpty())
-//				mnemFormatList.add(formatTerm);
-//		}
-//
-//		int i = 0;
-//
-//		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
-//
-//			for (String pathTerm : path) {
-//
-//				if (pathTerm.equals(mnemFormatList.get(i))) {
-//
-//					relevantOperands.add(getAssemblyOperand(path));
-//					i++;
-//					break;
-//				}
-//			}
-//		}
-//
-//		return relevantOperands;
-//	}
-	
 	private ArrayList<String> getRelevantOperands(String format) {
 		
 		ArrayList<String> relevantOps = new ArrayList<String>();
-
-		String[] mnemFormatSplit = format.split("\\s+"); // space
-		ArrayList<String> mnemFormatList = new ArrayList<String>();
+		String[] mnemFormatSplit = format.split("\\s+"); 
+		ArrayList<String> mnemFormatTokens = new ArrayList<String>();
 
 		for (String formatTerm : mnemFormatSplit) {
-
 			formatTerm = formatTerm.replaceAll("^,+", "");
 			formatTerm = formatTerm.replaceAll(",+$", "");
-
 			if(!formatTerm.isEmpty())
-				mnemFormatList.add(formatTerm);
+				mnemFormatTokens.add(formatTerm);
 		}
 
 		int i = 0;
@@ -1423,19 +1204,17 @@ public class Assembler {
 		boolean optional = false;
 
 		for (ArrayList<String> path : legitAssemblyOpTreePaths) {
-
 			for (String pathTerm : path) {
 
-				if (pathTerm.equals(mnemFormatList.get(i)))
+				if (pathTerm.equals(mnemFormatTokens.get(i)))
 					found = true;
 
 				else if ((pathTerm.equals("?")))
-					optional = true;
-				
+					optional = true;				
 			}
 			
-			if(found && !optional){	// assumes operands in opformat are not optional
-				
+			// Assumes nodes in operand format are not optional
+			if(found && !optional){					
 				i++;
 				relevantOps.add(getAssemblyOperand(path));
 			}
@@ -1450,96 +1229,83 @@ public class Assembler {
 	private String getAssemblyOperand(ArrayList<String> path) {
 
 		String operand = path.get(path.size() - 1);
-
 		operand = operand.replaceAll("\"", "");
 
 		return operand;
 	}
 
-	private HashMap<String, String> mapInsFieldLabels(	//TODO
-			ArrayList<String> relevantOperands, String insFieldLine)
+	private HashMap<String, String> mapInsFieldLabels(
+			ArrayList<String> relevantOperands, String fieldEncodingLine)
 			throws AssemblerException {
 
 		HashMap<String, String> insHash = new HashMap<String, String>();
+		String[] opFieldEncodings = fieldEncodingLine.split("\\s+");
 
-		String[] instructionLabels = insFieldLine.split("\\s+");
-
-		if (relevantOperands.size() != instructionLabels.length) {
-
-			String error = "Operand token mismatch between source assembly instruction operands and instruction field labels:\n\n";
-
+		if (relevantOperands.size() != opFieldEncodings.length) {
+			String error = "Token mismatch between source assembly operands and operand fields:\n\n";
+			error += "Source assembly operands: ";			
 			for (String operand : relevantOperands)
 				error += operand + " ";
-
-			error += "\n" + insFieldLine;
-
+			error += "\nOperand field encodings:  " + fieldEncodingLine;			
+			error += "\n\nField encodings should be mapped to the corresponding operand delimited by whitespace. "
+					+ "\nExample input:\n\n"
+					+ "mnem reg32, reg32"
+					+ "\n\tmnem rm reg";
 			throw new AssemblerException(error);
 		}
 
 		int i1 = 0;
 
-		for (String insFieldToken : instructionLabels) {
-
-			String operandToken = relevantOperands.get(i1);
-
-			String[] splitInsTokens = insFieldToken.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
-
+		for (String op : opFieldEncodings) {
+			String assemblyToken = relevantOperands.get(i1);
+			String[] splitFieldTokens = op.split("(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])");
 			String prefixes = "";
 
-			for (String str : splitInsTokens) {
-
+			for (String str : splitFieldTokens) {
 				if (!isAlphaNumeric(str))
 					prefixes += "\\" + str;
 			}
 
-			String[] splitOpTokens;
+			String[] splitAssemblyTokens;
 
 			if (prefixes.isEmpty()) {
-
-				splitOpTokens = new String[1];
-				splitOpTokens[0] = operandToken;
+				splitAssemblyTokens = new String[1];
+				splitAssemblyTokens[0] = assemblyToken;
 			}
 
 			else
-				splitOpTokens = operandToken.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
+				splitAssemblyTokens = assemblyToken.split("(?=[" + prefixes + "])|(?<=[" + prefixes + "])");
 
-			if (splitOpTokens.length != splitInsTokens.length) {
-
-				String error = "Syntax mismatch between instruction operands and instruction field labels:\n\n";
-
+			if (splitAssemblyTokens.length != splitFieldTokens.length) {
+				String error = "Syntax mismatch between instruction operands and field encodings:\n\n";
+				error += "Source assembly operands:  ";				
 				for (String operand : relevantOperands)
-					error += operand + " ";
-
-				error += "\n" + insFieldLine;
+					error += operand + " ";				
+				error += "\nOperand field encodings:  " + fieldEncodingLine;
+				error += "\n\nSeparator commas should NOT be specified within the operand field encoding tokens, "
+						+ "\nExample input:\n\n"
+						+ "mnem reg32, reg32"
+						+ "\n\tmnem rm reg";
 
 				throw new AssemblerException(error);
 			}
 
 			int i2 = 0;
 
-			for (String insTerm : splitInsTokens) {
-
+			for (String insTerm : splitFieldTokens) {
 				if (!isAlphaNumeric(insTerm)) {
-
-					if (!insTerm.equals(splitOpTokens[i2])) {
-
+					if (!insTerm.equals(splitAssemblyTokens[i2])) {
 						String error = "Could not map instruction fields to assembly line:\n\n"
-								+ insFieldLine;
-
+								+ fieldEncodingLine;
 						throw new AssemblerException(error);
 					}
-
 				}
-
 				else {
-
-					String assemblyTerm = splitOpTokens[i2];
+					String assemblyTerm = splitAssemblyTokens[i2];
 					insHash.put(insTerm, assemblyTerm);
 				}
-
 				i2++;
 			}
-
 			i1++;
 		}
 
@@ -1549,15 +1315,11 @@ public class Assembler {
 	private ArrayList<String> splitToMinAdrUnits(String binary) {
 
 		ArrayList<String> binaryArray = new ArrayList<String>();
-
 		int minAdrUnit = data.getMinAdrUnit();
-
 		int index = 0;
 
 		while (index < binary.length()) {
-
 			binaryArray.add(binary.substring(index,	Math.min(index + minAdrUnit, binary.length())));
-
 			index += minAdrUnit;
 		}
 
@@ -1567,35 +1329,24 @@ public class Assembler {
 	private String getHexObjCode(ArrayList<String> binaryArray) {
 
 		String hexObjCode = "";
-
 		int minAdrUnit = data.getMinAdrUnit();
-
 		int noOfHexCharacters = (minAdrUnit / 8) * 2;
 
 		if (data.getEndian().equals("big")) {
-
 			for (String str : binaryArray) {
-
 				String hex = binaryToHex(str);
-
 				while (hex.length() < noOfHexCharacters)
 					hex = "0" + hex;
-
 				hexObjCode += hex + " ";
 			}
 		}
 
 		else if (data.getEndian().equals("little")) {
-
 			int counter = binaryArray.size() - 1;
-
 			for (; counter >= 0; counter--) {
-
 				String hex = binaryToHex(binaryArray.get(counter));
-
 				while (hex.length() < noOfHexCharacters)
 					hex = "0" + hex;
-
 				hexObjCode += hex + " ";
 			}
 		}
@@ -1606,10 +1357,8 @@ public class Assembler {
 	public static String binaryFromIntFormatted(String intStr, int bits) throws AssemblerException {
 
 		String binary = intToBinary(intStr);
-
 		int initialLength = binary.length();
 		int zerosNeeded = bits - initialLength;
-
 		String zeros = "";
 
 		for (; zerosNeeded > 0; zerosNeeded -= 1)
@@ -1623,10 +1372,8 @@ public class Assembler {
 	public static String binaryFromHexFormatted(String hex, int bits) throws AssemblerException {
 
 		String binary = hexToBinary(hex);
-
 		int initialLength = binary.length();
 		int zerosNeeded = bits - initialLength;
-
 		String zeros = "";
 
 		for (; zerosNeeded > 0; zerosNeeded -= 1)
@@ -1640,9 +1387,7 @@ public class Assembler {
 	public static String binaryFormatted(String binary, int bits) {
 
 		int initialLength = binary.length();
-
 		int zerosNeeded = bits - initialLength;
-
 		String zeros = "";
 
 		for (; zerosNeeded > 0; zerosNeeded -= 1)
@@ -1669,13 +1414,12 @@ public class Assembler {
 	public static String intToBinary(String intStr) {
 
 		int i = Integer.parseInt(intStr);
-
 		String binary = Integer.toBinaryString(i);
 
 		return binary;
 	}
 
-	private boolean isAlphaNumeric(String s) {
+	public static boolean isAlphaNumeric(String s) {
 
 		String pattern = "[a-zA-Z0-9]*";
 
@@ -1685,7 +1429,7 @@ public class Assembler {
 		return false;
 	}
 
-	private boolean isNumeric(String s) {
+	public static boolean isNumeric(String s) {
 
 		String pattern = "[0-9]*";
 
@@ -1695,7 +1439,7 @@ public class Assembler {
 		return false;
 	}
 
-	private boolean isAlpha(String s) {
+	public static boolean isAlpha(String s) {
 
 		String pattern = "[a-zA-Z]*";
 
@@ -1705,15 +1449,12 @@ public class Assembler {
 		return false;
 	}
 	
-	private static boolean isHexNumber(String str) {
+	public static boolean isHexNumber(String str) {
 		
-		try {
-			
+		try {			
 			Long.parseLong(str, 16);
-			return true;
-			
-		} catch (NumberFormatException e) {
-			
+			return true;			
+		} catch (NumberFormatException e) {			
 			return false;
 		}
 	}

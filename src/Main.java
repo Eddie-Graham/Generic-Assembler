@@ -42,6 +42,6 @@ public class Main {
 		
 		DataSource data = file.getData();		
 		
-		Assembler assembler = new Assembler(data);
+		new Assembler(data);
 		}
 }
