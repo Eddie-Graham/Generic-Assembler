@@ -222,7 +222,8 @@ public class Assembler {
 					+ mnemData.getMnemonic() + "\":\n";
 			for (String opFormat : operandFormats)
 				error += "\n" + opFormat;			
-			error += "\n\nOperand tree built from assembly line:\n\n" + legitAssemblyOpTreePaths;
+			error += "\n\nIt is assumed that the operands specified above are NOT optional.\n"
+					+ "Operand tree built from assembly line:\n\n" + legitAssemblyOpTreePaths;
 			throw new AssemblerException(error);
 		}
 		

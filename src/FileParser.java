@@ -728,19 +728,19 @@ public class FileParser {
 		if (atOperandFieldEncodings) {
 			abortMnem = true;
 			throw new AssemblerException(
-					"MnemonicData error: Line format or indentation error, operand field encodings line expected.\n"
+					"MnemonicData error: Line format or indentation error, operand field encodings line expected. Line should begin with two tabs.\n"
 							+ getMnemDataErrorMessage());
 		}
 
 		else if (atLocalFieldEncodings) {
 			throw new AssemblerException(
-					"MnemonicData error: Line format or indentation error, local field encodings line expected.\n"
+					"MnemonicData error: Line format or indentation error, local field encodings line expected. Line should begin with two tabs.\n"
 							+ getMnemDataErrorMessage());
 		}
 
 		else if (atInsFormat) {
 			throw new AssemblerException(
-					"MnemonicData error: Line format or indentation error, instruction format line expected.\n"
+					"MnemonicData error: Line format or indentation error, instruction format line expected. Line should begin with two tabs.\n"
 							+ getMnemDataErrorMessage());
 		}
 		
