@@ -28,12 +28,12 @@ public class FileParser {
 
 	private boolean architecture, registers, mnemonicData, instructionFormat,
 			assemblyOpTree, endian, minAddressableUnit;
-	private boolean foundArchitecture, foundRegisters, foundMnemData,
+	private boolean foundArchitecture, foundMnemData,
 			foundInsFormat, foundAssemblyOpTree, foundEndian, foundMinAdrUnit;
 	private boolean architectureDeclared, registersDeclared, mnemDataDeclared,
 			insFormatDeclared, assemblyOpTreeDeclared, endianDeclared,
 			minAdrUnitDeclared;
-	private boolean doneGlobalOpcodes, emptyLine, abortMnem;
+	private boolean doneGlobalEncodings, emptyLine, abortMnem;
 	private boolean foundFormatHeader, atOperandFieldEncodings, atLocalFieldEncodings,
 			atInsFormat;
 	private boolean firstAssemblyOpTreeEntry;
@@ -65,7 +65,6 @@ public class FileParser {
 		minAddressableUnit = false;
 
 		foundArchitecture = false;
-		foundRegisters = false;
 		foundMnemData = false;
 		foundInsFormat = false;
 		foundAssemblyOpTree = false;
@@ -80,7 +79,7 @@ public class FileParser {
 		endianDeclared = false;
 		minAdrUnitDeclared = false;
 
-		doneGlobalOpcodes = false;
+		doneGlobalEncodings = false;
 		emptyLine = true;
 		abortMnem = false;
 
@@ -178,13 +177,11 @@ public class FileParser {
 			}
 		}
 		
-		if (!(foundArchitecture && foundRegisters && foundInsFormat
+		if (!(foundArchitecture && foundInsFormat
 				&& foundAssemblyOpTree && foundEndian && foundMinAdrUnit)) {
 			String missingSections = "";
 			if (!foundArchitecture)
 				missingSections += "\"architecture\" ";
-			if (!foundRegisters)
-				missingSections += "\"registers\" ";
 			if (!foundInsFormat)
 				missingSections += "\"instructionFormat\" ";
 			if (!foundAssemblyOpTree)
@@ -244,6 +241,7 @@ public class FileParser {
 		
 		inputFile2.close();
 		
+		mnemonicData = true;
 		// Run one last time with empty line to catch any error at end of mnemonic data section
 		try {
 			scanLine("", true, true, false, true, true, true, true, true);
@@ -254,6 +252,19 @@ public class FileParser {
 			resetBooleanValues();
 			abortMnem = true;
 			foundFormatHeader = true;
+		}
+		
+		if (!foundFormatHeader) {
+			try {
+				throw new AssemblerException(
+						"MnemonicData error: Mnemonic format missing for mnemonic \""
+								+ currentMnemonic.getMnemonic() 
+								+ "\".\n"
+								+ getMnemDataErrorMessage());
+			} catch (AssemblerException e) {
+				String error = getErrorMessage(lineCounter, fullSpecLine, e.getMessage());
+				errorReport.add(error);
+			}
 		}
 
 		// If missing sections in specification file
@@ -479,7 +490,7 @@ public class FileParser {
 			// (letters|numbers)+ space* colon space* (!(space|colon))+ (space*
 			// (!(space|colon))+)*
 			boolean legitRootExp = Pattern.matches(
-					"[^\\s:]+(\\s*[^\\s:]+)*", expression);
+					"[^\\s]+(\\s*[^\\s]+)*", expression);
 
 			if (!legitRootExp)
 				throw new AssemblerException("AssemblyOpTree error: Root expression syntax error.");
@@ -554,7 +565,6 @@ public class FileParser {
 		if (line.trim().length() == 0)
 			return;
 
-		foundRegisters = true;
 		line = line.trim();
 
 		// Valid register expression:
@@ -675,9 +685,9 @@ public class FileParser {
 
 		// Global field encodings (starts with tab and not passed an empty line)
 		else if (Pattern.matches("\t[^\t\\s].*", line) && !emptyLine
-				&& !doneGlobalOpcodes) {
+				&& !doneGlobalEncodings) {
 			analyseGlobalFieldEncodings(line);
-			doneGlobalOpcodes = true;
+			doneGlobalEncodings = true;
 		}
 
 		// Operand format (starts with tab and empty line passed)
@@ -718,13 +728,13 @@ public class FileParser {
 		if (atOperandFieldEncodings) {
 			abortMnem = true;
 			throw new AssemblerException(
-					"MnemonicData error: Line format or indentation error, instruction field labels line expected.\n"
+					"MnemonicData error: Line format or indentation error, operand field encodings line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 
 		else if (atLocalFieldEncodings) {
 			throw new AssemblerException(
-					"MnemonicData error: Line format or indentation error, local opcodes line expected.\n"
+					"MnemonicData error: Line format or indentation error, local field encodings line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 
@@ -734,13 +744,13 @@ public class FileParser {
 							+ getMnemDataErrorMessage());
 		}
 		
-		if (!emptyLine){
+		else if (!emptyLine){
 			throw new AssemblerException(
 					"MnemonicData error: Line format error, empty line expected.\n"
 							+ getMnemDataErrorMessage());
 		}
 		
-		if (!foundFormatHeader) {
+		else if (!foundFormatHeader) {
 			throw new AssemblerException(
 					"MnemonicData error: Line format or indentation error, operand format line expected.\nOperand format missing for mnemonic \""
 							+ currentMnemonic.getMnemonic()
@@ -748,8 +758,8 @@ public class FileParser {
 							+ getMnemDataErrorMessage());
 		}
 		
-		else{
-		}
+		else
+			throw new AssemblerException("MnemonicData error: Line format or indentation error.");
 	}
 
 	private void analyseMnemName(String line) throws AssemblerException {
@@ -837,23 +847,23 @@ public class FileParser {
 		else if (atLocalFieldEncodings) {
 			line = line.trim();
 			
-			// If line is "--" then there are no local opcodes
+			// If line is "--" then there are no local encodings
 			if (!line.equals("--")) {
 
-				// Legit local opcode expression:
+				// Legit local encoding expression:
 				// (!(space|equals|comma))+ space* equals space*
 				// (!(space|equals|comma))+
 				// (space* comma space* (!(space|equals|comma))+ space* equals
 				// space* (!(space|equals|comma))+)*
-				boolean legitLocalOpcodes = Pattern.matches(
+				boolean legitLocalEncodings = Pattern.matches(
 								"[A-Za-z0-9]+\\s*=\\s*[A-Za-z0-9]+(\\s*,\\s*[A-Za-z0-9]+\\s*=\\s*[A-Za-z0-9]+)*",
 								line);
 
-				if (!legitLocalOpcodes) {
+				if (!legitLocalEncodings) {
 					abortMnem = true;					
 					throw new AssemblerException(
-							"MnemonicData error: Local opcodes syntax error,"
-									+ "\n<fieldName>=<value><B/H/I> or \"--\" (if no local opcodes) expected.");
+							"MnemonicData error: Local encodings syntax error,"
+									+ "\n<fieldName>=<value><B/H/I> or \"--\" (if no local encodings) expected.");
 				}
 
 				// Legit local field encodings so omit unnecessary spaces
@@ -971,7 +981,7 @@ public class FileParser {
 										+ field
 										+ "\" in \""
 										+ currentMnemonic.getMnemonic()
-										+ "\" global opcodes ("
+										+ "\" global encodings ("
 										+ currentMnemonic.getRawGlobalFieldEncodingString()
 										+ ")\nexceeds expected " 
 										+ bits
@@ -993,7 +1003,7 @@ public class FileParser {
 								currentMnemFormat.getRawLinesString()
 										+ "\nMnemonicData error: Encoding for field \""
 										+ field 
-										+ "\" in local opcodes for \""
+										+ "\" in local encodings for \""
 										+ currentMnemonic.getMnemonic()
 										+ "\" format \""
 										+ currentMnemFormat.getMnemFormat()
@@ -1019,7 +1029,7 @@ public class FileParser {
 							+ "\" (" + insFormat.getRawLineString()
 							+ ")\nnot found within global \""
 							+ currentMnemonic.getMnemonic()
-							+ "\" opcodes ("
+							+ "\" encodings ("
 							+ currentMnemonic.getRawGlobalFieldEncodingString()
 							+ ") or in \"" 
 							+ currentMnemonic.getMnemonic()
@@ -1056,7 +1066,7 @@ public class FileParser {
 
 		abortMnem = false;
 
-		doneGlobalOpcodes = false;
+		doneGlobalEncodings = false;
 		emptyLine = false;
 
 		foundFormatHeader = false;
@@ -1071,30 +1081,30 @@ public class FileParser {
 
 		line = line.trim();
 
-		// Legit global opcode expression:
+		// Legit global encoding expression:
 		// alphanumeric+ space* equals space* alphanumeric+
 		// (space* comma space* alphanumeric+ space* equals space*
 		// alphanumeric+)*
-		boolean legitGlobalOpcodes = Pattern
+		boolean legitGlobalEncodings = Pattern
 				.matches("[a-zA-Z0-9]+\\s*=\\s*[a-zA-Z0-9]+(\\s*,\\s*[a-zA-Z0-9]+\\s*=\\s*[a-zA-Z0-9]+)*",
 						line);
 
-		if (!legitGlobalOpcodes) {
+		if (!legitGlobalEncodings) {
 			abortMnem = true;			
 			throw new AssemblerException(
-					"MnemonicData error: Global opcodes syntax error, <fieldName>=<value><B/H/I> expected.");
+					"MnemonicData error: Global encodings syntax error, <fieldName>=<value><B/H/I> expected.");
 		}
 
-		// Legit global opcodes so omit unnecessary spaces
+		// Legit global encodings so omit unnecessary spaces
 		line = line.replaceAll("\\s+", "");
 		String[] tokens = line.split(",");
 
 		for (String token : tokens) {
 			String[] elements = token.split("=");			
-			String opcode = elements[0];			
+			String field = elements[0];			
 			String valueAndBase = elements[1];
 			String binary = getBinaryFromBase(valueAndBase);			
-			currentMnemonic.getGlobalFieldEncodingHash().put(opcode, binary);
+			currentMnemonic.getGlobalFieldEncodingHash().put(field, binary);
 		}
 
 		currentMnemonic.setRawGlobalFieldEncodingString(line);

@@ -37,6 +37,11 @@ public class Main {
 			System.out.println("Too many arguments provided.");
 			System.exit(0);
 		}
+		
+		if(!(args[0].endsWith(".txt") && args[1].endsWith(".txt"))){
+			System.out.println("Input is limited to two .txt files.");
+			System.exit(0);
+		}
 				
 		FileParser file = new FileParser(args[0], args[1]);
 		

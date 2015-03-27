@@ -611,9 +611,13 @@ public class Assembler {
 			ArrayList<String> rootTerm = new ArrayList<String>();
 			rootTerm.add(rootTokens);
 			
-			if(analyseOperands(rootTerm, assemblyTokens, rootTerm, rootTerm, paths,
-				currentPath))
-				break;
+			try{
+				if(analyseOperands(rootTerm, assemblyTokens, rootTerm, rootTerm, paths,
+						currentPath))
+						break;
+			} catch(StackOverflowError e){
+				throw new AssemblerException("StackOverflow: Check tree has no infinite loops.");
+			}
 		}
 	}
 
